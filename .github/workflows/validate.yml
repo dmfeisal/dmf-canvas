@@ -37,5 +37,7 @@ jobs:
         run: npm run test:astro
       - name: Build isolated React and Vue consumers from packed archive
         run: npm run test:frameworks
+      - name: Verify generated HTML, Astro, React and Vue examples
+        run: npm run test:configurator
       - name: Verify checks leave tracked files unchanged
         run: git diff --exit-code

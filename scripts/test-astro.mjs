@@ -7,12 +7,13 @@ import assert from 'node:assert/strict';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const npm=process.platform==='win32'?'npm.cmd':'npm';
 const run=(args,cwd)=>execFileSync(npm,args,{cwd,encoding:'utf8',maxBuffer:8*1024*1024,stdio:['ignore','pipe','pipe']});
-export async function prepareAstro(){
+export async function prepareAstro({configure,expectedTag='canvas-astro-example'}={}){
  const directory=await mkdtemp(join(tmpdir(),'dmf-canvas-astro-'));
  try{
   await cp(join(root,'examples/astro'),directory,{recursive:true,filter:source=>!/(?:^|[/\\])(?:node_modules|dist|\.astro)(?:[/\\]|$)/.test(source)});
   await mkdir(join(directory,'src/lib'),{recursive:true});
   for(const name of ['custom-host.js','custom-host.css'])await cp(join(root,'examples/shared',name),join(directory,'src/lib',name));
+  if(configure)await configure(directory);
   const packed=JSON.parse(run(['pack','--ignore-scripts','--cache',join(directory,'cache'),'--pack-destination',directory,'--json'],root))[0];
   // Add only the dependency-free local archive to the fixture lock, then install
   // it with the already locked Astro tree in one clean operation. A second
@@ -31,8 +32,8 @@ export async function prepareAstro(){
   assert.equal(installed.name,'dmf-canvas');
   process.stdout.write(run(['run','build'],directory));
   const html=await readFile(join(directory,'dist/index.html'),'utf8');
-  assert(html.includes('canvas-astro-example')&&html.includes('Canvas in Astro'));
-  const away=await readFile(join(directory,'dist/away/index.html'),'utf8');assert(!away.includes('<canvas-astro-example'));
+  assert(html.includes(expectedTag)&&html.includes('Canvas in Astro'));
+  const away=await readFile(join(directory,'dist/away/index.html'),'utf8');assert(!away.includes('<'+expectedTag));
   const assets=await readdir(join(directory,'dist/_astro'));
   assert(assets.some(name=>name.endsWith('.css'))&&assets.some(name=>name.endsWith('.js')));
   const css=(await Promise.all(assets.filter(name=>name.endsWith('.css')).map(name=>readFile(join(directory,'dist/_astro',name),'utf8')))).join('\n');

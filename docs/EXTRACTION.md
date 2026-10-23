@@ -57,3 +57,10 @@ React uses a ref plus `useEffect` returning cleanup; its root enables Strict Mod
 Validation passed: both production builds and bundled CSS/cursor checks; 22 browser scenarios across development and production, including actual React development replay (two setups/one disposal/one live engine), isolated edits/history, parent updates, single-instance removal, ten hide/show cycles per development consumer, permissions, clipboard, local files, mobile RTL and interrupted drawing. The test servers observed zero writes. Existing core contract/type/archive checks remain green. The workflow now includes the two recipe builds on its Node 22/24 matrix; this local change does not claim a new hosted run has occurred.
 
 The recipes preserve local-only data policy and make no SSR, hydration, router, HMR, non-Chromium or real touch certification. React/Vue examples complete the planned framework recipe set alongside plain HTML and Astro; licensing, public release compatibility and broader integration coverage remain separate gates.
+
+
+## Embed configurator checkpoint — 23 October 2026
+
+The example-only configurator offers independent A/B previews, all 14 supported tool permissions, read-only mode, four theme choices and bounded dimensions. Settings updates preserve preview objects; invalid dimensions keep the last valid value without blocking other controls. Generated HTML, Astro, React and Vue outputs each include three host helper files and a complete entry component/page. Only configuration is serialized, never preview text, image content or board data.
+
+Generated consumers install the packed archive and build through their actual framework tooling. Host lifecycle, permissions, local files, image descriptions, cancellation, code copying/downloading, mobile RTL and repeated disposal are covered by the focused browser suite. Runtime exports and dependencies remain unchanged. The configurator is example host code, not a new public API or a publication decision. See `examples/configurator/README.md`; licensing and broader compatibility remain release gates.

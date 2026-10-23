@@ -16,6 +16,10 @@ Open `http://127.0.0.1:8000/` for two independent custom hosts, or `/examples/ca
 
 The examples include Text, Sticky Notes, Drawings and local raster Images; selection/marquee, editing, transforms, groups, arrangement, layer ordering, locks, Undo/Redo, duplication/deletion, page-local clipboard and local board files. Settings, theme and optional draft persistence belong to each host. No service, upload, publication or portfolio script is required.
 
+## Embed configurator
+
+Open `/examples/configurator/` to configure two independent previews and copy complete HTML, Astro, React or Vue examples. Settings include tool permissions, read-only mode, themes and bounded dimensions. Generated files contain configuration only; preview edits and images remain local. See [the configurator guide](examples/configurator/README.md) for integration and validation.
+
 ## Integrate
 
 Consumers use native ESM entrypoints. A bundler may resolve the package name; build-free hosts supply an import map as both examples do. CSS is explicit: load `dmf-canvas/canvas.css`, plus `dmf-canvas/toolbar.css` if using the optional toolbar. This preview is not available from a public registry; `npm pack` creates a local archive for installation testing.

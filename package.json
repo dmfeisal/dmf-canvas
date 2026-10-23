@@ -77,7 +77,9 @@
     "test:astro": "node scripts/test-astro.mjs",
     "test:astro:browser": "node scripts/test-astro-browser.mjs",
     "test:frameworks": "node scripts/test-frameworks.mjs",
-    "test:frameworks:browser": "node scripts/test-frameworks-browser.mjs"
+    "test:frameworks:browser": "node scripts/test-frameworks-browser.mjs",
+    "test:configurator": "node scripts/test-configurator.mjs",
+    "test:configurator:browser": "node scripts/test-configurator-browser.mjs"
   },
   "devDependencies": {
     "typescript": "6.0.3"

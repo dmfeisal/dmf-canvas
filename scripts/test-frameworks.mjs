@@ -8,13 +8,14 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const npm=process.platform==='win32'?'npm.cmd':'npm';
 const run=(args,cwd)=>execFileSync(npm,args,{cwd,encoding:'utf8',maxBuffer:8*1024*1024,stdio:['ignore','pipe','pipe']});
 export const frameworks=Object.freeze(['react','vue']);
-export async function prepareFramework(framework){
+export async function prepareFramework(framework,{configure}={}){
  if(!frameworks.includes(framework))throw new TypeError('Choose react or vue.');
  const directory=await mkdtemp(join(tmpdir(),'dmf-canvas-'+framework+'-'));
  try{
   await cp(join(root,'examples',framework),directory,{recursive:true,filter:source=>!/(?:^|[/\\])(?:node_modules|dist)(?:[/\\]|$)/.test(source)});
   await mkdir(join(directory,'src/lib'),{recursive:true});
   for(const name of ['custom-host.js','custom-host.css','framework-session.js'])await cp(join(root,'examples/shared',name),join(directory,'src/lib',name));
+  if(configure)await configure(directory);
   const library=JSON.parse(await readFile(join(root,'package.json'),'utf8'));
   assert(!library.dependencies,'Update fixture lock generation if Canvas gains runtime dependencies.');
   const packed=JSON.parse(run(['pack','--ignore-scripts','--cache',join(directory,'cache'),'--pack-destination',directory,'--json'],root))[0];
