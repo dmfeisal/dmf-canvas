@@ -2,7 +2,7 @@
 
 An embeddable, framework-free DOM Canvas. This repository is the standalone extraction preview from feisal.id, with explicit object owners and independent instances.
 
-**Status:** private `0.0.0` development preview. The package entrypoints work locally; compatibility, source licensing and public release policy are not settled. This is not the full portfolio Canvas engine.
+**Status:** private `0.1.0` development baseline. The package entrypoints work locally; compatibility, source licensing and public release policy are not settled. This is not the full portfolio Canvas engine.
 
 ## Run the examples
 
@@ -93,4 +93,8 @@ This preview has no camera, PNG export, Highlighter, Eraser, general shapes or p
 
 ## Planning and references
 
-See [release milestones and advancement references](docs/ROADMAP-AND-REFERENCES.md) for the proposed versioning policy and directional Koboyo/Mochiboard references. Current package metadata remains a private `0.0.0` preview.
+See [release milestones and advancement references](docs/ROADMAP-AND-REFERENCES.md) for the proposed versioning policy and directional Koboyo/Mochiboard references. Current package metadata is a private `0.1.0` baseline.
+
+## Private baseline
+
+[API contract](docs/API.md), [compatibility limits](docs/COMPATIBILITY.md), [changelog](CHANGELOG.md) and [release checklist](docs/RELEASE-CHECKLIST.md) define the 0.1.0 baseline. This does not authorize registry publication or promise 1.0 compatibility.

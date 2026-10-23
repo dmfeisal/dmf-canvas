@@ -1,6 +1,6 @@
 {
   "name": "dmf-canvas",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Embeddable DOM Canvas \u2014 internal extraction preview",
@@ -65,7 +65,11 @@
     "LICENSES",
     "README.md",
     "images.js",
-    "images.d.ts"
+    "images.d.ts",
+    "CHANGELOG.md",
+    "docs/API.md",
+    "docs/COMPATIBILITY.md",
+    "docs/RELEASE-CHECKLIST.md"
   ],
   "scripts": {
     "start": "node server.mjs",

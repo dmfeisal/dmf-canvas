@@ -4,7 +4,7 @@ Recorded 23 October 2026. The full 20-item product backlog is maintained in the 
 
 ## Proposed version milestones — 23 October 2026
 
-Record this as the working release proposal, not completed releases or permission to publish. Current standalone version remains private `0.0.0`.
+Record this as the working release proposal, not completed releases or permission to publish. The proposal began at private `0.0.0`; the private `0.1.0` baseline now documents the supported API and release checks. Later milestones remain proposed.
 
 | Target | Scope |
 | --- | --- |

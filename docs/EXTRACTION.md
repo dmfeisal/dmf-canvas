@@ -64,3 +64,8 @@ The recipes preserve local-only data policy and make no SSR, hydration, router, 
 The example-only configurator offers independent A/B previews, all 14 supported tool permissions, read-only mode, four theme choices and bounded dimensions. Settings updates preserve preview objects; invalid dimensions keep the last valid value without blocking other controls. Generated HTML, Astro, React and Vue outputs each include three host helper files and a complete entry component/page. Only configuration is serialized, never preview text, image content or board data.
 
 Generated consumers install the packed archive and build through their actual framework tooling. Host lifecycle, permissions, local files, image descriptions, cancellation, code copying/downloading, mobile RTL and repeated disposal are covered by the focused browser suite. Runtime exports and dependencies remain unchanged. The configurator is example host code, not a new public API or a publication decision. See `examples/configurator/README.md`; licensing and broader compatibility remain release gates.
+
+
+## Private 0.1.0 baseline — 23 October 2026
+
+Package and root lockfile now use 0.1.0 with `private: true`. The installed archive includes API, compatibility, changelog and release-check documentation. Runtime source, board/clipboard schema version 1 and production migration boundaries are unchanged. This establishes an initial development contract, not stable 1.0 compatibility or public source licensing. Local release artifacts live in ignored `releases/`; portfolio consumption remains on its existing pinned archive until separately updated.
