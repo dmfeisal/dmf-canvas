@@ -24,11 +24,18 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            examples/astro/package-lock.json
+            examples/react/package-lock.json
+            examples/vue/package-lock.json
       - name: Install locked development dependencies
         run: npm ci --ignore-scripts
       - name: Validate runtime contracts, public types and installed archive
         run: npm run check
       - name: Build isolated Astro consumer from packed archive
         run: npm run test:astro
+      - name: Build isolated React and Vue consumers from packed archive
+        run: npm run test:frameworks
       - name: Verify checks leave tracked files unchanged
         run: git diff --exit-code

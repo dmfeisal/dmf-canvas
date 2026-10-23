@@ -46,3 +46,14 @@ The workflow builds the installed Astro consumer on both Node matrix versions. L
 
 
 Cold-cache CI correction: the Astro runner now adds the dependency-free local archive and its integrity to the generated fixture lock, then performs one clean install of both it and the existing locked Astro tree. This avoids a second lockfile-disabled install relying on cached Astro registry metadata. The committed source recipe lock remains unchanged.
+
+
+## React and Vue recipe checkpoint — 23 October 2026
+
+React and Vue now have separate locked consumers under `examples/react/` and `examples/vue/`. Both install a packed library with the existing locked framework tree, import package CSS, and reuse the canonical host with an example-only lifecycle session. Core runtime modules and public package exports are unchanged, and core still has no framework dependency.
+
+React uses a ref plus `useEffect` returning cleanup; its root enables Strict Mode. Vue uses a template ref with `onMounted`/`onBeforeUnmount` and stable keyed component identities. Both expose individual Hide/Show actions and a parent-update control so tests exercise real framework lifecycle and re-render behavior. Unmount cancels active ink and releases host resources. Bounded diagnostics live on the example container; they are not public library API.
+
+Validation passed: both production builds and bundled CSS/cursor checks; 22 browser scenarios across development and production, including actual React development replay (two setups/one disposal/one live engine), isolated edits/history, parent updates, single-instance removal, ten hide/show cycles per development consumer, permissions, clipboard, local files, mobile RTL and interrupted drawing. The test servers observed zero writes. Existing core contract/type/archive checks remain green. The workflow now includes the two recipe builds on its Node 22/24 matrix; this local change does not claim a new hosted run has occurred.
+
+The recipes preserve local-only data policy and make no SSR, hydration, router, HMR, non-Chromium or real touch certification. React/Vue examples complete the planned framework recipe set alongside plain HTML and Astro; licensing, public release compatibility and broader integration coverage remain separate gates.

@@ -75,7 +75,9 @@
     "check": "npm test && npm run test:types && npm run test:package",
     "test:package": "node scripts/test-package.mjs",
     "test:astro": "node scripts/test-astro.mjs",
-    "test:astro:browser": "node scripts/test-astro-browser.mjs"
+    "test:astro:browser": "node scripts/test-astro-browser.mjs",
+    "test:frameworks": "node scripts/test-frameworks.mjs",
+    "test:frameworks:browser": "node scripts/test-frameworks-browser.mjs"
   },
   "devDependencies": {
     "typescript": "6.0.3"

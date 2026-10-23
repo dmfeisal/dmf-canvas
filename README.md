@@ -72,6 +72,15 @@ GitHub Actions runs `npm run check` on Node 22 and 24 for main pushes, pull requ
 
 `CANVAS_TEST_SPACE_ID=<agent-owned-space-id> npm run test:astro:browser` additionally checks editing, files, Pencil, mobile RTL, real navigation cleanup and ten repeated leave/return cycles. CI builds this installed-package fixture on Node 22/24; interactive tests still require the local browser.
 
+## React and Vue integrations
+
+`npm run test:frameworks` builds separate React and Vue consumers from packed Canvas archives and their own locked dependencies. The examples do not add framework dependencies or wrappers to core. `node scripts/test-frameworks.mjs --keep` retains self-contained projects for `npm run dev` or `npm run preview`.
+
+- [React recipe](examples/react/README.md): JSX component with `useEffect` cleanup, an unmanaged DOM container and root Strict Mode enabled.
+- [Vue recipe](examples/vue/README.md): Single-File Component with `onMounted` setup and `onBeforeUnmount` cleanup.
+
+`CANVAS_TEST_SPACE_ID=<agent-owned-id> npm run test:frameworks:browser` tests both development servers and production bundles. Development checks verify React's actual Strict Mode setup/cleanup replay, parent updates, isolated unmounts, local files, mobile RTL, interrupted drawing and repeated hide/show cycles. Production checks verify mounted styles, edits and real component removal. The workflow builds both recipes on Node 22/24; interactive checks remain local.
+
 ## Limits and provenance
 
 This preview has no camera, PNG export, Highlighter, Eraser, general shapes or production owner migration. Browser validation used Ego Lite/Chromium; other browsers, real touch devices and cross-origin iframes are not certified. Native Popover and ResizeObserver are required by the optional adapters/example hosts.

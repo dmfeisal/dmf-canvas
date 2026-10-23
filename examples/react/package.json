@@ -1,0 +1,18 @@
+{
+  "name": "dmf-canvas-react-consumer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "8.3.5",
+    "@vitejs/plugin-react": "6.1.2"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
+}
