@@ -1,0 +1,186 @@
+{
+  "format": 1,
+  "status": "private extraction rehearsal",
+  "files": [
+    {
+      "path": "assets/cursors/pencil.svg",
+      "source": "public/assets/cursors/pencil.svg",
+      "sha256": "c31a844e063ef86dfdebd3f64483f9e241606553fe80dbf3f406f06ad2b2df2e"
+    },
+    {
+      "path": "consumer.js",
+      "source": "scripts/canvas-rehearsal/consumer.js",
+      "sha256": "91b00fcd991ae52cac27702e218e798c268d1d2855a68f73a5bd58edb3330933"
+    },
+    {
+      "path": "css/canvas-instance-toolbar.css",
+      "source": "public/css/canvas-instance-toolbar.css",
+      "sha256": "098152f92f9f8373fd4405016bbf6d7d3659cb1efbd8a16ca8368c71bf2a5529"
+    },
+    {
+      "path": "css/canvas-instance.css",
+      "source": "public/css/canvas-instance.css",
+      "sha256": "61187d2e20c71f361a57769b5d25c220843eb4d02c91ef2472dd7ed283570584"
+    },
+    {
+      "path": "examples/canvas/index.html",
+      "source": "public/examples/canvas/index.html",
+      "sha256": "e43ee52b09f83c6ec1c5594f9469a7465c87b53a2f48a6090d0315f39d609f42"
+    },
+    {
+      "path": "index.html",
+      "source": "scripts/canvas-rehearsal/index.html",
+      "sha256": "fda08217bfa8992569157fb5506b931483f835132506fc73d850c4628ca7919c"
+    },
+    {
+      "path": "js/canvas-instance-changes.js",
+      "source": "public/js/canvas-instance-changes.js",
+      "sha256": "7a03018cadd62d6d316795deae764960d8fee6e0241bf43098a05777b552dbd2"
+    },
+    {
+      "path": "js/canvas-instance-clipboard.d.ts",
+      "source": "public/js/canvas-instance-clipboard.d.ts",
+      "sha256": "00ecbdb2feed8e5d6e9a1c541a89394a1ba98657bd963e493103d8e1179c301d"
+    },
+    {
+      "path": "js/canvas-instance-clipboard.js",
+      "source": "public/js/canvas-instance-clipboard.js",
+      "sha256": "29f09e7737f3e8077a17a3c8c8fb17776b5197dc86affb6e2f72884bbfab8b3d"
+    },
+    {
+      "path": "js/canvas-instance-document.js",
+      "source": "public/js/canvas-instance-document.js",
+      "sha256": "8cd3369f072c9a578ac4b7139e766ac06ac44e9ca9ac53772bc86012b1b5b02a"
+    },
+    {
+      "path": "js/canvas-instance-draft-controls.js",
+      "source": "public/js/canvas-instance-draft-controls.js",
+      "sha256": "d6fa1adf354ac99280d0f29cbba74064c55fa1e6275ff18403743b198f628cf6"
+    },
+    {
+      "path": "js/canvas-instance-drafts.d.ts",
+      "source": "public/js/canvas-instance-drafts.d.ts",
+      "sha256": "07434e16ad35a925d498e2b1d81f193c64c764e07aa65cd46328cb8db424e85c"
+    },
+    {
+      "path": "js/canvas-instance-drafts.js",
+      "source": "public/js/canvas-instance-drafts.js",
+      "sha256": "e66c8313b2029f0fbe6079d59dfc3da225eeb2f6f7ac3a6cb4e7d4c4efbefd56"
+    },
+    {
+      "path": "js/canvas-instance-files.js",
+      "source": "public/js/canvas-instance-files.js",
+      "sha256": "78f4ad1d93d16cdb8f2e63c5b957f060e96278823ce86d59ec60e5c4f6c2acb4"
+    },
+    {
+      "path": "js/canvas-instance-image-controls.js",
+      "source": "public/js/canvas-instance-image-controls.js",
+      "sha256": "5b9309d98f8e4440cd6433931e5995f322046cf79228bff759984d1d4014c262"
+    },
+    {
+      "path": "js/canvas-instance-image-data.js",
+      "source": "public/js/canvas-instance-image-data.js",
+      "sha256": "237ba93407dceab6fc2e1fc7f04e7ad54795ae87a0f37959664b3e176768cdc0"
+    },
+    {
+      "path": "js/canvas-instance-image-encode.js",
+      "source": "public/js/canvas-instance-image-encode.js",
+      "sha256": "39e4f5c5997af61237303063bd47908ff578d01567a5a63968d282f17f39885e"
+    },
+    {
+      "path": "js/canvas-instance-image.js",
+      "source": "public/js/canvas-instance-image.js",
+      "sha256": "e0b55d62c7a6d0d291894db27148ec0c2a7b171d8a6990cd84653a5e9e63b77d"
+    },
+    {
+      "path": "js/canvas-instance-pencil.js",
+      "source": "public/js/canvas-instance-pencil.js",
+      "sha256": "a1a6f9e684c605aa5d33621a7fefb16db1973805ecc8901090e6bfcd7465a095"
+    },
+    {
+      "path": "js/canvas-instance-settings.js",
+      "source": "public/js/canvas-instance-settings.js",
+      "sha256": "d3fa15371d87fdacf490d9c507cdc279777a316ad9761cf111b74b61d80b0e24"
+    },
+    {
+      "path": "js/canvas-instance-sticky.js",
+      "source": "public/js/canvas-instance-sticky.js",
+      "sha256": "9bad1a8dcdb3b970fbddba97009e93e00d2012368bbde79cb15fa50a9e7480ab"
+    },
+    {
+      "path": "js/canvas-instance-text.js",
+      "source": "public/js/canvas-instance-text.js",
+      "sha256": "8f7f28695b9d0005082776ac957589a0fc2b83b7f0850a67da7d15c23ac28b25"
+    },
+    {
+      "path": "js/canvas-instance-theme.d.ts",
+      "source": "public/js/canvas-instance-theme.d.ts",
+      "sha256": "92fd4f223e053c26c125ececbdf549be021c22ea9c15363d16dae96ae79a7413"
+    },
+    {
+      "path": "js/canvas-instance-theme.js",
+      "source": "public/js/canvas-instance-theme.js",
+      "sha256": "4800c98712655a5c57cab3994a6e65967b34c6a453acc594d826abf301f9d3df"
+    },
+    {
+      "path": "js/canvas-instance-toolbar-icons.js",
+      "source": "public/js/canvas-instance-toolbar-icons.js",
+      "sha256": "d152a8a7c31f31784a6578e27a7b75f650a044d5927a1188c0645fc1e2d14616"
+    },
+    {
+      "path": "js/canvas-instance-toolbar.d.ts",
+      "source": "public/js/canvas-instance-toolbar.d.ts",
+      "sha256": "929d70236faea4eec428c4e670672ae79689872eb243cec5906f44dd9f808931"
+    },
+    {
+      "path": "js/canvas-instance-toolbar.js",
+      "source": "public/js/canvas-instance-toolbar.js",
+      "sha256": "f2136035342952e80b4c86cfd76eb774abd110d2a6a6167753ea077ba05c561a"
+    },
+    {
+      "path": "js/canvas-instance.d.ts",
+      "source": "public/js/canvas-instance.d.ts",
+      "sha256": "8fa6f0177e0ce6ecf9ab218fd0ff52306ecfca742fba783c0502c942a5829dec"
+    },
+    {
+      "path": "js/canvas-instance.js",
+      "source": "public/js/canvas-instance.js",
+      "sha256": "9065356570cf0ab83bf716b5d81066f5757aa1a42d62027cccc02d37f3359c33"
+    },
+    {
+      "path": "LICENSES/lucide.txt",
+      "source": "public/assets/icons/lucide-LICENSE.txt",
+      "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
+    },
+    {
+      "path": "package.json",
+      "generated": true,
+      "sha256": "ff4d8cd0f819abd6eee49e34ab4cd3c496f7e39cbe0eb844a13a9e63a80bf145"
+    },
+    {
+      "path": "README.md",
+      "generated": true,
+      "sha256": "976031537c0634274329ca8869c776d400097847b8346b0bf5f3ac4493e6efe8"
+    },
+    {
+      "path": "server.mjs",
+      "source": "scripts/canvas-rehearsal/server.mjs",
+      "sha256": "274023b4bba6acfb4b5734d08e9e32ac079b5af15378d8df1d3f4fd672d80682"
+    },
+    {
+      "path": "test-browser.mjs",
+      "source": "scripts/canvas-rehearsal/test-browser.mjs",
+      "sha256": "5adb1688b3360cea268a10ac5852f7adb53ae39bd85a339bf0fa50070ea06d5f"
+    },
+    {
+      "path": "tests/browser.mjs",
+      "source": "scripts/canvas-rehearsal/browser.mjs",
+      "sha256": "e70bd568101dc35187022bdeff6e49d8eb3ee6138248af0312bb069c9b08ce45"
+    },
+    {
+      "path": "tests/structure.test.mjs",
+      "source": "scripts/canvas-rehearsal/structure.test.mjs",
+      "sha256": "9eb8f0ceef1ef173265d2e8c84b927942a517035741a5b7c4649dcb2fbab95ed"
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+/* Internal Text adapter artwork. No production canvas selectors. */
+.canvas-instance-handle {
+  appearance: none; box-sizing: border-box; visibility: hidden; position: absolute;
+  width: 24px; height: 24px; min-width: 0; min-height: 0; margin: 0; padding: 0;
+  border: 0; border-radius: 0; background: transparent; line-height: 1;
+  color: var(--dmf-color-canvas-selection); touch-action: auto;
+  transform: scale(var(--canvas-instance-inverse, 1)); transform-origin: center;
+}
+[data-canvas-instance-selected] > .canvas-instance-handle { visibility: visible; }
+.canvas-instance-handle::after {
+  content: ''; box-sizing: border-box; position: absolute; inset: 8px;
+  border: 1px solid currentColor; background: var(--dmf-color-canvas-handle);
+  box-shadow: 0 0 0 1px var(--dmf-color-canvas-halo);
+}
+.canvas-instance-handle--nw { top: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); left: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); cursor: nwse-resize; }
+.canvas-instance-handle--ne { top: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); right: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); cursor: nesw-resize; }
+.canvas-instance-handle--sw { bottom: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); left: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); cursor: nesw-resize; }
+.canvas-instance-handle--se { bottom: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); right: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); cursor: nwse-resize; }
+.canvas-instance-handle--w { top: calc(50% - 12px); left: calc(-12px - (16px + var(--canvas-instance-gap-x, 0px)) * var(--canvas-instance-inverse, 1)); cursor: ew-resize; }
+.canvas-instance-handle--e { top: calc(50% - 12px); right: calc(-12px - (16px + var(--canvas-instance-gap-x, 0px)) * var(--canvas-instance-inverse, 1)); cursor: ew-resize; }
+.canvas-instance-handle--w::before, .canvas-instance-handle--e::before { content: ''; position: absolute; top: 12px; width: 12px; border-top: 1px solid currentColor; pointer-events: none; }
+.canvas-instance-handle--w::before { left: 16px; }
+.canvas-instance-handle--e::before { right: 16px; }
+.canvas-instance-handle--rotate { top: calc(-12px - 28px * var(--canvas-instance-inverse, 1)); left: calc(50% - 12px); cursor: crosshair; }
+.canvas-instance-handle--rotate::after { border-radius: 50%; }
+.canvas-instance-handle--rotate::before { content: ''; position: absolute; left: 12px; top: 17px; height: 23px; border-left: 1px solid currentColor; }
+.canvas-instance-handle:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.canvas-instance-editor { display: block; outline: none; }
+.canvas-instance-editor[data-instance-plain-text], .canvas-instance-editor[contenteditable]:not([contenteditable="false"]) { white-space: pre-wrap; overflow-wrap: anywhere; }
+.canvas-instance-editor[contenteditable]:not([contenteditable="false"]) { cursor: text; user-select: text; }
+[data-canvas-instance-editing] { outline: 1px dashed var(--dmf-color-canvas-selection); cursor: text; }
+[data-canvas-instance-editing] > .canvas-instance-handle { visibility: hidden; }
+.canvas-instance-edit-done {
+  position: absolute; z-index: 103; inset-block-end: 8px; inset-inline-end: 8px;
+  box-sizing: border-box; min-height: 44px; max-width: calc(100% - 16px); padding: 8px 12px;
+  font: inherit; font-size: 13px; line-height: 1.2;
+  color: var(--dmf-color-text, CanvasText); background: var(--dmf-color-paper-canvas, Canvas);
+  border: 1px solid var(--dmf-color-line, GrayText); cursor: pointer;
+}
+.canvas-instance-edit-done[hidden] { display: none; }
+.canvas-instance-edit-done:focus-visible { outline: 2px solid var(--dmf-color-canvas-selection); outline-offset: 2px; }
+.canvas-instance-status--editing { max-width: calc(100% - 140px); }
+.canvas-instance-note {
+  position:absolute; box-sizing:border-box; margin:0; padding:20px;
+  background:var(--canvas-instance-paper, #ffcf34); color:#171717;
+  font:18px/1.4 system-ui,sans-serif; cursor:grab; user-select:none;
+  border:1px solid rgb(0 0 0 / .12); border-radius:2px;
+}
+.canvas-instance-note[data-canvas-instance-selected] { outline:1px solid var(--dmf-color-canvas-selection); }
+.canvas-instance-note[data-canvas-instance-editing] { outline-style:dashed; cursor:text; }
+.canvas-instance-note:focus-visible { outline:2px solid var(--dmf-color-canvas-selection); outline-offset:3px; }
+.canvas-instance-note > .canvas-instance-editor { height:100%; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; }
+.canvas-instance-drawing { position:absolute; box-sizing:border-box; margin:0; padding:0; user-select:none; cursor:default; }
+.canvas-instance-drawing > svg { position:absolute; inset:0; display:block; width:100%; height:100%; overflow:hidden; pointer-events:none; }
+.canvas-instance-drawing[data-canvas-instance-selected] { outline:1px solid var(--dmf-color-canvas-selection); }
+.canvas-instance-drawing:focus-visible { outline:2px solid var(--dmf-color-canvas-selection); outline-offset:3px; }
+[data-canvas-instance-preview] { position:absolute; inset:0; width:100%; height:100%; z-index:101; overflow:hidden; pointer-events:none; }
+[data-instance-pencil-active], [data-instance-pencil-active] :is(.canvas-instance-editor,.canvas-instance-note,.canvas-instance-drawing) { cursor:url('../assets/cursors/pencil.svg') 3 29, crosshair; }
+[data-instance-pencil-active] .canvas-instance-handle { visibility:hidden; }
+[data-canvas-instance-multiple] .canvas-instance-handle { visibility:hidden; }
+
+.canvas-instance-local-text { cursor:grab; user-select:none; color:inherit; line-height:1.5; }
+.canvas-instance-local-text[data-canvas-instance-selected] { outline:1px solid var(--dmf-color-canvas-selection); }
+.canvas-instance-local-text[data-canvas-instance-editing] { outline-style:dashed; cursor:text; }
+.canvas-instance-local-text:focus-visible { outline:2px solid var(--dmf-color-canvas-selection); outline-offset:3px; }
+
+.canvas-instance-marquee { position:absolute; box-sizing:border-box; z-index:102; border:1px solid var(--dmf-color-canvas-selection, #1677ff); background:var(--dmf-color-canvas-marquee,color-mix(in srgb,var(--dmf-color-canvas-selection, #1677ff) 8%,transparent)); pointer-events:none; }
+
+.canvas-instance-status { pointer-events:none; }
+
+[data-canvas-instance-locked] > .canvas-instance-handle { visibility:hidden; }
+[data-canvas-instance-locked] { cursor:default; }
+
+.canvas-instance-arrange { flex-basis:100%; max-width:100%; font-size:13px; }
+.canvas-instance-arrange > summary { cursor:pointer; width:fit-content; padding-block:8px; }
+.canvas-instance-arrange > div { display:flex; flex-wrap:wrap; gap:8px; padding-block:8px; }
+.canvas-instance-arrange > summary:focus-visible { outline:2px solid var(--dmf-color-canvas-selection, Highlight); outline-offset:2px; }
+
+[data-canvas-instance-readonly] .canvas-instance-handle { visibility:hidden; }
+[data-canvas-instance-readonly] > [tabindex] { cursor:default; }
+.canvas-instance-settings { flex-basis:100%; max-width:100%; font-size:13px; }
+.canvas-instance-settings > summary { cursor:pointer; width:fit-content; padding-block:8px; }
+.canvas-instance-settings > div { display:flex; flex-wrap:wrap; gap:8px 16px; padding-block:8px; }
+.canvas-instance-settings label { display:inline-flex; align-items:center; gap:4px; min-height:36px; }
+.canvas-instance-settings > summary:focus-visible { outline:2px solid var(--dmf-color-canvas-selection, Highlight); outline-offset:2px; }
+
+.canvas-instance-settings [hidden], [data-example] [hidden], [data-canvas-instance-demo] [hidden] { display:none !important; }
+
+[data-document-dirty] { flex-basis:100%; font-size:13px; }
+
+.canvas-instance-drafts { flex-basis:100%; display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:13px; padding-block:8px; }
+.canvas-instance-drafts label { display:inline-flex; align-items:center; gap:8px; min-height:44px; }
+.canvas-instance-drafts output { flex-basis:100%; overflow-wrap:anywhere; }
+
+.canvas-instance-drafts button { min-height:44px; padding:8px 16px; font:inherit; }
+
+/* Appearance belongs to each embed wrapper, including its toolbar/popovers. */
+[data-canvas-embed-theme] :is([data-canvas-theme-surface],[data-host],[data-instance-host]) {
+  color:var(--dmf-color-text,CanvasText);
+  background-color:var(--canvas-embed-surface,var(--dmf-color-paper-canvas,Canvas));
+  background-image:radial-gradient(circle,var(--canvas-embed-grid,color-mix(in srgb,currentColor 20%,transparent)) 1px,transparent 1px);
+  border-color:var(--dmf-color-line,GrayText);
+}
+.canvas-instance-appearance { flex-basis:100%; }
+.canvas-instance-appearance p { flex-basis:100%; margin:0; }
+.canvas-instance-appearance input { box-sizing:border-box; width:9rem; max-width:100%; min-height:36px; }
+
+.canvas-instance-image { position:absolute; margin:0; cursor:grab; user-select:none; touch-action:none; }
+.canvas-instance-image > img { display:block; width:100%; height:100%; object-fit:contain; pointer-events:none; user-select:none; }
+.canvas-instance-image[data-canvas-instance-selected] { outline:1px solid var(--dmf-color-canvas-selection); }
+.canvas-instance-image:focus-visible { outline:2px solid var(--dmf-color-canvas-selection); outline-offset:3px; }
+
+.canvas-instance-image-details { min-width:0; max-width:100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex-basis:100%; }
+.canvas-instance-image-details label { min-width:0; max-width:100%; display:flex; flex-wrap:wrap; gap:8px; }
+.canvas-instance-image-details input { width:22rem; max-width:100%; min-width:0; min-height:44px; box-sizing:border-box; font:inherit; }
+.canvas-instance-image-details output { font-size:13px; direction:ltr; unicode-bidi:isolate; }
+.canvas-instance-image-details button,[data-image-cancel] { min-height:44px; padding:8px 12px; font:inherit; }
+[data-image-progress] { width:8rem; align-self:center; }

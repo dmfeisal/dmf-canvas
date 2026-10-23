@@ -1,0 +1,75 @@
+{
+  "name": "dmf-canvas",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Embeddable DOM Canvas \u2014 internal extraction preview",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dmfeisal/dmf-canvas.git"
+  },
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    },
+    "./owners": {
+      "types": "./owners.d.ts",
+      "import": "./owners.js"
+    },
+    "./pencil": {
+      "types": "./pencil.d.ts",
+      "import": "./pencil.js"
+    },
+    "./clipboard": {
+      "types": "./clipboard.d.ts",
+      "import": "./clipboard.js"
+    },
+    "./toolbar": {
+      "types": "./toolbar.d.ts",
+      "import": "./toolbar.js"
+    },
+    "./theme": {
+      "types": "./theme.d.ts",
+      "import": "./theme.js"
+    },
+    "./drafts": {
+      "types": "./drafts.d.ts",
+      "import": "./drafts.js"
+    },
+    "./canvas.css": "./css/canvas-instance.css",
+    "./toolbar.css": "./css/canvas-instance-toolbar.css"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "owners.js",
+    "owners.d.ts",
+    "pencil.js",
+    "pencil.d.ts",
+    "clipboard.js",
+    "clipboard.d.ts",
+    "toolbar.js",
+    "toolbar.d.ts",
+    "theme.js",
+    "theme.d.ts",
+    "drafts.js",
+    "drafts.d.ts",
+    "js",
+    "css",
+    "assets",
+    "LICENSES",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:types": "tsc -p tests/types/tsconfig.json",
+    "test:browser": "node test-browser.mjs",
+    "check": "npm test && npm run test:types && npm run test:package",
+    "test:package": "node scripts/test-package.mjs"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}
