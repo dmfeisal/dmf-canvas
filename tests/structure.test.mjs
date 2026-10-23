@@ -21,6 +21,6 @@ test('runtime graph is normalized and core excludes optional UI theme and Pencil
  await access(resolve(root,'assets/cursors/pencil.svg'));await access(resolve(root,'LICENSES/lucide.txt'));
 });
 test('custom host uses package entrypoints without implicit persistent storage',async()=>{
- const text=await readFile(resolve(root,'consumer.js'),'utf8');assert(!/localStorage|sessionStorage|fetch\(/.test(text));assert(imports(text).every(specifier=>specifier.startsWith('dmf-canvas')));
+ const text=await readFile(resolve(root,'examples/shared/custom-host.js'),'utf8');assert(!/localStorage|sessionStorage|fetch\(/.test(text));assert(imports(text).every(specifier=>specifier.startsWith('dmf-canvas')));
  const owners=await readFile(resolve(root,'js/canvas-instance-document.js'),'utf8');assert(!owners.includes('canvas-instance-pencil.js'));
 });

@@ -1,0 +1,28 @@
+---
+import 'dmf-canvas/canvas.css';
+import 'dmf-canvas/toolbar.css';
+---
+<canvas-astro-example><div class="consumers"></div><output data-lifecycle aria-live="polite">Starting canvases</output></canvas-astro-example>
+<script>
+  import {mountConsumer} from '../lib/custom-host.js';
+  class CanvasAstroExample extends HTMLElement {
+    instances=[];
+    connectedCallback(){
+      this.mount();
+      window.addEventListener('pagehide',this.stop);
+      window.addEventListener('pageshow',this.mount);
+    }
+    mount=()=>{
+      if(!this.isConnected||this.instances.length)return;
+      const parent=this.querySelector('.consumers');
+      if(!parent)return;
+      try{for(const name of ['A','B'])this.instances.push(mountConsumer(parent,name));}
+      catch(error){this.stop();throw error;}
+      this.dataset.ready='true';
+      this.querySelector('[data-lifecycle]').textContent='Two independent canvases ready';
+    };
+    stop=()=>{for(const instance of this.instances)instance.dispose();this.instances=[];delete this.dataset.ready;};
+    disconnectedCallback(){this.stop();window.removeEventListener('pagehide',this.stop);window.removeEventListener('pageshow',this.mount);}
+  }
+  if(!customElements.get('canvas-astro-example'))customElements.define('canvas-astro-example',CanvasAstroExample);
+</script>

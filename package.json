@@ -38,7 +38,11 @@
       "import": "./drafts.js"
     },
     "./canvas.css": "./css/canvas-instance.css",
-    "./toolbar.css": "./css/canvas-instance-toolbar.css"
+    "./toolbar.css": "./css/canvas-instance-toolbar.css",
+    "./images": {
+      "types": "./images.d.ts",
+      "import": "./images.js"
+    }
   },
   "files": [
     "index.js",
@@ -59,7 +63,9 @@
     "css",
     "assets",
     "LICENSES",
-    "README.md"
+    "README.md",
+    "images.js",
+    "images.d.ts"
   ],
   "scripts": {
     "start": "node server.mjs",
@@ -67,7 +73,9 @@
     "test:types": "tsc -p tests/types/tsconfig.json",
     "test:browser": "node test-browser.mjs",
     "check": "npm test && npm run test:types && npm run test:package",
-    "test:package": "node scripts/test-package.mjs"
+    "test:package": "node scripts/test-package.mjs",
+    "test:astro": "node scripts/test-astro.mjs",
+    "test:astro:browser": "node scripts/test-astro-browser.mjs"
   },
   "devDependencies": {
     "typescript": "6.0.3"

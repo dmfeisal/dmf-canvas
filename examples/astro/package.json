@@ -1,0 +1,13 @@
+{
+  "name": "dmf-canvas-astro-consumer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "astro build",
+    "dev": "astro dev",
+    "preview": "astro preview"
+  },
+  "devDependencies": {
+    "astro": "7.3.2"
+  }
+}

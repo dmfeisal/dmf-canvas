@@ -45,6 +45,7 @@ Host CSS owns surface dimensions and original-object layout. Keep owner objects 
 | `dmf-canvas` | `createCanvas`, `resolveSettings`, `canvasToolNames`, core types |
 | `dmf-canvas/owners` | Text, Sticky Note, Image and Drawing factories; `canvasDocuments`, `validateObject` |
 | `dmf-canvas/clipboard` | `createObjectClipboard`, `validateTransfer` |
+| `dmf-canvas/images` | Optional bounded raster validation, dimension reading and progressive encoding helpers |
 | `dmf-canvas/pencil` | `createPencil` input controller |
 | `dmf-canvas/toolbar` | `createCanvasToolbar` with host-owned actions |
 | `dmf-canvas/theme` | `createCanvasTheme`, `resolveTheme` |
@@ -64,6 +65,12 @@ The six theme roles are surface, grid, selection, toolbar, ink and line. Existin
 The local server binds loopback, accepts GET/HEAD only and does not save files. Drafts in the custom host are opt-in memory-only; the controls specimen separately offers opt-in localStorage drafts. Native editors retain text Undo and their system clipboard.
 
 GitHub Actions runs `npm run check` on Node 22 and 24 for main pushes, pull requests and manual dispatch. It uses locked dependencies and read-only permissions. The workflow checks contracts, public types and clean archive installation; interactive browser checks still require the local Ego Browser app. It does not publish or deploy.
+
+## Astro integration
+
+`npm run test:astro` packs the library, installs it into a fresh temporary Astro 7.3.2 project, builds two routes and checks bundled CSS/cursor assets. Only the example depends on Astro; core remains framework-free. `node scripts/test-astro.mjs --keep` retains the generated project for local preview. It has actual ClientRouter navigation and a custom element that disposes its instances when disconnected. See [the Astro recipe](examples/astro/README.md).
+
+`CANVAS_TEST_SPACE_ID=<agent-owned-space-id> npm run test:astro:browser` additionally checks editing, files, Pencil, mobile RTL, real navigation cleanup and ten repeated leave/return cycles. CI builds this installed-package fixture on Node 22/24; interactive tests still require the local browser.
 
 ## Limits and provenance
 

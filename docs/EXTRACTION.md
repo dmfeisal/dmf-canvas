@@ -1,6 +1,6 @@
 # Standalone extraction implementation
 
-23 October 2026. Destination: https://github.com/dmfeisal/dmf-canvas. Local implementation only; no commit, push or public package publication has been performed by this task.
+23 October 2026. Destination: https://github.com/dmfeisal/dmf-canvas. Private preview repository and CI are pushed; the checkpoints below record extraction work and validation. No public package publication or production migration is included.
 
 ## Provenance and changes
 
@@ -34,3 +34,12 @@ No other browser or real touch-device coverage is claimed. License, registry nam
 ## CI checkpoint
 
 `.github/workflows/validate.yml` runs the runtime/structural suite, strict public-consumer types and clean archive-install checks on Node 22/24. Action revisions are pinned, repository permissions are read-only, concurrent superseded runs cancel, and each job has a ten-minute limit. It runs for main pushes, pull requests and manual dispatch. It performs no publication/deployment and does not claim interactive browser coverage on a hosted runner.
+
+
+## Astro consumer and portfolio-reference checkpoint
+
+The isolated `examples/astro` recipe now consumes a locally packed archive with its own locked Astro 7.3.2 development dependency. It builds with package exports and CSS, uses real ClientRouter navigation, and cleans up custom-element instances on removal. The shared custom host was moved from the plain HTML entry script into `examples/shared/` so both hosts use one canonical recipe without duplicating engine source. Optional raster import helpers are exported and typed through `dmf-canvas/images` for host-owned controls.
+
+Validation passed: eight Astro browser scenarios, including ten real leave/return cycles, keyboard editing/history, clipboard, local files, Pencil, mobile RTL, full reload and zero server writes. The portfolio's `/examples/canvas/` alone now consumes an integrity-pinned archive with generated assets and host-owned controls; nine focused built-page scenarios and eight independent package-rehearsal scenarios passed. Production and `/ui/` owners remain on their prior runtime. These checks are not certification of other browser engines, real touch devices or a public release.
+
+The workflow builds the installed Astro consumer on both Node matrix versions. Licensing, stable release compatibility, production migration, React/Vue recipes and iframe coverage remain separate work.

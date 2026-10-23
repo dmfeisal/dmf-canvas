@@ -28,5 +28,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Validate runtime contracts, public types and installed archive
         run: npm run check
+      - name: Build isolated Astro consumer from packed archive
+        run: npm run test:astro
       - name: Verify checks leave tracked files unchanged
         run: git diff --exit-code

@@ -31,3 +31,10 @@ const invalid:CanvasOwner={capture:()=>element,restore(){},dispose(){}};
 // @ts-expect-error image description is a string
 canvas.execute('image-description',4);
 registration.dispose();canvas.destroy();void invalid;
+
+import {encodeImage,validateImage,imageDimensions} from 'dmf-canvas/images';
+declare const image:HTMLImageElement;declare const doc:Document;
+encodeImage(image,doc,{active:()=>true,onProgress:dimensions=>{const width:number=dimensions.width;void width;}}).then(value=>validateImage({...value,alt:'Image'}));
+imageDimensions(new Uint8Array(),'image/png');
+// @ts-expect-error encoder requires a decoded image
+encodeImage('image.png',doc);
