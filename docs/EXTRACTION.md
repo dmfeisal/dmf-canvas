@@ -29,3 +29,8 @@ Packing initially included root example helpers through a broad wildcard. The pa
 - A packed archive installed offline in a clean consumer; entrypoint imports, installed declarations and CSS cursor asset checks passed.
 
 No other browser or real touch-device coverage is claimed. License, registry name, release versioning policy, camera/export parity, stable external original IDs and framework/iframe integration remain open. Do not publish this private preview until those choices and relevant compatibility checks are complete.
+
+
+## CI checkpoint
+
+`.github/workflows/validate.yml` runs the runtime/structural suite, strict public-consumer types and clean archive-install checks on Node 22/24. Action revisions are pinned, repository permissions are read-only, concurrent superseded runs cancel, and each job has a ten-minute limit. It runs for main pushes, pull requests and manual dispatch. It performs no publication/deployment and does not claim interactive browser coverage on a hosted runner.

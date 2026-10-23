@@ -63,6 +63,8 @@ The six theme roles are surface, grid, selection, toolbar, ink and line. Existin
 
 The local server binds loopback, accepts GET/HEAD only and does not save files. Drafts in the custom host are opt-in memory-only; the controls specimen separately offers opt-in localStorage drafts. Native editors retain text Undo and their system clipboard.
 
+GitHub Actions runs `npm run check` on Node 22 and 24 for main pushes, pull requests and manual dispatch. It uses locked dependencies and read-only permissions. The workflow checks contracts, public types and clean archive installation; interactive browser checks still require the local Ego Browser app. It does not publish or deploy.
+
 ## Limits and provenance
 
 This preview has no camera, PNG export, Highlighter, Eraser, general shapes or production owner migration. Browser validation used Ego Lite/Chromium; other browsers, real touch devices and cross-origin iframes are not certified. Native Popover and ResizeObserver are required by the optional adapters/example hosts.
