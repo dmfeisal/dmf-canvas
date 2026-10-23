@@ -14,8 +14,19 @@ export async function prepareAstro(){
   await mkdir(join(directory,'src/lib'),{recursive:true});
   for(const name of ['custom-host.js','custom-host.css'])await cp(join(root,'examples/shared',name),join(directory,'src/lib',name));
   const packed=JSON.parse(run(['pack','--ignore-scripts','--cache',join(directory,'cache'),'--pack-destination',directory,'--json'],root))[0];
+  // Add only the dependency-free local archive to the fixture lock, then install
+  // it with the already locked Astro tree in one clean operation. A second
+  // lockfile-disabled install would resolve Astro metadata from a warm cache.
+  const library=JSON.parse(await readFile(join(root,'package.json'),'utf8'));
+  assert(!library.dependencies,'Update fixture lock generation if Canvas gains runtime dependencies.');
+  const project=JSON.parse(await readFile(join(directory,'package.json'),'utf8'));
+  project.dependencies={'dmf-canvas':'file:'+packed.filename};
+  const lock=JSON.parse(await readFile(join(directory,'package-lock.json'),'utf8'));
+  lock.packages[''].dependencies=project.dependencies;
+  lock.packages['node_modules/dmf-canvas']={version:packed.version,resolved:'file:'+packed.filename,integrity:packed.integrity};
+  await writeFile(join(directory,'package.json'),JSON.stringify(project,null,2)+'\n');
+  await writeFile(join(directory,'package-lock.json'),JSON.stringify(lock,null,2)+'\n');
   run(['ci','--ignore-scripts','--no-audit','--no-fund'],directory);
-  run(['install','--offline','--no-save','--package-lock=false','--ignore-scripts','--no-audit','--no-fund',join(directory,packed.filename)],directory);
   const installed=JSON.parse(await readFile(join(directory,'node_modules/dmf-canvas/package.json'),'utf8'));
   assert.equal(installed.name,'dmf-canvas');
   process.stdout.write(run(['run','build'],directory));

@@ -43,3 +43,6 @@ The isolated `examples/astro` recipe now consumes a locally packed archive with 
 Validation passed: eight Astro browser scenarios, including ten real leave/return cycles, keyboard editing/history, clipboard, local files, Pencil, mobile RTL, full reload and zero server writes. The portfolio's `/examples/canvas/` alone now consumes an integrity-pinned archive with generated assets and host-owned controls; nine focused built-page scenarios and eight independent package-rehearsal scenarios passed. Production and `/ui/` owners remain on their prior runtime. These checks are not certification of other browser engines, real touch devices or a public release.
 
 The workflow builds the installed Astro consumer on both Node matrix versions. Licensing, stable release compatibility, production migration, React/Vue recipes and iframe coverage remain separate work.
+
+
+Cold-cache CI correction: the Astro runner now adds the dependency-free local archive and its integrity to the generated fixture lock, then performs one clean install of both it and the existing locked Astro tree. This avoids a second lockfile-disabled install relying on cached Astro registry metadata. The committed source recipe lock remains unchanged.
