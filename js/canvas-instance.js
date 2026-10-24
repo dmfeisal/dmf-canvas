@@ -1,6 +1,7 @@
 import { createChangeTracker } from './canvas-instance-changes.js';
 import { resolveSettings } from './canvas-instance-settings.js';
 import { validateTransfer } from './canvas-instance-clipboard.js';
+import {combinedGeometry,validGeometry,planInspector} from './canvas-instance-inspector-plan.js';
 // Internal lifecycle spike. Production object owners still use DMFCanvasTools.
 // No document/window listeners, storage, camera or owner geometry writes.
 const mounted = new WeakMap(), registrations = new WeakMap();
@@ -424,6 +425,24 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if (command === 'edit') {const ok=startEdit(selected);return result(ok,ok?null:'unsupported');}
     if(editing||creation)return result(false,'busy');
     if (gesture) return result(false,'busy');
+    if(command==='inspect'){
+      const entries=[...selection];
+      if(!entries.length||entries.some(entry=>!usable(entry)||entry.locked||!entry.adapter.geometry))return result(false,'unsupported');
+      const geometries=entries.map(entry=>entry.adapter.geometry.read());
+      const plan=planInspector(geometries,value?.field,value?.value);if(!plan)return result(false,'bounds');
+      if(plan.every((target,index)=>['centerX','centerY','scale','angle'].every(key=>Math.abs(target[key]-geometries[index][key])<1e-5)))return result(true);
+      const items=entries.map(entry=>({entry,before:capture(entry)}));
+      if(new TextEncoder().encode(JSON.stringify(items.map(i=>i.before))).byteLength>65536)return result(false,'resource-limit');
+      try{
+        const apply=entries.map((entry,index)=>entry.adapter.geometry.prepare(plan[index]));
+        if(apply.some(fn=>typeof fn!=='function'))return result(false,'unsupported');
+        for(const fn of apply)fn();
+        for(const item of items)item.after=capture(item.entry);
+        if(new TextEncoder().encode(JSON.stringify(items.map(({before,after})=>({before,after})))).byteLength>131072)throw new RangeError('Selection history exceeds 128 KiB.');
+        if(items.some(item=>JSON.stringify(item.before)!==JSON.stringify(item.after)))pushAction({items},'transform');
+      }catch(error){for(const item of items)item.entry.adapter.restore(clone(item.before));emit();throw error;}
+      emit();return result(true);
+    }
     if(command==='group'||command==='ungroup'){
       if(!(command==='group'?state().canGroup:state().canUngroup)||command==='group'&&!begin(selected))return result(false,'unsupported');
       const after=command==='group'?++groupSerial:null,groupItems=[...selection].filter(entry=>command==='group'||entry.group).map(entry=>({entry,before:entry.group,after}));
@@ -650,6 +669,12 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   emit();
   const instance = Object.freeze({
     getState: state,
+    getInspector(){
+      if(!alive||editing||creation||gesture||!selection.size)return null;
+      const entries=[...selection];if(entries.some(entry=>!usable(entry)||!entry.adapter.geometry))return null;
+      const items=entries.map(entry=>entry.adapter.geometry.read());if(!items.every(validGeometry))return null;
+      return Object.freeze({...combinedGeometry(items),rotation:items.length===1?items[0].angle:0,relativeRotation:items.length>1,editable:!settings.readOnly&&entries.every(entry=>!entry.locked)});
+    },
     subscribeChanges(listener) { return changes.subscribe(listener); },
     markSaved(revision=changes.state().revision) {
       if(!alive)return result(false,'destroyed');

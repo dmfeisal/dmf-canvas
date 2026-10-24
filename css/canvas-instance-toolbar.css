@@ -11,3 +11,15 @@
 .canvas-embed-toolbar__label { position:absolute; inset:0; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
 .canvas-embed-tooltip { position:fixed; inset:auto; box-sizing:border-box; width:max-content; max-width:calc(100% - 16px); margin:0; padding:6px 9px; border:1px solid var(--dmf-color-line,GrayText); border-radius:6px; color:var(--dmf-color-text,CanvasText); background:var(--canvas-embed-toolbar,var(--dmf-color-paper-canvas,Canvas)); font:13px/1.4 system-ui,sans-serif; pointer-events:none; overflow-wrap:anywhere; }
 .canvas-embed-toolbar [hidden],.canvas-embed-toolbar__group[hidden],.canvas-embed-tooltip[hidden] { display:none!important; }
+
+.canvas-embed-inspector { position:fixed; inset:auto; box-sizing:border-box; width:300px; margin:0; padding:16px; overflow:auto; border:1px solid var(--dmf-color-line,GrayText); border-radius:10px; color:var(--dmf-color-text,CanvasText); background:var(--canvas-embed-toolbar,Canvas); font:13px/1.45 system-ui,sans-serif; }
+.canvas-embed-inspector h2 { margin:0 0 8px; font-size:15px; line-height:1.4; }
+.canvas-embed-inspector p { margin:0 0 12px; }
+.canvas-embed-inspector__fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.canvas-embed-inspector .canvas-embed-inspector__fields label { display:grid; gap:4px; min-width:0; margin:0; }
+.canvas-embed-inspector input[type=number] { box-sizing:border-box; width:100%; min-width:0; min-height:44px; padding:8px; border:1px solid var(--dmf-color-line,GrayText); border-radius:6px; color:inherit; background:transparent; font:inherit; }
+.canvas-embed-inspector button { min-height:44px; padding:8px 12px; margin-top:12px; border:1px solid var(--dmf-color-line,GrayText); border-radius:6px; color:inherit; background:transparent; font:inherit; }
+.canvas-embed-inspector output { display:block; margin-top:10px; overflow-wrap:anywhere; }
+.canvas-embed-inspector :is(input,button):focus-visible { outline:2px solid var(--dmf-color-canvas-selection,Highlight); outline-offset:2px; }
+.canvas-embed-inspector input:disabled { opacity:.65; }
+.canvas-embed-inspector input[aria-invalid=true] { border-color:var(--dmf-color-text,CanvasText); border-style:dashed; }

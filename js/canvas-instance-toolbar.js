@@ -33,7 +33,8 @@ export function createCanvasToolbar(container,{actions=null,label='Canvas editin
     const row=rows.find(item=>item.button===button);if(!row||button.hidden||tipTarget===button)return;hide();tipTarget=button;
     tip.textContent=describe(row);tip.hidden=false;
     button.setAttribute('aria-describedby',[restore.find(item=>item.button===button)?.described,tip.id].filter(Boolean).join(' '));
-    tip.showPopover();const r=button.getBoundingClientRect(),t=tip.getBoundingClientRect(),width=view.innerWidth,height=view.innerHeight;tip.style.left=Math.max(8,Math.min(width-t.width-8,r.left+(r.width-t.width)/2))+'px';tip.style.top=Math.max(8,Math.min(height-t.height-8,r.top-t.height-8<8?r.bottom+8:r.top-t.height-8))+'px';
+    // Native popover focus restoration can run inside another popover operation.
+    queueMicrotask(()=>{if(!alive||tipTarget!==button||!tip.isConnected)return;if(!tip.matches(':popover-open'))tip.showPopover();const r=button.getBoundingClientRect(),t=tip.getBoundingClientRect(),width=view.innerWidth,height=view.innerHeight;tip.style.left=Math.max(8,Math.min(width-t.width-8,r.left+(r.width-t.width)/2))+'px';tip.style.top=Math.max(8,Math.min(height-t.height-8,r.top-t.height-8<8?r.bottom+8:r.top-t.height-8))+'px';});
   }
   const eligible=()=>rows.filter(row=>bar.contains(row.button)&&!row.button.disabled&&!row.button.hidden&&!row.button.closest('[hidden]')).map(row=>row.button);
   function render() {

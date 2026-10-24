@@ -65,6 +65,10 @@ for(const target of configuratorTest.outputs){
  await check('generated '+target.format+' output enforces the selected policy and size',async()=>{
   assert(await page.evaluate(expected=>{const embed=document.querySelector('.configured-canvas').parentElement.canvasEmbed,c=embed.getConfig(),state=embed.canvas.getState();return JSON.stringify(c)===JSON.stringify(expected)&&state.settings.readOnly===expected.readOnly&&!state.settings.tools.pencil&&!state.settings.tools.clipboard&&document.querySelector('[data-host]').style.height===expected.height+'px'&&document.querySelector('.configured-canvas').style.maxWidth===expected.width+'px'&&document.querySelector('[data-save]').hidden&&document.querySelector('[data-host]').getAttribute('aria-label')===(expected.readOnly?'Read-only canvas':'Editable canvas');},target.config),'Generated '+target.format+' disagrees with selected configuration');
   if(!target.config.readOnly){await page.click('button[aria-label="Add note"]');assert(await page.evaluate(()=>document.querySelector('.configured-canvas').parentElement.canvasEmbed.canvas.getState().objects===2),'Generated creation failed');}
+  await page.click('[data-original]');await page.click('button[aria-label="Selection inspector"]');
+  assert(await page.evaluate(readOnly=>{const p=document.querySelector('.canvas-embed-inspector');return p.matches(':popover-open')&&[...p.querySelectorAll('input')].every(i=>i.disabled===readOnly);},target.config.readOnly),'Generated inspector policy failed');
+  if(!target.config.readOnly){await page.fill('[data-inspector-field=x]','40');await page.press('[data-inspector-field=x]','Enter');assert(await page.evaluate(()=>Math.abs(document.querySelector('.configured-canvas').parentElement.canvasEmbed.canvas.getInspector().x-40)<.1),'Generated inspector command failed');}
+  await page.click('.canvas-embed-inspector button');
  });
  await check('generated '+target.format+' output cleans up its actual host',async()=>{
   await page.evaluate(()=>{window.generatedCanvas=document.querySelector('.configured-canvas').parentElement.canvasEmbed.canvas;});

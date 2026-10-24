@@ -38,3 +38,14 @@ encodeImage(image,doc,{active:()=>true,onProgress:dimensions=>{const width:numbe
 imageDimensions(new Uint8Array(),'image/png');
 // @ts-expect-error encoder requires a decoded image
 encodeImage('image.png',doc);
+
+import {createCanvasInspector} from 'dmf-canvas/toolbar';
+declare const trigger:HTMLButtonElement;
+const inspector=createCanvasInspector(element,{canvas,trigger});
+const geometry=canvas.getInspector();if(geometry){const width:number=geometry.width;void width;}
+canvas.execute('inspect',{field:'width',value:200});
+// @ts-expect-error inspector fields are explicit
+canvas.execute('inspect',{field:'scale',value:2});
+// @ts-expect-error numeric values are not coerced
+canvas.execute('inspect',{field:'x',value:'20'});
+inspector.dispose();

@@ -113,6 +113,21 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
   };
   return Object.freeze({
     name,
+    geometry:Object.freeze({
+      read(){
+        if(!node?.isConnected||activeEdit)return null;
+        const rect=node.getBoundingClientRect(),area=root.getBoundingClientRect(),bounds=areaBounds(),style=node.ownerDocument.defaultView.getComputedStyle(node);
+        const left=area.left+root.clientLeft,top=area.top+root.clientTop;
+        const dimension=(key,extras)=>parseFloat(style[key])+(style.boxSizing==='border-box'?0:extras.reduce((sum,key)=>sum+parseFloat(style[key]),0));
+        return {centerX:rect.left+rect.width/2-left,centerY:rect.top+rect.height/2-top,localWidth:dimension('width',['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth']),localHeight:dimension('height',['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth']),scale,angle,minScale:Math.min(.5,scale),maxScale:Math.max(1.8,scale),bounds:{left:bounds.left-left,right:bounds.right-left,top:bounds.top-top,bottom:bounds.bottom-top}};
+      },
+      prepare(target){
+        if(!node?.isConnected||activeEdit)return null;
+        const rect=node.getBoundingClientRect(),area=root.getBoundingClientRect();
+        const nextX=x+target.centerX-(rect.left+rect.width/2-area.left-root.clientLeft),nextY=y+target.centerY-(rect.top+rect.height/2-area.top-root.clientTop);
+        return ()=>{x=nextX;y=nextY;scale=target.scale;angle=target.angle;localWidth=node.offsetWidth;localHeight=node.offsetHeight;apply();};
+      },
+    }),
     serialize() {const style=node.ownerDocument.defaultView.getComputedStyle(node);return {type:'text',layout:{left:node.offsetLeft,top:node.offsetTop,width:Math.ceil(parseFloat(style.width)*100)/100,height:node.offsetHeight,fontSize:parseFloat(style.fontSize),lineHeight:style.lineHeight==='normal'?'normal':parseFloat(style.lineHeight),fontWeight:Number(style.fontWeight)},text:content??originalText,state:{x,y,scale,angle,width:node.style.width,content:content??originalText}};},
     capture: () => ({ x, y, scale, angle, width:node.style.width, content }),
     restore(value) {

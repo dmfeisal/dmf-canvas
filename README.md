@@ -98,3 +98,5 @@ See [release milestones and advancement references](docs/ROADMAP-AND-REFERENCES.
 ## Private baseline
 
 [API contract](docs/API.md), [compatibility limits](docs/COMPATIBILITY.md), [changelog](CHANGELOG.md) and [release checklist](docs/RELEASE-CHECKLIST.md) define the 0.1.0 baseline. This does not authorize registry publication or promise 1.0 compatibility.
+
+Unreleased work toward 0.2.0 adds a five-field Selection inspector to the configurator and generated integrations. It uses explicit owner geometry, whole-selection bounds and one-step history; see the API's unreleased section. Text formatting remains planned. The v0.1.0 tag/archive are unchanged.

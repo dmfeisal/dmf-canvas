@@ -69,3 +69,7 @@ Generated consumers install the packed archive and build through their actual fr
 ## Private 0.1.0 baseline — 23 October 2026
 
 Package and root lockfile now use 0.1.0 with `private: true`. The installed archive includes API, compatibility, changelog and release-check documentation. Runtime source, board/clipboard schema version 1 and production migration boundaries are unchanged. This establishes an initial development contract, not stable 1.0 compatibility or public source licensing. Local release artifacts live in ignored `releases/`; portfolio consumption remains on its existing pinned archive until separately updated.
+
+## Selection inspector working source, 24 October 2026
+
+Unreleased work toward 0.2.0 adds explicit owner geometry, pure whole-selection plans, an atomic `inspect` command and an optional native-popover adapter through the existing toolbar entry. Text, Sticky Note, Drawing and Image share the bounded geometry capability while preserving their own content and metadata. The configurator includes the inspector in both previews and all generated integrations. See `INSPECTOR.md` for interaction/design/validation details. No package version, schema, production owner or pinned portfolio runtime is changed.

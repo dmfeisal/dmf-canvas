@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Add owner-backed Selection inspector geometry and atomic mixed-selection transforms with Undo/Redo.
+- Add optional `createCanvasInspector` through `dmf-canvas/toolbar`, included in configurator previews and generated integrations.
+- Preserve native field editing and defer tooltip opening during native popover focus handoffs.
+
+These changes target the 0.2.0 milestone. Package metadata and the immutable v0.1.0 baseline remain unchanged; text formatting is still planned.
+
 ## 0.1.0 — 23 October 2026
 
 First private versioned baseline of the existing standalone extraction. No new canvas interaction or board-schema change.

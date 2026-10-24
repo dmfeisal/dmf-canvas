@@ -9,3 +9,5 @@ HTML, Astro, React and Vue recipes install packed archives. Existing checks cove
 The standalone baseline includes bounded Text/Sticky Note/Drawing/Image objects, selection and transforms, locks/groups/arrangement/layers, history, page-local clipboard, local board files, Pencil, themes, permissions and optional drafts. It excludes camera controls, general shapes, Highlighter, Eraser, PNG export and production-owner migration. Production portfolio/Guestbook storage contracts remain separate.
 
 The package stays private. Source licensing and public distribution decisions remain unresolved; bundled Lucide notices remain required. A local archive or Git tag is not registry publication or a public compatibility promise.
+
+Unreleased inspector work uses native Popover and the existing owners' untransformed-host coordinates. It does not establish camera, CSS-transformed-ancestor, iframe or additional browser-engine support. The configurator's generated files must be paired with the corresponding unreleased package source until a new version is released.

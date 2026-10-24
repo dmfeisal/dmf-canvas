@@ -83,7 +83,8 @@
     "test:frameworks": "node scripts/test-frameworks.mjs",
     "test:frameworks:browser": "node scripts/test-frameworks-browser.mjs",
     "test:configurator": "node scripts/test-configurator.mjs",
-    "test:configurator:browser": "node scripts/test-configurator-browser.mjs"
+    "test:configurator:browser": "node scripts/test-configurator-browser.mjs",
+    "test:inspector:browser": "node scripts/test-inspector-browser.mjs"
   },
   "devDependencies": {
     "typescript": "6.0.3"

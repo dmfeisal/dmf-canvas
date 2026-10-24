@@ -32,6 +32,7 @@ export interface CanvasOwner<T extends JsonValue = JsonValue> {
   paperColor?: { read(): string; set(value: string): boolean };
   description?: {read():string;set(value:string):boolean};
   imageSize?:Readonly<{width:number;height:number}>;
+  geometry?:{read():CanvasGeometry|null;prepare(target:CanvasGeometry):(()=>void)|null};
   serialize?(): CanvasObjectDocument;
   dispose(): void;
 }
@@ -81,6 +82,8 @@ export interface CommandResult {
   readonly reason: 'stale-revision' | 'read-only' | 'disabled' | 'destroyed' | 'busy' | 'invalid-delta' | 'invalid-color' | 'invalid-description' | 'unsupported' | 'empty-history' | 'resource-limit' | 'bounds' | 'overlap' | null;
 }
 export interface CanvasInstance {
+  getInspector():Readonly<{x:number;y:number;width:number;height:number;rotation:number;relativeRotation:boolean;editable:boolean}>|null;
+  execute(command:'inspect',value:{field:'x'|'y'|'width'|'height'|'rotation';value:number}):CommandResult;
   /** One provisional creation at a time; cancellation owns preview cleanup. */
   beginCreation(cancel: () => void, kind?: 'text' | 'sticky' | 'image' | 'pencil'): Readonly<{ cancel(): void; commit<T extends JsonValue>(element: HTMLElement, owner: CanvasOwner<T>): Readonly<{ dispose(): void }> | null }> | null;
   /** Observational events delivered in order after the current JavaScript stack. No initial event. */
@@ -103,6 +106,10 @@ export interface CanvasInstance {
   register<T extends JsonValue>(element: HTMLElement, owner: CanvasOwner<T>, options?: { created?: boolean; locked?:boolean }): Readonly<{ dispose(): void }>;
   subscribe(listener: (state: Readonly<CanvasState>) => void): () => boolean;
   destroy(): void;
+}
+export interface CanvasGeometry {
+  centerX:number;centerY:number;localWidth:number;localHeight:number;scale:number;angle:number;minScale:number;maxScale:number;
+  bounds:{left:number;right:number;top:number;bottom:number};
 }
 export interface CanvasObjectDocument {
   type: 'text' | 'sticky' | 'drawing' | 'image';
