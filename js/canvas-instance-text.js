@@ -1,6 +1,8 @@
 // Bounded text geometry owner for the isolation specimen. No automatic discovery,
 // storage or dependency on the production document-global coordinator.
+import {defaultTextStyle,validateTextStyle,resolveTextStyle,textFonts,textWeights,hasTextStyle} from './canvas-instance-text-style.js';
 export function createTextOwner(element, host, { name = 'Text', widthHandles = true, editable = true } = {}) {
+  const formatting=editable&&widthHandles;
   const kinds=widthHandles?['nw','ne','sw','se','w','e','rotate']:['nw','ne','sw','se','rotate'];
   if (!element || element.parentElement !== host || element.querySelector('input,textarea,button,a,[contenteditable],img,svg') || element.isContentEditable) {
     throw new TypeError('Text owner needs a direct, static text child.');
@@ -21,7 +23,8 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     editor.append(...originalNodes);element.append(editor);
   }
   const hadStyle = element.hasAttribute('style');
-  const original = Object.fromEntries(['translate','scale','rotate','width','transformOrigin'].map(key=>[key,element.style[key]]));
+  const original = Object.fromEntries(['translate','scale','rotate','width','transformOrigin',...(formatting?['fontFamily','fontSize','fontWeight','textAlign']:[])].map(key=>[key,element.style[key]]));
+  let typography=defaultTextStyle;
   const inverse = element.style.getPropertyValue('--canvas-instance-inverse'), inversePriority = element.style.getPropertyPriority('--canvas-instance-inverse');
   const gaps = ['--canvas-instance-gap-x','--canvas-instance-gap-y'].map(key=>({key,value:element.style.getPropertyValue(key),priority:element.style.getPropertyPriority(key)}));
   let localWidth=element.offsetWidth,localHeight=element.offsetHeight;
@@ -56,13 +59,22 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
   };
   const anchor = kind => {
     localWidth=node.offsetWidth;localHeight=node.offsetHeight;
-    const rect=node.getBoundingClientRect(),radians=angle*Math.PI/180;
-    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2,width=node.offsetWidth*scale,height=node.offsetHeight*scale;
+    const rect=node.getBoundingClientRect(),radians=angle*Math.PI/180,style=node.ownerDocument.defaultView.getComputedStyle(node);
+    const dimension=(key,extras)=>parseFloat(style[key])+(style.boxSizing==='border-box'?0:extras.reduce((sum,key)=>sum+parseFloat(style[key]),0));
+    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2,width=dimension('width',['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth'])*scale,height=dimension('height',['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'])*scale;
     const localX=(kind.includes('w')?1:-1)*width/2,localY=(kind.length===1?0:kind.includes('n')?1:-1)*height/2;
     return {cx,cy,width,height,x:cx+localX*Math.cos(radians)-localY*Math.sin(radians),y:cy+localX*Math.sin(radians)+localY*Math.cos(radians)};
   };
   const setWidth = (width,max) => {node.style.width=`${Math.max(Math.min(80,max),Math.min(max,width))}px`;};
   const preserveAnchor = (kind, fixed) => {const now=anchor(kind);x+=fixed.x-now.x;y+=fixed.y-now.y;apply();};
+  const applyTypography=(next,width)=>{
+    typography=next;
+    node.style.fontFamily=next.font==='original'?original.fontFamily:textFonts[next.font];
+    node.style.fontSize=next.size===null?original.fontSize:next.size+'px';
+    node.style.fontWeight=next.weight===null?original.fontWeight:String(next.weight);
+    node.style.textAlign=next.align==='original'?original.textAlign:next.align;
+    node.style.width=width;
+  };
   const readText = () => (editor.innerText ?? editor.textContent).replace(/\r\n?/g,'\n').replace(/\0/g,'');
   const caretAtEnd = () => {
     const selection=node.ownerDocument.getSelection(),range=node.ownerDocument.createRange();
@@ -113,6 +125,15 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
   };
   return Object.freeze({
     name,
+    ...(formatting?{textStyle:Object.freeze({
+      read(){if(!node?.isConnected||activeEdit)return null;const style=node.ownerDocument.defaultView.getComputedStyle(node),alignment=style.textAlign==='start'?(style.direction==='rtl'?'right':'left'):style.textAlign==='end'?(style.direction==='rtl'?'left':'right'):style.textAlign;return {font:typography.font,family:style.fontFamily,size:parseFloat(style.fontSize),weight:Number(style.fontWeight),align:['left','center','right'].includes(alignment)?alignment:'original',wrap:['','fit-content'].includes(node.style.width)?'auto':'fixed',weights:[...textWeights]};},
+      prepare(field,value){
+        if(!node?.isConnected||activeEdit)return null;
+        const next=resolveTextStyle(typography,field,value),fixed=anchor('se'),style=node.ownerDocument.defaultView.getComputedStyle(node);
+        const width=field==='reset'?original.width:field==='wrap'?(value==='auto'?'fit-content':style.width):node.style.width;
+        return {apply:()=>applyTypography(next,width),finish(){preserveAnchor('se',fixed);contain();}};
+      },
+    })}:{}),
     geometry:Object.freeze({
       read(){
         if(!node?.isConnected||activeEdit)return null;
@@ -128,13 +149,14 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
         return ()=>{x=nextX;y=nextY;scale=target.scale;angle=target.angle;localWidth=node.offsetWidth;localHeight=node.offsetHeight;apply();};
       },
     }),
-    serialize() {const style=node.ownerDocument.defaultView.getComputedStyle(node);return {type:'text',layout:{left:node.offsetLeft,top:node.offsetTop,width:Math.ceil(parseFloat(style.width)*100)/100,height:node.offsetHeight,fontSize:parseFloat(style.fontSize),lineHeight:style.lineHeight==='normal'?'normal':parseFloat(style.lineHeight),fontWeight:Number(style.fontWeight)},text:content??originalText,state:{x,y,scale,angle,width:node.style.width,content:content??originalText}};},
-    capture: () => ({ x, y, scale, angle, width:node.style.width, content }),
+    serialize() {const style=node.ownerDocument.defaultView.getComputedStyle(node);return {type:'text',layout:{left:node.offsetLeft,top:node.offsetTop,width:Math.ceil(parseFloat(style.width)*100)/100,height:node.offsetHeight,fontSize:parseFloat(style.fontSize),lineHeight:style.lineHeight==='normal'?'normal':parseFloat(style.lineHeight),fontWeight:Number(style.fontWeight)},text:content??originalText,state:{x,y,scale,angle,width:node.style.width,content:content??originalText,...(formatting&&hasTextStyle(typography)?{typography:{...typography}}:{})}};},
+    capture: () => ({ x, y, scale, angle, width:node.style.width, content,...(formatting?{typography:{...typography}}:{}) }),
     restore(value) {
       if (!node) return;
       if (value?.content!==null&&(typeof value?.content!=='string'||value.content.length>textLimit))throw new TypeError('Invalid text content.');
-      if (!['x','y','scale','angle'].every(key=>Number.isFinite(value?.[key])) || value.scale<=0 || typeof value.width!=='string' || (value.width!==original.width&&!/^\d+(?:\.\d+)?px$/.test(value.width))) throw new TypeError('Invalid text geometry.');
-      ({ x, y, scale, angle, content } = value);renderContent();node.style.width=value.width;apply();contain();
+      if (!['x','y','scale','angle'].every(key=>Number.isFinite(value?.[key])) || value.scale<=0 || typeof value.width!=='string' || (value.width!==original.width&&!['','fit-content'].includes(value.width)&&!/^\d+(?:\.\d+)?px$/.test(value.width))) throw new TypeError('Invalid text geometry.');
+      const next=formatting?validateTextStyle(value.typography??defaultTextStyle):null;
+      ({ x, y, scale, angle, content } = value);renderContent();if(formatting)applyTypography(next,value.width);else node.style.width=value.width;apply();contain();
     },
     beginEdit() {
       if(!editable||!node?.isConnected||activeEdit)return null;

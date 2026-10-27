@@ -1,4 +1,4 @@
-# Private 0.1.0 API contract
+# Private 0.2.0 API contract
 
 The package export map and installed TypeScript declarations define supported names and payloads. Deep imports under `js/`, example helper properties and portfolio globals are implementation details, not supported consumer APIs. This is an initial development contract; it is not a stable 1.0 promise.
 
@@ -29,7 +29,7 @@ Register each element with an explicit owner. `register` returns a disposer; own
 
 Commands cover movement, editing, selection, locks, grouping, arrangement, layer order, copy/paste, duplicate/delete, history, paper colors, image descriptions, containment and cancellation. Use the installed `CanvasInstance` overloads for command names and payloads. Camera and export commands remain outside this baseline.
 
-`saveDocument()` returns a bounded board document; `loadDocument(unknown)` validates before applying it. Board and clipboard schemas remain version 1 independently of package version. Clipboard sharing is opt-in within a page, not OS clipboard or cross-origin messaging.
+`saveDocument()` returns a bounded board document; `loadDocument(unknown)` validates before applying it. Styled records and font sizes over 200px require board/clipboard schema 2. Otherwise saves/transfers remain schema 1; both are readable, and schema 1 rejects typography. Draft envelopes remain version 1. Clipboard sharing is opt-in within a page, not OS clipboard or cross-origin messaging. See `TEXT-FORMATTING.md` for migration details.
 
 Dispose optional draft/Pencil subscriptions before destroying the canvas, then dispose visual adapters. `destroy()` is idempotent and releases instance state; hosts still own their listeners, observers, pending frames, file reads, object URLs and framework lifecycle. Host resize handlers cancel active gestures then contain objects. Native fields and editing retain their own keyboard behavior. Use the tested framework recipes for lifecycle examples.
 
@@ -37,7 +37,7 @@ Dispose optional draft/Pencil subscriptions before destroying the canvas, then d
 
 All modules, CSS and declarations share one package version. Before 1.0, compatible fixes increment patch; features or incompatible contracts increment minor. Breaking changes require migration notes. After 1.0 use Semantic Versioning. Released archives and tags are immutable; file schema changes need explicit validation/migration policy independently of package bumps.
 
-## Unreleased inspector additions toward 0.2.0
+## Selection inspector (0.2.0)
 
 `getInspector()` returns visible selection bounds (`x`, `y`, `width`, `height`), `rotation`, `relativeRotation` and `editable`, or null for no selection, unsupported owners, active editing/creation/gestures or destruction. Locked/read-only selections remain measurable but not editable. Values use CSS screen pixels relative to the surface inside its border. Current owners support untransformed host surfaces; no new camera or CSS-transformed-ancestor support is claimed.
 
@@ -46,3 +46,11 @@ All modules, CSS and declarations share one package version. Before 1.0, compati
 Custom owners opt in through `geometry.read()` and `geometry.prepare(target)`. Read returns a finite `CanvasGeometry` with center, unscaled border-box dimensions, scale, angle, permitted scale range and bounds in the same surface coordinate space. Prepare must not mutate; it returns one apply closure or null. The closure applies geometry only, preserving content, metadata and style capabilities. Core captures/restores owner snapshots and owns the batch/history. One unsupported or locked member prevents the whole batch. There is no DOM fallback for unknown owners.
 
 `createCanvasInspector(container, {canvas, trigger})` from `dmf-canvas/toolbar` mounts one optional native popover for a contained HTML button. Call its `toggle()` from the trigger's existing dispatcher, load `toolbar.css`, and dispose it before the canvas/toolbar. It restores trigger attributes and disabled state. The caller owns trigger dispatch; the inspector owns fields, subscriptions and dismissal listeners. No storage, persistence service or publication is added. See the configurator for the complete host recipe.
+
+## Text formatting (0.2.0)
+
+`getTextStyle()` returns common `font`, `size`, `weight`, `align`, `wrap`, supported `weights` and `editable`; mixed values are null. It returns null during editing/creation/gestures or when any selected owner lacks the explicit textStyle capability. Original font choices compare actual families for mixed selections; alignment is physical Left/Center/Right, including RTL. Read-only, disabled Text and any lock prevent formatting.
+
+`execute('text-style', {field, value})` supports Font (`original`, `sans`, `serif`, `mono`), Size (8-320 CSS px), Weight (400/500/600/700), Alignment (`original`, `left`, `center`, `right`) and Wrapping (`auto`, `fixed`). `{field:'reset'}` restores each owner's initial text styles and wrapping. Invalid inputs return `invalid-style`; values are never coerced from CSS or URL strings. The inspector exposes these controls only for complete eligible Text selections.
+
+Custom owners opt in with `textStyle.read()` and mutation-free `textStyle.prepare(field, value)`, returning `{apply, finish}` or null. Core captures every owner before preparation, applies all writes, then finishes anchor compensation/containment and records one bounded history action. Application failures restore the entire batch. Current Text owners preserve local top-left anchors through reflow/rotation/scale; canvas bounds take precedence. Reset retains text content and current transform except necessary containment. Copies use their cloned appearance as their reset baseline. No font service, network font loading, new storage service or arbitrary CSS capability is introduced.

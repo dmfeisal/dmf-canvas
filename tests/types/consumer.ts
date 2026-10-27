@@ -49,3 +49,13 @@ canvas.execute('inspect',{field:'scale',value:2});
 // @ts-expect-error numeric values are not coerced
 canvas.execute('inspect',{field:'x',value:'20'});
 inspector.dispose();
+
+const textStyle=canvas.getTextStyle();if(textStyle){const font:string|null=textStyle.font;void font;}
+canvas.execute('text-style',{field:'font',value:'serif'});
+canvas.execute('text-style',{field:'size',value:32});
+canvas.execute('text-style',{field:'weight',value:600});
+canvas.execute('text-style',{field:'reset'});
+// @ts-expect-error arbitrary CSS fonts are not accepted
+canvas.execute('text-style',{field:'font',value:'url(unsafe)'});
+// @ts-expect-error numeric style values are not coerced
+canvas.execute('text-style',{field:'size',value:'32'});

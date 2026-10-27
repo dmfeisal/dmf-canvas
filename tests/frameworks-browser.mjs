@@ -7,10 +7,11 @@ for(const target of frameworkTest.targets){
  await page.cdp('Emulation.setFocusEmulationEnabled',{enabled:true});await page.cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await page.goto(target.base+'/');
  await page.waitForFunction(expected=>[...document.querySelectorAll('[data-framework-host]')].length===2&&[...document.querySelectorAll('[data-framework-host]')].every(e=>e.dataset.ready==='true'&&Number(e.dataset.mounts)===expected),expectedMounts);
  await check(label+' mounts two installed-package hosts with the correct lifecycle',async()=>{
-  assert(await page.evaluate(({expectedMounts,development,framework})=>{
+  const mountState=await page.evaluate(({expectedMounts,development,framework})=>{
    const roots=[...document.querySelectorAll('[data-framework-host]')];
-   return document.querySelector('main').dataset.framework===framework&&document.querySelector('main').dataset.development===String(development)&&roots.every(root=>Number(root.dataset.mounts)===expectedMounts&&Number(root.dataset.disposals||0)===expectedMounts-1&&root.canvasExample.canvas.getState().objects===1&&root.querySelectorAll('[data-canvas-instance-status]').length===1&&getComputedStyle(root.canvasExample.host).position==='relative')&&document.querySelectorAll('.canvas-embed-toolbar').length===2&&!window.DMFCanvasTools;
-  },{expectedMounts,development,framework:target.framework}),'Wrong mount/cleanup counts or package styles');
+   const state={framework:document.querySelector('main').dataset.framework,development:document.querySelector('main').dataset.development,roots:roots.map(root=>({mounts:Number(root.dataset.mounts),disposals:Number(root.dataset.disposals||0),objects:root.canvasExample.canvas.getState().objects,statuses:root.querySelectorAll('[data-canvas-instance-status]').length,position:getComputedStyle(root.canvasExample.host).position})),toolbars:document.querySelectorAll('.canvas-embed-toolbar').length,global:!!window.DMFCanvasTools};
+   return{...state,ok:state.framework===framework&&state.development===String(development)&&state.roots.every(root=>root.mounts===expectedMounts&&root.disposals===expectedMounts-1&&root.objects===1&&root.statuses===1&&root.position==='relative')&&state.toolbars===2&&!state.global};
+  },{expectedMounts,development,framework:target.framework});console.log(label+' mount state',mountState);assert(mountState.ok,'Wrong mount/cleanup counts or package styles');
  });
  await check(label+' parent updates preserve existing engines and edits',async()=>{
   await page.focus(consumer('A')+' [data-original]');await page.keyboard.press('F2');await page.keyboard.press('ControlOrMeta+a');await page.keyboard.type('Framework-owned lifecycle');await page.keyboard.press('Escape');

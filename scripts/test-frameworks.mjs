@@ -6,7 +6,7 @@ import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const npm=process.platform==='win32'?'npm.cmd':'npm';
-const run=(args,cwd)=>execFileSync(npm,args,{cwd,encoding:'utf8',maxBuffer:8*1024*1024,stdio:['ignore','pipe','pipe']});
+const run=(args,cwd,env)=>execFileSync(npm,args,{cwd,env:{...process.env,...env},encoding:'utf8',maxBuffer:8*1024*1024,stdio:['ignore','pipe','pipe']});
 export const frameworks=Object.freeze(['react','vue']);
 export async function prepareFramework(framework,{configure}={}){
  if(!frameworks.includes(framework))throw new TypeError('Choose react or vue.');
@@ -29,7 +29,7 @@ export async function prepareFramework(framework,{configure}={}){
   run(['ci','--ignore-scripts','--no-audit','--no-fund'],directory);
   const installed=await realpath(join(directory,'node_modules/dmf-canvas'));
   assert.equal(installed,await realpath(join(directory,'node_modules'))+'/dmf-canvas','No sibling/source symlinks');
-  process.stdout.write(run(['run','build'],directory));
+  process.stdout.write(run(['run','build'],directory,{NODE_ENV:'production'}));
   const html=await readFile(join(directory,'dist/index.html'),'utf8');assert(html.includes('id="app"'));
   const assets=await readdir(join(directory,'dist/assets'));
   assert(assets.some(name=>name.endsWith('.css'))&&assets.some(name=>name.endsWith('.js')));

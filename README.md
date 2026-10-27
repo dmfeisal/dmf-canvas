@@ -2,7 +2,7 @@
 
 An embeddable, framework-free DOM Canvas. This repository is the standalone extraction preview from feisal.id, with explicit object owners and independent instances.
 
-**Status:** private `0.1.0` development baseline. The package entrypoints work locally; compatibility, source licensing and public release policy are not settled. This is not the full portfolio Canvas engine.
+**Status:** private `0.2.0` release preparation. The package entrypoints work locally; compatibility, source licensing and public release policy are not settled. This is not the full portfolio Canvas engine.
 
 ## Run the examples
 
@@ -93,13 +93,13 @@ This preview has no camera, PNG export, Highlighter, Eraser, general shapes or p
 
 ## Planning and references
 
-See [release milestones and advancement references](docs/ROADMAP-AND-REFERENCES.md) for the proposed versioning policy and directional Koboyo/Mochiboard references. Current package metadata is a private `0.1.0` baseline.
+See [release milestones and advancement references](docs/ROADMAP-AND-REFERENCES.md) for the versioning policy and directional Koboyo/Mochiboard references. Current package metadata is private `0.2.0`.
 
 ## Private baseline
 
-[API contract](docs/API.md), [compatibility limits](docs/COMPATIBILITY.md), [changelog](CHANGELOG.md) and [release checklist](docs/RELEASE-CHECKLIST.md) define the 0.1.0 baseline. This does not authorize registry publication or promise 1.0 compatibility.
+[API contract](docs/API.md), [compatibility limits](docs/COMPATIBILITY.md), [changelog](CHANGELOG.md) and [release checklist](docs/RELEASE-CHECKLIST.md) define the current private contracts. This does not authorize registry publication or promise 1.0 compatibility.
 
-Unreleased work toward 0.2.0 adds a five-field Selection inspector to the configurator and generated integrations. It uses explicit owner geometry, whole-selection bounds and one-step history; see the API's unreleased section. Text formatting remains planned. The v0.1.0 tag/archive are unchanged.
+The configurator and generated integrations include a five-field geometry inspector plus Text font, size, weight, alignment, wrapping and style reset. They use explicit owner capabilities, bounded geometry and atomic history. See [inspector notes](docs/INSPECTOR.md) and [text-formatting notes](docs/TEXT-FORMATTING.md). Styled files/transfers use schema 2; schema 1 remains readable. The v0.1.0 tag/archive are unchanged.
 
 ## Product documentation
 

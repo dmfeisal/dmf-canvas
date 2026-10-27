@@ -2,6 +2,7 @@ import { createChangeTracker } from './canvas-instance-changes.js';
 import { resolveSettings } from './canvas-instance-settings.js';
 import { validateTransfer } from './canvas-instance-clipboard.js';
 import {combinedGeometry,validGeometry,planInspector} from './canvas-instance-inspector-plan.js';
+import {defaultTextStyle,resolveTextStyle} from './canvas-instance-text-style.js';
 // Internal lifecycle spike. Production object owners still use DMFCanvasTools.
 // No document/window listeners, storage, camera or owner geometry writes.
 const mounted = new WeakMap(), registrations = new WeakMap();
@@ -422,9 +423,27 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if(settings.readOnly&&!['cancel','finish-edit','contain','select-all','copy'].includes(command))return result(false,'read-only');
     const feature=['copy','paste'].includes(command)?'clipboard':['group','ungroup'].includes(command)?'group':command.startsWith('align-')||command.startsWith('distribute-')?'arrange':['bring-forward','bring-front','send-backward','send-back'].includes(command)?'layers':['undo','redo'].includes(command)?'history':command==='image-description'?'image':command==='paper-color'?'paperColor':command==='edit'?'text':['lock','delete','duplicate'].includes(command)?command:null;
     if(feature&&!settings.tools[feature])return result(false,'disabled');
+    if(command==='text-style'&&!settings.tools.text)return result(false,'disabled');
     if (command === 'edit') {const ok=startEdit(selected);return result(ok,ok?null:'unsupported');}
     if(editing||creation)return result(false,'busy');
     if (gesture) return result(false,'busy');
+    if(command==='text-style'){
+      try{resolveTextStyle(defaultTextStyle,value?.field,value?.value);}catch{return result(false,'invalid-style');}
+      const entries=[...selection];
+      if(!entries.length||entries.some(entry=>!usable(entry)||entry.locked||!entry.adapter.textStyle))return result(false,'unsupported');
+      if(value.field==='weight'&&entries.some(entry=>!entry.adapter.textStyle.read()?.weights.includes(value.value)))return result(false,'unsupported');
+      const items=entries.map(entry=>({entry,before:capture(entry)}));
+      if(new TextEncoder().encode(JSON.stringify(items.map(i=>i.before))).byteLength>65536)return result(false,'resource-limit');
+      try{
+        const plans=entries.map(entry=>entry.adapter.textStyle.prepare(value.field,value.value));
+        if(plans.some(plan=>typeof plan?.apply!=='function'||typeof plan?.finish!=='function'))return result(false,'unsupported');
+        for(const plan of plans)plan.apply();for(const plan of plans)plan.finish();
+        for(const item of items)item.after=capture(item.entry);
+        if(new TextEncoder().encode(JSON.stringify(items.map(({before,after})=>({before,after})))).byteLength>131072)throw new RangeError('Selection history exceeds 128 KiB.');
+        if(items.some(item=>JSON.stringify(item.before)!==JSON.stringify(item.after)))pushAction({items},'text-style');
+      }catch(error){for(const item of items)item.entry.adapter.restore(clone(item.before));emit();throw error;}
+      emit();return result(true);
+    }
     if(command==='inspect'){
       const entries=[...selection];
       if(!entries.length||entries.some(entry=>!usable(entry)||entry.locked||!entry.adapter.geometry))return result(false,'unsupported');
@@ -560,7 +579,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if(!entry.group)delete data.group;
       const r=entry.element.getBoundingClientRect();return {data,bounds:{left:r.left-area.left-root.clientLeft,top:r.top-area.top-root.clientTop,width:r.width,height:r.height}};
     });
-    clipboard.write(validateTransfer({format:'dmf-canvas-clipboard',version:1,objects}));
+    clipboard.write(validateTransfer({format:'dmf-canvas-clipboard',version:objects.some(item=>item.data.state.typography||item.data.layout.fontSize>200)?2:1,objects}));
     status.textContent=`${objects.length} object${objects.length===1?'':'s'} copied for this page.`;return result(true);
   }
   function pasteSelection() {
@@ -622,6 +641,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       const data={...documents.validate(clone(entry.adapter.serialize())),locked:entry.locked,layer:layers.indexOf(entry),...(groups.has(entry.group)?{group:groups.get(entry.group)}:{})};
       if(entry.created)document.objects.push(data);else document.originals.push({id:entry.id,data});
     }
+    if([...document.originals.map(item=>item.data),...document.objects].some(item=>item.state.typography||item.layout.fontSize>200))document.version=2;
     const json=JSON.stringify(document);if(new TextEncoder().encode(json).byteLength>1048576)throw new RangeError('Board file exceeds 1 MiB.');
     return JSON.parse(json);
   }
@@ -633,7 +653,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     // Validate the complete envelope before allocating or changing live owners.
     const json=JSON.stringify(document);if(!json||new TextEncoder().encode(json).byteLength>1048576)throw new RangeError('Board file exceeds 1 MiB.');
     const value=JSON.parse(json),originals=[...owners.values()].filter(entry=>!entry.created);
-    if(value?.format!=='dmf-canvas'||value.version!==1||!Array.isArray(value.originals)||!Array.isArray(value.objects)||value.originals.length!==originals.length||value.objects.length+originals.length>50)throw new TypeError('Unsupported board file.');
+    if(value?.format!=='dmf-canvas'||![1,2].includes(value.version)||!Array.isArray(value.originals)||!Array.isArray(value.objects)||value.originals.length!==originals.length||value.objects.length+originals.length>50||value.version===1&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.state?.typography||item?.layout?.fontSize>200))throw new TypeError('Unsupported board file.');
     const ids=new Set();
     const plans=value.originals.map(item=>{
       const entry=originals.find(entry=>entry.id===item.id);if(!entry||ids.has(item.id))throw new TypeError('Board originals do not match this canvas.');ids.add(item.id);
@@ -669,6 +689,12 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   emit();
   const instance = Object.freeze({
     getState: state,
+    getTextStyle(){
+      if(!alive||editing||creation||gesture||!selection.size)return null;
+      const entries=[...selection];if(entries.some(entry=>!usable(entry)||!entry.adapter.textStyle))return null;
+      const styles=entries.map(entry=>entry.adapter.textStyle.read());if(styles.some(style=>!style))return null;
+      return Object.freeze({...Object.fromEntries(['font','size','weight','align','wrap'].map(key=>[key,styles.every(style=>style[key]===styles[0][key]&&(key!=='font'||style.font!=='original'||style.family===styles[0].family))?styles[0][key]:null])),weights:Object.freeze(styles[0].weights.filter(weight=>styles.every(style=>style.weights.includes(weight)))),editable:!settings.readOnly&&settings.tools.text&&entries.every(entry=>!entry.locked)});
+    },
     getInspector(){
       if(!alive||editing||creation||gesture||!selection.size)return null;
       const entries=[...selection];if(entries.some(entry=>!usable(entry)||!entry.adapter.geometry))return null;

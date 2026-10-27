@@ -3,8 +3,8 @@ export function validateTransfer(input) {
   const text=JSON.stringify(input);
   if(!text||new TextEncoder().encode(text).byteLength>131072)throw new RangeError('Object clipboard exceeds 128 KiB.');
   const value=JSON.parse(text);
-  if(value?.format!=='dmf-canvas-clipboard'||value.version!==1||!Array.isArray(value.objects)||!value.objects.length||value.objects.length>50)throw new TypeError('Invalid object clipboard.');
-  return {format:value.format,version:1,objects:value.objects.map(({data,bounds:b})=>{
+  if(value?.format!=='dmf-canvas-clipboard'||![1,2].includes(value.version)||!Array.isArray(value.objects)||!value.objects.length||value.objects.length>50||value.version===1&&value.objects.some(item=>item?.data?.state?.typography||item?.data?.layout?.fontSize>200))throw new TypeError('Invalid object clipboard.');
+  return {format:value.format,version:value.version,objects:value.objects.map(({data,bounds:b})=>{
     if(!data||!b||!['left','top','width','height'].every(key=>typeof b[key]==='number'&&Number.isFinite(b[key])&&Math.abs(b[key])<=100000)||b.width<=0||b.height<=0)throw new TypeError('Invalid clipboard geometry.');
     return {data,bounds:{left:b.left,top:b.top,width:b.width,height:b.height}};
   })};

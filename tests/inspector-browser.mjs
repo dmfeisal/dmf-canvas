@@ -8,13 +8,13 @@ await page.evaluate(()=>{window.inspectorErrors=[];window.addEventListener('erro
 await check('empty selection disables the trigger and original selection exposes five fields',async()=>{
  assert(await page.evaluate(()=>document.querySelector('[data-preview=A] button[aria-label="Selection inspector"]').disabled),'Empty inspector enabled');
  await page.click('[data-preview=A] [data-original]');await page.click('[data-preview=A] button[aria-label="Selection inspector"]');
- assert(await page.evaluate(()=>document.querySelectorAll('[data-preview=A] .canvas-embed-inspector input').length===5&&document.querySelector('[data-preview=A] .canvas-embed-inspector').matches(':popover-open')&&[...document.querySelectorAll('[data-preview=A] .canvas-embed-inspector input')].every(i=>i.getBoundingClientRect().height>=44)),'Inspector did not open with 44px fields');
+ assert(await page.evaluate(()=>document.querySelectorAll('[data-preview=A] [data-inspector-field]').length===5&&document.querySelector('[data-preview=A] .canvas-embed-inspector').matches(':popover-open')&&[...document.querySelectorAll('[data-preview=A] .canvas-embed-inspector input')].every(i=>i.getBoundingClientRect().height>=44)),'Inspector did not open with 44px fields');
 });
 await check('X and Y commit independently with exact one-action Undo and isolation',async()=>{
  const before=await page.evaluate(()=>{const a=document.querySelector('main').configurator;window.inspectorBefore=a.previews.A.canvas.saveDocument();return a.previews.B.canvas.saveDocument();});
  await page.fill(field('x'),'70');await page.press(field('x'),'Enter');await page.fill(field('y'),'90');await page.press(field('y'),'Enter');
  assert(await page.evaluate(()=>{const c=document.querySelector('main').configurator.previews.A.canvas,g=c.getInspector();return Math.abs(g.x-70)<.05&&Math.abs(g.y-90)<.05;}),'Position differs from fields');
- await page.click('[data-preview=A] .canvas-embed-inspector button');await page.click('[data-preview=A] button[aria-label=Undo]');assert(await page.evaluate(()=>Math.abs(document.querySelector('main').configurator.previews.A.canvas.getInspector().y-56)<.1),'Undo did not revert only Y');await page.click('[data-preview=A] button[aria-label=Redo]');
+ await page.click('[data-preview=A] .canvas-embed-inspector__close');await page.click('[data-preview=A] button[aria-label=Undo]');assert(await page.evaluate(()=>Math.abs(document.querySelector('main').configurator.previews.A.canvas.getInspector().y-56)<.1),'Undo did not revert only Y');await page.click('[data-preview=A] button[aria-label=Redo]');
  assert(await page.evaluate(value=>JSON.stringify(document.querySelector('main').configurator.previews.B.canvas.saveDocument())===JSON.stringify(value),before),'Other instance changed');
 });
 await check('width height and absolute rotation preserve text layout and proportional shape',async()=>{
@@ -38,8 +38,8 @@ await check('native number-field arrows and Undo do not transform canvas objects
 });
 await check('read-only and locked selections remain measurable but cannot change',async()=>{
  await page.click('[data-preview=B] [data-original]');await page.click('[data-preview=B] button[aria-label="Selection inspector"]');
- assert(await page.evaluate(()=>[...document.querySelectorAll('[data-preview=B] .canvas-embed-inspector input')].every(i=>i.disabled)&&!document.querySelector('main').configurator.previews.B.canvas.execute('inspect',{field:'x',value:99}).ok),'Read-only bypass');
- await page.click('[data-preview=B] .canvas-embed-inspector button');
+ assert(await page.evaluate(()=>{const panel=document.querySelector('[data-preview=B] .canvas-embed-inspector');return panel.matches(':popover-open')&&document.activeElement===panel.querySelector('.canvas-embed-inspector__close')&&[...panel.querySelectorAll('input')].every(i=>i.disabled)&&!document.querySelector('main').configurator.previews.B.canvas.execute('inspect',{field:'x',value:99}).ok;}),'Read-only inspector lost focus, closed, or bypassed policy');
+ await page.click('[data-preview=B] .canvas-embed-inspector__close');
  assert(await page.evaluate(()=>{const c=document.querySelector('main').configurator.previews.A.canvas;c.execute('lock',true);const before=JSON.stringify(c.saveDocument()),r=c.execute('inspect',{field:'rotation',value:45});const ok=!r.ok&&!c.getInspector().editable&&JSON.stringify(c.saveDocument())===before;c.execute('lock',false);return ok;}),'Lock bypass');
 });
 await page.evaluate(async()=>{
@@ -83,12 +83,13 @@ await check('mobile RTL dark popover is contained with 44px inputs and explicit 
  await page.evaluate(()=>{window.inspectorFixture.canvas.destroy();window.inspectorFixture.container.remove();document.documentElement.dir='rtl';const a=document.querySelector('main').configurator.previews.A;a.update({...a.getConfig(),theme:'dark'});a.canvas.select(document.querySelector('[data-preview=A] [data-original]'));});
  await page.cdp('Emulation.setDeviceMetricsOverride',{width:320,height:700,deviceScaleFactor:1,mobile:false});await page.click('[data-preview=A] button[aria-label="Selection inspector"]');
  assert(await page.evaluate(()=>{const p=document.querySelector('[data-preview=A] .canvas-embed-inspector'),r=p.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&[...p.querySelectorAll('input')].every(i=>i.getBoundingClientRect().height>=44&&getComputedStyle(i).color===getComputedStyle(p).color)&&document.documentElement.scrollWidth<=innerWidth&&getComputedStyle(p).backgroundColor==='rgb(36, 36, 39)';}),'Mobile theme or containment failed');
- await page.screenshot({path:'/tmp/canvas-inspector-mobile.png'});await page.click('[data-preview=A] .canvas-embed-inspector button');
+ await page.screenshot({path:'/tmp/canvas-inspector-mobile.png'});await page.click('[data-preview=A] .canvas-embed-inspector__close');
  assert(await page.evaluate(()=>!document.querySelector('[data-preview=A] .canvas-embed-inspector').matches(':popover-open')),'Close failed');
  await page.cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await page.evaluate(()=>document.documentElement.dir='ltr');
 });
 await check('viewport changes dismiss unfinished fields without mutation',async()=>{
  await page.click('[data-preview=A] button[aria-label="Selection inspector"]');const revision=await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.getState().revision);await page.fill(field('x'),'123');await page.cdp('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
+ await page.waitForFunction(()=>!document.querySelector('[data-preview=A] .canvas-embed-inspector').matches(':popover-open'));
  assert(await page.evaluate(revision=>!document.querySelector('[data-preview=A] .canvas-embed-inspector').matches(':popover-open')&&document.querySelector('main').configurator.previews.A.canvas.getState().revision===revision,revision),'Viewport dismissal committed');
 });
 await check('full-screen inspector stays in its host and Escape returns focus',async()=>{

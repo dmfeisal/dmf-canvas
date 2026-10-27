@@ -1,12 +1,16 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 (prepared 24 October 2026, private)
 
 - Add owner-backed Selection inspector geometry and atomic mixed-selection transforms with Undo/Redo.
 - Add optional `createCanvasInspector` through `dmf-canvas/toolbar`, included in configurator previews and generated integrations.
 - Preserve native field editing and defer tooltip opening during native popover focus handoffs.
+- Keep read-only inspectors open with focus on the enabled Close button when geometry fields are disabled.
+- Add owner-backed Text font, 8-320px size, weight, physical alignment, Auto/Fixed wrapping and Reset text styles. Mixed selections share atomic history and preserve local top-left anchors within bounds.
+- Use Original and system Sans-serif/Serif/Monospace choices without new font resources. Images, Sticky Notes, Drawings and unsupported custom owners are excluded from text formatting.
+- Preserve formatting through Duplicate, Copy/Paste, Save/Open and optional drafts using validated style data.
 
-These changes target the 0.2.0 milestone. Package metadata and the immutable v0.1.0 baseline remain unchanged; text formatting is still planned.
+Migration: styled boards and transfers use schema version 2; ordinary records within the old limits continue to use version 1. Both versions remain readable. Version 1 cannot carry typography or font sizes above 200px. A 0.1.0 reader rejects version 2 rather than silently losing formatting. Draft envelopes/keys remain version 1 and carry the explicit board version. Pin consumers to the matching archive. The immutable v0.1.0 baseline is unchanged; this private release preparation does not publish to a registry.
 
 ## 0.1.0 — 23 October 2026
 

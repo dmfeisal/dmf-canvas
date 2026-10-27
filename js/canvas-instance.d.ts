@@ -33,13 +33,14 @@ export interface CanvasOwner<T extends JsonValue = JsonValue> {
   description?: {read():string;set(value:string):boolean};
   imageSize?:Readonly<{width:number;height:number}>;
   geometry?:{read():CanvasGeometry|null;prepare(target:CanvasGeometry):(()=>void)|null};
+  textStyle?:{read():(Omit<CanvasTextStyleView,'editable'>&{family?:string})|null;prepare(field:CanvasTextStyleField,value?:string|number):{apply():void;finish():void}|null};
   serialize?(): CanvasObjectDocument;
   dispose(): void;
 }
 export type CanvasTool = 'text' | 'sticky' | 'image' | 'pencil' | 'clipboard' | 'group' | 'arrange' | 'layers' | 'lock' | 'delete' | 'duplicate' | 'files' | 'history' | 'paperColor';
 export interface CanvasEmbedSettings { readonly readOnly:boolean; readonly tools:Readonly<Record<CanvasTool,boolean>>; }
 export interface CanvasSettingsPatch { readOnly?:boolean; tools?:Partial<Record<CanvasTool,boolean>>; }
-export type CanvasChangeSource = 'text' | 'move' | 'transform' | 'create' | 'duplicate' | 'delete' | 'paste' | 'lock' | 'paper-color' | 'image-description' | 'group' | 'ungroup' | 'bring-forward' | 'bring-front' | 'send-backward' | 'send-back' | 'align-left' | 'align-center' | 'align-right' | 'align-top' | 'align-middle' | 'align-bottom' | 'distribute-horizontal' | 'distribute-vertical' | 'undo' | 'redo' | 'open';
+export type CanvasChangeSource = 'text' | 'text-style' | 'move' | 'transform' | 'create' | 'duplicate' | 'delete' | 'paste' | 'lock' | 'paper-color' | 'image-description' | 'group' | 'ungroup' | 'bring-forward' | 'bring-front' | 'send-backward' | 'send-back' | 'align-left' | 'align-center' | 'align-right' | 'align-top' | 'align-middle' | 'align-bottom' | 'distribute-horizontal' | 'distribute-vertical' | 'undo' | 'redo' | 'open';
 export interface CanvasChange { readonly revision:number; readonly dirty:boolean; readonly source:CanvasChangeSource; }
 export interface CanvasState {
   readonly imageDescription:string|null;
@@ -79,9 +80,11 @@ export interface CanvasState {
 }
 export interface CommandResult {
   readonly ok: boolean;
-  readonly reason: 'stale-revision' | 'read-only' | 'disabled' | 'destroyed' | 'busy' | 'invalid-delta' | 'invalid-color' | 'invalid-description' | 'unsupported' | 'empty-history' | 'resource-limit' | 'bounds' | 'overlap' | null;
+  readonly reason: 'stale-revision' | 'read-only' | 'disabled' | 'destroyed' | 'busy' | 'invalid-delta' | 'invalid-color' | 'invalid-description' | 'invalid-style' | 'unsupported' | 'empty-history' | 'resource-limit' | 'bounds' | 'overlap' | null;
 }
 export interface CanvasInstance {
+  getTextStyle():Readonly<CanvasTextStyleView>|null;
+  execute(command:'text-style',value:CanvasTextStyleCommand):CommandResult;
   getInspector():Readonly<{x:number;y:number;width:number;height:number;rotation:number;relativeRotation:boolean;editable:boolean}>|null;
   execute(command:'inspect',value:{field:'x'|'y'|'width'|'height'|'rotation';value:number}):CommandResult;
   /** One provisional creation at a time; cancellation owns preview cleanup. */
@@ -111,13 +114,18 @@ export interface CanvasGeometry {
   centerX:number;centerY:number;localWidth:number;localHeight:number;scale:number;angle:number;minScale:number;maxScale:number;
   bounds:{left:number;right:number;top:number;bottom:number};
 }
+export type CanvasTextFont='original'|'sans'|'serif'|'mono';
+export type CanvasTextStyleField='font'|'size'|'weight'|'align'|'wrap'|'reset';
+export type CanvasTextStyleCommand={field:'font';value:CanvasTextFont}|{field:'size';value:number}|{field:'weight';value:400|500|600|700}|{field:'align';value:'original'|'left'|'center'|'right'}|{field:'wrap';value:'auto'|'fixed'}|{field:'reset'};
+export interface CanvasTextStyleSnapshot {font:CanvasTextFont;size:number|null;weight:400|500|600|700|null;align:'original'|'left'|'center'|'right';wrap:'original'|'auto'|'fixed';}
+export interface CanvasTextStyleView {font:CanvasTextFont|null;size:number|null;weight:number|null;align:CanvasTextStyleSnapshot['align']|null;wrap:'auto'|'fixed'|null;weights:readonly number[];editable:boolean;}
 export interface CanvasObjectDocument {
   type: 'text' | 'sticky' | 'drawing' | 'image';
   locked?:boolean;
   layer?:number;
   group?:number;
   layout: {left:number;top:number;width:number;height:number;fontSize:number;lineHeight?:number|'normal';fontWeight?:number};
-  state: {x:number;y:number;scale:number;angle:number;width:string;content:string|null;alt?:string;paperColor?:string};
+  state: {x:number;y:number;scale:number;angle:number;width:string;content:string|null;alt?:string;paperColor?:string;typography?:CanvasTextStyleSnapshot};
   text?:string;
   image?:{src:string;alt:string;width:number;height:number};
   points?:{x:number;y:number}[];
@@ -125,7 +133,7 @@ export interface CanvasObjectDocument {
   ink?:string;
 }
 export interface CanvasDocument {
-  format:'dmf-canvas';version:1;
+  format:'dmf-canvas';version:1|2;
   originals:{id:number;data:CanvasObjectDocument}[];
   objects:CanvasObjectDocument[];
 }
@@ -136,7 +144,7 @@ export interface CanvasDocumentAdapter {
 export function createCanvas(host: HTMLElement, options?:CanvasSettingsPatch & {documents?:CanvasDocumentAdapter;clipboard?:CanvasObjectClipboard}): CanvasInstance;
 
 export interface CanvasObjectTransfer {
-  format:'dmf-canvas-clipboard';version:1;
+  format:'dmf-canvas-clipboard';version:1|2;
   objects:{data:CanvasObjectDocument;bounds:{left:number;top:number;width:number;height:number}}[];
 }
 export interface CanvasObjectClipboard {

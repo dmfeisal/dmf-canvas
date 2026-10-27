@@ -3,6 +3,7 @@ import { validateImage } from './canvas-instance-image-data.js';
 import { createTextOwner } from './canvas-instance-text.js';
 import { createStickyNote } from './canvas-instance-sticky.js';
 import { createDrawing } from './canvas-instance-drawing.js';
+import {validateTextStyle,textFonts} from './canvas-instance-text-style.js';
 
 const finite=(value,min,max)=>typeof value==='number'&&Number.isFinite(value)&&value>=min&&value<=max;
 // Whitelist data only. Files never contain HTML, SVG markup, remote URLs or CSS rules. Images use bounded raster data.
@@ -16,11 +17,12 @@ export function validateObject(input) {
   if(input.group!==undefined&&(!Number.isInteger(input.group)||input.group<1||input.group>50))throw new TypeError('Invalid object group.');
   const group=input.group;
   const {type,layout:l,state:s}=input;
-  if(!l||!s||!finite(l.left,-100000,100000)||!finite(l.top,-100000,100000)||!finite(l.width,1,100000)||!finite(l.height,1,100000)||!finite(l.fontSize,1,200)||!finite(s.x,-100000,100000)||!finite(s.y,-100000,100000)||!finite(s.scale,.000001,100)||!finite(s.angle,-100000,100000)||typeof s.width!=='string'||!['','fit-content'].includes(s.width)&&!/^\d{1,6}(?:\.\d{1,6})?px$/.test(s.width))throw new TypeError('Invalid object geometry.');
+  if(!l||!s||!finite(l.left,-100000,100000)||!finite(l.top,-100000,100000)||!finite(l.width,1,100000)||!finite(l.height,1,100000)||!finite(l.fontSize,1,320)||!finite(s.x,-100000,100000)||!finite(s.y,-100000,100000)||!finite(s.scale,.000001,100)||!finite(s.angle,-100000,100000)||typeof s.width!=='string'||!['','fit-content'].includes(s.width)&&!/^\d{1,6}(?:\.\d{1,6})?px$/.test(s.width))throw new TypeError('Invalid object geometry.');
   const lineHeight=l.lineHeight??'normal',fontWeight=l.fontWeight??400;
   if(lineHeight!=='normal'&&!finite(lineHeight,1,1000)||!finite(fontWeight,1,1000))throw new TypeError('Invalid text typography.');
   const layout={left:l.left,top:l.top,width:l.width,height:l.height,fontSize:l.fontSize,lineHeight,fontWeight};
   const state={x:s.x,y:s.y,scale:s.scale,angle:s.angle,width:s.width,content:null};
+  if(s.typography!==undefined){if(type!=='text')throw new TypeError('Only Text supports formatting.');state.typography={...validateTextStyle(s.typography)};}
   if(type==='image'){
     const image=validateImage(input.image);if(s.alt!==undefined&&s.alt!==image.alt)throw new TypeError('Image description mismatch.');state.alt=image.alt;
     return {type,layout,state,locked,...(layer===undefined?{}:{layer}),...(group===undefined?{}:{group}),image};
@@ -47,6 +49,7 @@ function createObject(host,input) {
       const element=host.ownerDocument.createElement('p');element.className='canvas-instance-local-text';element.textContent=data.text;element.setAttribute('aria-label','Text');host.append(element);
       if(host.getAttribute('aria-describedby'))element.setAttribute('aria-describedby',host.getAttribute('aria-describedby'));
       Object.assign(element.style,{position:'absolute',left:data.layout.left+'px',top:data.layout.top+'px',width:data.layout.width+'px',fontSize:data.layout.fontSize+'px',lineHeight:data.layout.lineHeight==='normal'?'normal':data.layout.lineHeight+'px',fontWeight:String(data.layout.fontWeight),margin:'0'});
+      const typography=data.state.typography;if(typography){if(typography.font!=='original')element.style.fontFamily=textFonts[typography.font];if(typography.align!=='original')element.style.textAlign=typography.align;if(['','fit-content'].includes(data.state.width))element.style.width='fit-content';}
       let base;try{base=createTextOwner(element,host);}catch(error){element.remove();throw error;}
       item={element,owner:{...base,setPresent(present){if(present){host.append(element);base.restore(base.capture());}else element.remove();},dispose(){base.dispose();element.remove();}}};
     }
@@ -55,7 +58,7 @@ function createObject(host,input) {
     if(data.type!=='drawing')Object.assign(element.style,{lineHeight:data.layout.lineHeight==='normal'?'normal':data.layout.lineHeight+'px',fontWeight:String(data.layout.fontWeight)});
     if(data.type!=='text')Object.assign(element.style,{width:data.layout.width+'px',height:data.layout.height+'px'});
     // Factories start with pixel widths; equivalent auto widths are materialized.
-    owner.restore({...data.state,width:['','fit-content'].includes(data.state.width)?data.layout.width+'px':data.state.width});
+    owner.restore({...data.state,width:['','fit-content'].includes(data.state.width)?data.type==='text'&&data.state.typography?'fit-content':data.layout.width+'px':data.state.width});
     return item;
   }catch(error){item?.owner.dispose();throw error;}
 }

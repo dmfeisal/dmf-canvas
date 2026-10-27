@@ -4,12 +4,12 @@ Recorded 23 October 2026. The full 20-item product backlog is maintained in the 
 
 ## Proposed version milestones — 23 October 2026
 
-Record this as the working release proposal, not completed releases or permission to publish. The proposal began at private `0.0.0`; the private `0.1.0` baseline now documents the supported API and release checks. Later milestones remain proposed.
+Record this as the working release plan, not permission to publish. The proposal began at private `0.0.0`; private `0.1.0` established the first supported API and release checks, and private `0.2.0` is prepared locally with the inspector and text formatting. Later milestones remain proposed.
 
 | Target | Scope |
 | --- | --- |
-| `0.1.0` | Current baseline, documented API boundaries and reproducible release archive |
-| `0.2.0` | Selection inspector and text formatting |
+| `0.1.0` | Immutable initial baseline with documented API boundaries and reproducible release archive |
+| `0.2.0` | Current private local preparation: Selection inspector and text formatting |
 | `0.3.0` | Shapes, Highlighter and stroke Eraser |
 | `0.4.0` | Touch controls, optional camera and snapping |
 | `0.5.0` | PNG export and expanded release validation |
@@ -18,7 +18,7 @@ Record this as the working release proposal, not completed releases or permissio
 
 Use one package version for runtime modules, CSS and declarations. Before 1.0, use patch releases for compatible fixes and minor releases for features or breaking changes; identify breaking changes explicitly with migration notes. From 1.0, follow [Semantic Versioning](https://semver.org/): patch fixes, minor compatible additions, major incompatible changes. Never replace released contents. Match each release to an immutable Git tag, changelog and tested archive; pin portfolio consumption to exact versions and archive integrity. Keep board-file and clipboard schema versions separate from package versions.
 
-Keep `private: true` until distribution and licensing decisions are settled. If npm publication is later authorized, use `next` for prereleases and `latest` for stable releases ([npm distribution tags](https://docs.npmjs.com/cli/v11/commands/npm-dist-tag/)). Milestones may change; 1.0 requires a reliable declared scope, not completion of every backlog feature. Recommended next sequence: establish the 0.1.0 baseline, then implement the inspector toward 0.2.0.
+Keep `private: true` until distribution and licensing decisions are settled. If npm publication is later authorized, use `next` for prereleases and `latest` for stable releases ([npm distribution tags](https://docs.npmjs.com/cli/v11/commands/npm-dist-tag/)). Milestones may change; 1.0 requires a reliable declared scope, not completion of every backlog feature. No later milestone begins merely because the private 0.2.0 archive is prepared.
 
 ## Advancement references
 

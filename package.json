@@ -1,9 +1,9 @@
 {
   "name": "dmf-canvas",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Embeddable DOM Canvas \u2014 internal extraction preview",
+  "description": "Embeddable DOM Canvas — internal extraction preview",
   "repository": {
     "type": "git",
     "url": "https://github.com/dmfeisal/dmf-canvas.git"
@@ -69,7 +69,9 @@
     "CHANGELOG.md",
     "docs/API.md",
     "docs/COMPATIBILITY.md",
-    "docs/RELEASE-CHECKLIST.md"
+    "docs/RELEASE-CHECKLIST.md",
+    "docs/INSPECTOR.md",
+    "docs/TEXT-FORMATTING.md"
   ],
   "scripts": {
     "start": "node server.mjs",
@@ -84,7 +86,8 @@
     "test:frameworks:browser": "node scripts/test-frameworks-browser.mjs",
     "test:configurator": "node scripts/test-configurator.mjs",
     "test:configurator:browser": "node scripts/test-configurator-browser.mjs",
-    "test:inspector:browser": "node scripts/test-inspector-browser.mjs"
+    "test:inspector:browser": "node scripts/test-inspector-browser.mjs",
+    "test:text:browser": "node scripts/test-text-browser.mjs"
   },
   "devDependencies": {
     "typescript": "6.0.3"

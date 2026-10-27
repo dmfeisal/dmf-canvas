@@ -14,6 +14,8 @@ Current private implementation contracts remain in the existing root guides. Pro
 
 ## Read first
 
+Latest verification: [private 0.2.0 change review](engineering/PREEXISTING-CHANGE-REVIEW.md).
+
 [Repository assessment](engineering/REPOSITORY-ASSESSMENT.md) → [feature evidence](product/FEATURE-INVENTORY.md) → [roadmap and next sprint](product/PRODUCT-ROADMAP.md). [Vision](product/PRODUCT-VISION.md), [MVP](prd/MVP-PRD.md) and [architecture](architecture/ARCHITECTURE.md) define the proposed direction. [Research provenance](research/PROVENANCE.md) explains the imported benchmark's limits.
 
 ## Existing document reconciliation

@@ -13,7 +13,16 @@ export function createCanvasInspector(container,{canvas,trigger}){
   const label=doc.createElement('label'),text=doc.createElement('span'),input=doc.createElement('input');text.textContent=title;input.type='number';input.step='any';input.required=true;input.dataset.inspectorField=key;input.setAttribute('aria-describedby',help.id+' '+id+'-message');if(key==='width'||key==='height')input.min='0.01';label.append(text,input);grid.append(label);fields.set(key,input);
  }
  const message=doc.createElement('output');message.id=id+'-message';message.setAttribute('aria-live','polite');
+ const textSection=doc.createElement('fieldset');textSection.className='canvas-embed-inspector__text';const legend=doc.createElement('legend');legend.textContent='Text';textSection.append(legend);const textGrid=doc.createElement('div');textGrid.className='canvas-embed-inspector__fields';const textFields=new Map();
+ for(const [key,title,options]of [['font','Font',[['original','Original'],['sans','Sans-serif'],['serif','Serif'],['mono','Monospace']]],['size','Text size (px)',null],['weight','Weight',[[400,'Regular (400)'],[500,'Medium (500)'],[600,'Semi bold (600)'],[700,'Bold (700)']]],['align','Alignment',[['original','Original'],['left','Left'],['center','Center'],['right','Right']]],['wrap','Wrapping',[['auto','Auto width'],['fixed','Fixed width']]]]){
+  const label=doc.createElement('label'),span=doc.createElement('span'),input=doc.createElement(options?'select':'input');span.textContent=title;input.dataset.inspectorText=key;input.setAttribute('aria-describedby',message.id);
+  if(options){const mixed=doc.createElement('option');mixed.value='';mixed.textContent='Mixed';mixed.disabled=true;input.append(mixed);for(const [value,text]of options){const option=doc.createElement('option');option.value=String(value);option.textContent=text;input.append(option);}}
+  else{input.type='number';input.min='8';input.max='320';input.step='any';input.required=true;input.placeholder='Mixed';}
+  label.append(span,input);textGrid.append(label);textFields.set(key,input);
+ }
+ const reset=doc.createElement('button');reset.type='button';reset.textContent='Reset text styles';reset.dataset.inspectorTextReset='';textSection.append(textGrid,reset);
  const closeButton=doc.createElement('button');closeButton.type='button';closeButton.textContent='Close inspector';panel.append(grid,message,closeButton);container.append(panel);
+ panel.insertBefore(textSection,message);closeButton.className='canvas-embed-inspector__close';
  let alive=true,committing=false,selectionKey='',values=null;const dirty=new Set();
  const isOpen=()=>panel.matches(':popover-open');
  function close(focus=false){if(!alive)return;if(isOpen())panel.hidePopover();trigger.setAttribute('aria-expanded','false');if(focus&&!trigger.disabled)trigger.focus({preventScroll:true});}
@@ -24,14 +33,17 @@ export function createCanvasInspector(container,{canvas,trigger}){
   if(!values){close();return;}if(!isOpen()&&!force)return;
   for(const [field,input]of fields){input.disabled=!values.editable;if(force||doc.activeElement!==input){input.value=String(Math.round(values[field]*100)/100);input.removeAttribute('aria-invalid');dirty.delete(input);}}
   fields.get('rotation').parentElement.firstChild.textContent=values.relativeRotation?'Turn selection (degrees)':'Rotation (degrees)';
+  const text=canvas.getTextStyle();textSection.hidden=!text;
+  for(const [key,input]of textFields){input.disabled=!text?.editable;if(force||doc.activeElement!==input){const value=text?.[key]??'';if(key==='weight'){for(const option of [...input.options])if(option.dataset.originalWeight)option.remove();if(value!==''&&![...input.options].some(option=>option.value===String(value))){const option=doc.createElement('option');option.value=String(value);option.textContent=value+' (original)';option.disabled=true;option.dataset.originalWeight='';input.append(option);}for(const option of input.options)if(option.value&&!option.dataset.originalWeight)option.disabled=!text?.weights.includes(Number(option.value));}input.value=String(value);input.removeAttribute('aria-invalid');dirty.delete(input);}}
+  reset.disabled=!text?.editable;
  }
  function commit(input){
-  if(committing||!isOpen()||input.disabled||!dirty.has(input))return;const field=input.dataset.inspectorField,value=input.valueAsNumber;
-  if(!input.value.trim()||!Number.isFinite(value)||!input.checkValidity()){
-   input.setAttribute('aria-invalid','true');message.textContent='Enter a valid number. Size must be greater than zero.';return;
+  if(committing||!isOpen()||input.disabled||!dirty.has(input))return;const text=!!input.dataset.inspectorText,field=text?input.dataset.inspectorText:input.dataset.inspectorField,value=text&&!['size','weight'].includes(field)?input.value:input.type==='number'?input.valueAsNumber:Number(input.value);
+  if(!input.value.trim()||typeof value==='number'&&!Number.isFinite(value)||!input.checkValidity()){
+   input.setAttribute('aria-invalid','true');message.textContent=text?'Choose a value. Text size must be from 8 to 320 px.':'Enter a valid number. Size must be greater than zero.';return;
   }
   committing=true;
-  try{const result=canvas.execute('inspect',{field,value});refresh(true);message.textContent=result.ok?'Applied within canvas and owner limits.':'The complete selection cannot apply this value.';}
+  try{const result=canvas.execute(text?'text-style':'inspect',{field,value});refresh(true);message.textContent=result.ok?'Applied within canvas and owner limits.':'The complete selection cannot apply this value.';}
   catch{refresh(true);message.textContent='Could not change this selection. No changes were kept.';}
   finally{committing=false;}
  }
@@ -43,21 +55,29 @@ export function createCanvasInspector(container,{canvas,trigger}){
  function toggle(){
   if(!alive||trigger.disabled)return;if(isOpen()){close(true);return;}
   if(doc.querySelector('dialog:modal'))return;
-  refresh(true);message.textContent='';panel.showPopover();trigger.setAttribute('aria-expanded','true');position();fields.get('x').focus({preventScroll:true});
+  refresh(true);message.textContent='';panel.showPopover();trigger.setAttribute('aria-expanded','true');position();(fields.get('x').disabled?closeButton:fields.get('x')).focus({preventScroll:true});
  }
- const onInput=event=>{if(fields.has(event.target.dataset?.inspectorField))dirty.add(event.target);};
- const onBlur=event=>{if(fields.has(event.target.dataset?.inspectorField))commit(event.target);};
+ const isField=input=>fields.has(input.dataset?.inspectorField)||textFields.has(input.dataset?.inspectorText);
+ const onInput=event=>{if(isField(event.target))dirty.add(event.target);};
+ const onBlur=event=>{if(isField(event.target))commit(event.target);};
+ const onChange=event=>{if(textFields.has(event.target.dataset?.inspectorText)&&event.target.tagName==='SELECT'){dirty.add(event.target);commit(event.target);}};
+ const onReset=()=>{committing=true;try{const result=canvas.execute('text-style',{field:'reset'});refresh(true);message.textContent=result.ok?'Original text styles restored.':'This selection cannot reset text styles.';}catch{message.textContent='Could not reset this selection.';}finally{committing=false;}};
  const onKey=event=>{
   if(event.key==='Escape'){event.preventDefault();event.stopPropagation();refresh(true);close(true);}
-  else if(event.key==='Enter'&&fields.has(event.target.dataset?.inspectorField)&&!event.isComposing){event.preventDefault();commit(event.target);}
+  else if(event.key==='Enter'&&isField(event.target)&&!event.isComposing){event.preventDefault();commit(event.target);}
  };
  const onToggle=()=>{if(!isOpen()){trigger.setAttribute('aria-expanded','false');refresh(true);}};
- const dismiss=event=>{if(event?.type==='scroll'&&panel.contains(event.target))return;close();};
+ const dismiss=event=>{
+  if(event?.type==='scroll'&&panel.contains(event.target))return;
+  const active=doc.activeElement;
+  if(panel.contains(active)&&!dirty.has(active)){position();return;}
+  close();
+ };
  const onClose=()=>close(true);
- panel.addEventListener('input',onInput);panel.addEventListener('focusout',onBlur);panel.addEventListener('keydown',onKey);panel.addEventListener('toggle',onToggle);closeButton.addEventListener('click',onClose);
+ panel.addEventListener('input',onInput);panel.addEventListener('focusout',onBlur);panel.addEventListener('change',onChange);reset.addEventListener('click',onReset);panel.addEventListener('keydown',onKey);panel.addEventListener('toggle',onToggle);closeButton.addEventListener('click',onClose);
  const listeners=[[view,'resize',dismiss],[view,'pagehide',dismiss],[doc,'fullscreenchange',dismiss],[doc,'scroll',dismiss,true]];
  if(view.visualViewport)listeners.push([view.visualViewport,'resize',dismiss],[view.visualViewport,'scroll',dismiss]);
  for(const [target,type,fn,capture]of listeners)target.addEventListener(type,fn,capture);
  const off=canvas.subscribe(()=>{if(!committing)refresh();});refresh();
- return Object.freeze({toggle,close:()=>close(true),dispose(){if(!alive)return;close();alive=false;off();for(const [target,type,fn,capture]of listeners)target.removeEventListener(type,fn,capture);panel.removeEventListener('input',onInput);panel.removeEventListener('focusout',onBlur);panel.removeEventListener('keydown',onKey);panel.removeEventListener('toggle',onToggle);closeButton.removeEventListener('click',onClose);panel.remove();for(const [name,value]of original)if(value===null)trigger.removeAttribute(name);else trigger.setAttribute(name,value);trigger.disabled=disabled;mounted.delete(trigger);fields.clear();dirty.clear();values=null;}});
+ return Object.freeze({toggle,close:()=>close(true),dispose(){if(!alive)return;close();alive=false;off();for(const [target,type,fn,capture]of listeners)target.removeEventListener(type,fn,capture);panel.removeEventListener('input',onInput);panel.removeEventListener('focusout',onBlur);panel.removeEventListener('change',onChange);reset.removeEventListener('click',onReset);panel.removeEventListener('keydown',onKey);panel.removeEventListener('toggle',onToggle);closeButton.removeEventListener('click',onClose);panel.remove();for(const [name,value]of original)if(value===null)trigger.removeAttribute(name);else trigger.setAttribute(name,value);trigger.disabled=disabled;mounted.delete(trigger);fields.clear();textFields.clear();dirty.clear();values=null;}});
 }
