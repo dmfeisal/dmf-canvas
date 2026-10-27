@@ -35,7 +35,7 @@ Latest verification: [private 0.2.0 change review](engineering/PREEXISTING-CHANG
 | Root CHANGELOG.md | Retain version record; no duplicated changelog |
 | Example README files | Retain host-specific recipes; public/README.md indexes them |
 
-No files were moved or replaced. Historical portfolio-only references are recorded rather than rewritten as if local evidence existed. No docs framework is configured; portable Markdown remains sufficient. Lower-priority standalone public guides are reconciled in public/README.md instead of empty duplicate files.
+No files were moved or replaced. Historical portfolio-only references are recorded rather than rewritten as if local evidence existed. The [Astro/Starlight website](../site/README.md) generates pages from these portable Markdown sources; generated content is not a second source of truth. Lower-priority standalone public guides are reconciled in public/README.md instead of empty duplicate files.
 
 ## Documentation navigation
 

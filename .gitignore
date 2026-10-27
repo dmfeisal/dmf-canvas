@@ -2,3 +2,8 @@ node_modules/
 *.tgz
 .DS_Store
 releases/
+.netlify/
+site/.astro/
+site/.generated/
+site/src/content/docs/
+site/dist/

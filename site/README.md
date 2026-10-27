@@ -1,0 +1,55 @@
+# Canvas documentation website
+
+Static Astro/Starlight documentation for `https://canvas.feisal.id`. The library remains a separate package with no website runtime dependencies.
+
+## Local workflow
+
+```sh
+npm ci --prefix site --ignore-scripts
+npm run dev --prefix site
+npm run build --prefix site
+npm run preview --prefix site
+```
+
+Edit canonical Markdown in `docs/`, root README/changelog or the example guides. `scripts/sync-docs.mjs` generates the site's content before development/builds, normalizes metadata without changing the research source, rewrites Markdown links into routes and sends source-code links to GitHub. Never edit `src/content/docs/` directly. Generated content, search output, build files and `.netlify/` project state are ignored.
+
+`npm run build --prefix site` builds static HTML and Pagefind search, then checks every generated page and its local links/assets. It fails on missing local targets. Publication status notices distinguish proposed capabilities and unverified research. No telemetry or third-party font requests are added.
+
+Design follows the existing Canvas blue selection color and system fonts: white/neutral reading surfaces, blue links/focus, a left navigation rail, readable content and a right page outline. Starlight provides search, light/dark themes and mobile navigation. Motion is limited to native UI responses and respects reduced motion.
+
+## Netlify setup
+
+Project: `dmf-canvas`, site ID `14282c2d-4b59-4f80-804b-28b5fd0ac4f4`.
+
+- Project dashboard: https://app.netlify.com/projects/dmf-canvas
+- Intended production domain: `canvas.feisal.id`
+- Default Netlify hostname: `dmf-canvas.netlify.app`
+- Base directory: repository root (leave blank)
+- Package directory: `site`
+- Build command and publish directory: defined in root `netlify.toml`
+- Production branch when linking Git: `main`
+- Node: 24, as declared in the Netlify configuration
+
+For Git continuous deployment, import/link `dmfeisal/dmf-canvas` to this existing project rather than creating another project. The website source/config must be committed and pushed before the hosted Git build can use it. A one-off CLI deployment does not configure Git-based updates.
+
+For an already-built manual deployment with an authorized Netlify CLI:
+
+```sh
+netlify deploy --site 14282c2d-4b59-4f80-804b-28b5fd0ac4f4 --dir site/dist --no-build --prod
+```
+
+Add `canvas.feisal.id` in Netlify Domain management before configuring DNS. In Cloudflare's `feisal.id` zone, add only this record:
+
+| Type | Name | Target | Proxy |
+|---|---|---|---|
+| CNAME | canvas | dmf-canvas.netlify.app | DNS only during setup |
+
+Keep apex, www, mail and unrelated records unchanged. Wait for Netlify DNS verification and HTTPS provisioning, then verify the homepage, a deep route and search over HTTPS. A site build or Netlify hostname alone does not prove the custom domain is connected.
+
+Official setup reference: https://docs.netlify.com/manage/domains/configure-domains/configure-external-dns/
+
+## Initial deployment and validation
+
+The initial production deploy succeeded at https://dmf-canvas.netlify.app; Netlify deploy ID `6ae079c60e4b3090d3f19c86`. The custom domain `https://canvas.feisal.id` is attached and returned the correct documentation homepage over verified HTTPS after the Cloudflare DNS setup. Git continuous deployment is not connected by this initial upload. The repository owner authorized committing and pushing the website source.
+
+Validation: 55 generated documentation pages plus the 404 page build; 3,859 local page/asset references and Pagefind output pass. Browser checks confirmed search results for typography, 25 rendered competitor records, 390px layouts without document overflow and mobile-menu navigation to Text formatting. Desktop/mobile screenshots were inspected. External research claims were not reverified. Mermaid diagrams currently display as readable source blocks. Canvas runtime and root dependencies are unchanged.

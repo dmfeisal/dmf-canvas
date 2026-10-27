@@ -104,3 +104,5 @@ The configurator and generated integrations include a five-field geometry inspec
 ## Product documentation
 
 See the [documentation index](docs/README.md), [repository assessment](docs/engineering/REPOSITORY-ASSESSMENT.md) and [product roadmap](docs/product/PRODUCT-ROADMAP.md) for the interactive-canvas direction and next-sprint proposal. Future import/viewer capabilities are labeled separately from the current private editor.
+
+The documentation website is available at [canvas.feisal.id](https://canvas.feisal.id). See the [website workflow](site/README.md) for local builds, Netlify setup and DNS instructions.

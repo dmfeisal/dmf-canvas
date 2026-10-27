@@ -1,0 +1,22 @@
+import {readFile,stat} from 'node:fs/promises';
+import {resolve,dirname,join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=fileURLToPath(new URL('../',import.meta.url)),dist=join(root,'dist');
+const manifest=JSON.parse(await readFile(join(root,'.generated/docs.json'),'utf8'));
+const errors=[];
+let links=0;
+for(const slug of ['',...manifest.map(page=>page.slug)]){
+ const path=join(dist,slug,'index.html'),html=await readFile(path,'utf8');
+ if(!html.includes('<h1'))errors.push(`${slug}: missing heading`);
+ for(const match of html.matchAll(/(?:href|src)="([^"#]+)(?:#[^"]*)?"/g)){
+  const target=match[1].replaceAll('&amp;','&');
+  if(/^(?:[a-z]+:|\/\/)/i.test(target))continue;
+  const base=target.split(/[?#]/)[0];if(!base)continue;
+  const destination=base.startsWith('/')?resolve(dist,'.'+decodeURIComponent(base)):resolve(dirname(path),decodeURIComponent(base));
+  if(!destination.startsWith(dist+'/')&&destination!==dist){errors.push(`${slug}: outside publish directory ${base}`);continue;}
+  try{const s=await stat(destination);if(s.isDirectory())await stat(join(destination,'index.html'));links++;}catch{errors.push(`${slug}: missing ${base}`);}
+ }
+}
+await stat(join(dist,'pagefind/pagefind.js'));
+if(errors.length)throw new Error(errors.join('\n'));
+console.log(`PASS ${manifest.length+1} pages, ${links} local links/assets and Pagefind search output.`);
