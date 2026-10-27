@@ -26,3 +26,7 @@ Keep `private: true` until distribution and licensing decisions are settled. If 
 - [Mochiboard app](https://mochiboard.app/) and [source repository](https://github.com/jessawolfe-ux/mochiboard): additional directional references for future Canvas advancement. Evaluate mixed-content board workflows, quick capture/focus, shapes/connectors, snapping, typography and export discoverability against our existing roadmap. These are research areas, not newly approved features.
 
 The Mochiboard repository README was reviewed on 23 October 2026; the supplied app URL could not be retrieved by the web reader, so no live-app interaction audit is claimed. Its README describes a Mac app wrapping a plain HTML/CSS/JavaScript canvas with native services. Study transferable interaction ideas while preserving DMF's framework-free embeddable core, scoped owners/history, accessible input, host-owned persistence and local/public-data boundaries. AI, native services, collaboration and backend integration require separate scope decisions. Inspect applicable source/asset licenses and preserve required attribution before any reuse; adding a reference does not authorize copying code or changing dependencies.
+
+## Product roadmap reconciliation — 27 October 2026
+
+The [product roadmap](product/PRODUCT-ROADMAP.md) now records proposed outcome/dependency milestones and reconciles the version targets above. Retain this page for version policy and historical proposals; no milestone-to-version mapping or release is approved by the documentation update.
