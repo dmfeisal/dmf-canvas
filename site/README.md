@@ -53,3 +53,11 @@ Official setup reference: https://docs.netlify.com/manage/domains/configure-doma
 The initial production deploy succeeded at https://dmf-canvas.netlify.app; Netlify deploy ID `6ae079c60e4b3090d3f19c86`. The custom domain `https://canvas.feisal.id` is attached and returned the correct documentation homepage over verified HTTPS after the Cloudflare DNS setup. Git continuous deployment is not connected by this initial upload. The repository owner authorized committing and pushing the website source.
 
 Validation: 55 generated documentation pages plus the 404 page build; 3,859 local page/asset references and Pagefind output pass. Browser checks confirmed search results for typography, 25 rendered competitor records, 390px layouts without document overflow and mobile-menu navigation to Text formatting. Desktop/mobile screenshots were inspected. External research claims were not reverified. Mermaid diagrams currently display as readable source blocks. Canvas runtime and root dependencies are unchanged.
+
+## Live editor playground
+
+`/playground/` bundles the existing Canvas library and configurator host through explicit package-export aliases. It adds host-owned Text creation, theme and reset controls without changing library runtime modules. No files are uploaded and no board autosave is enabled. The public documentation links to the playground; planned importer/viewer capabilities remain excluded.
+
+After a production build, run `CANVAS_TEST_SPACE_ID=<agent-owned-space> npm run test:browser --prefix site`. The caller owns and closes the browser space. The runner serves the built site temporarily and checks Text editing/formatting/history, notes, images, Save/Open, Pencil, mobile controls, reset cancellation/confirmation, cleanup and navigation. The fixture rejects server writes.
+
+Playground validation on 27 October 2026: the static build checks 56 content/playground pages and 3,925 local page/asset references. The reusable browser suite passed all named flows and reported zero server writes. Desktop/mobile screenshots were inspected. These are Chromium checks, not certification of other engines or real touch hardware.

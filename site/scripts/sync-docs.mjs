@@ -49,6 +49,8 @@ DMF Canvas is a framework-free, embeddable editor for Text, Sticky Notes, Drawin
 
 ## Build with Canvas
 
+[Try the live Canvas](/playground/) to edit Text, add notes, draw, and save a local board in your browser.
+
 Start with the [integration guide](/getting-started/), then use the [API contract](/api/) and your host's recipe: [Astro](/examples/astro/), [React](/examples/react/), [Vue](/examples/vue/) or the [embed configurator](/examples/configurator/).
 
 The [Selection inspector](/inspector/) and [Text formatting guide](/text-formatting/) explain the current authoring controls. The [compatibility baseline](/compatibility/) records known limits.

@@ -1,8 +1,15 @@
 import {defineConfig} from 'astro/config';
 import starlight from '@astrojs/starlight';
+import {fileURLToPath} from 'node:url';
+import {readFileSync} from 'node:fs';
+const library=new URL('../',import.meta.url);
+const exports=JSON.parse(readFileSync(new URL('package.json',library),'utf8')).exports;
+const aliases=Object.entries(exports).map(([key,value])=>({find:key==='.'?'dmf-canvas':'dmf-canvas'+key.slice(1),replacement:fileURLToPath(new URL(typeof value==='string'?value:value.import,library))})).sort((a,b)=>b.find.length-a.find.length);
+
 export default defineConfig({
  site:'https://canvas.feisal.id',
  trailingSlash:'always',
+ vite:{resolve:{alias:aliases}},
  integrations:[starlight({
   title:'DMF Canvas',
   description:'Documentation for the embeddable Canvas editor and its interactive publishing roadmap.',
@@ -11,6 +18,7 @@ export default defineConfig({
   customCss:['./src/styles/docs.css'],
   sidebar:[
    {label:'Overview',link:'/'},
+   {label:'Try the live Canvas',link:'/playground/'},
    {label:'Current editor',items:[{slug:'getting-started'},{slug:'api'},{slug:'inspector'},{slug:'text-formatting'},{slug:'compatibility'},{slug:'changelog'}]},
    {label:'Integration recipes',items:[{autogenerate:{directory:'examples'}}]},
    {label:'Product direction',items:[{autogenerate:{directory:'product'}}],collapsed:true},
