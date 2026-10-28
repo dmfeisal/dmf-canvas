@@ -15,7 +15,7 @@ This is the proposed dependency order for the product vision, not a release sche
 | Stage | Current state | Outcome / exit gate | Dependency / blocker |
 |---|---|---|---|
 | M0 baseline | Partial | Reproducible unit/types/package checks plus browser regressions, accurate inventory | Browser rerun; historical mobile-navigation issue unresolved |
-| M1 portable document + Excalidraw | Planned; local serialization foundation exists | Representative supported objects import/edit/save/reload; stable IDs; deterministic loss report; old files remain readable | Schema/migration approval; shape/connector mapping; bounds policy |
+| M1 portable document + Excalidraw | Partial; experimental portable IDs/migrations and Text/freehand adapter exist locally | Representative supported objects import/edit/save/reload; stable IDs; deterministic loss report; old files remain readable | Schema/migration approval; shape/connector mapping; bounds policy |
 | M2 independent viewer/embed | Planned; editor embeds exist | Separate visitor runtime renders portable artifact on real Astro iframe host; keyboard, resize and origin tests pass | M1; asset policy; measured runtime budget |
 | M3 stories | Planned | Hotspots/reveals/scenes operate by keyboard and pointer with reduced motion | M2 plus declarative interaction contract |
 | M4 interoperability | Planned | Authorized FigJam and later JSON/SVG ingestion with explicit fidelity report | M1 adapter interface; permissions and license review |
@@ -29,7 +29,9 @@ The [older release plan](../ROADMAP-AND-REFERENCES.md) proposes 0.3 shapes/Highl
 
 Use user-outcome dependency first, verified regression/security severity second, then evidence of demand and implementation cost. No numeric opportunity score or velocity estimate is available.
 
-## Recommended next sprint: close M0, start bounded M1
+## Recommended next sprint: close M0, advance bounded M1
+
+The local portable experiment now provides a Text/freehand import → edit → independent save/reload proof with synthetic fixtures. The full M1 gate remains open: obtain permitted creator boards, evaluate real conversion losses, define native shape/connector support and review larger-board/camera constraints. No delivery date or publication is implied.
 
 1. Rerun the installed-package check and browser suites covering Text formatting, inspector, configurator, framework navigation and mobile RTL. Reproduce text-size edit followed by Astro navigation and React/Vue hide/show. Track observed result and preserve existing uncommitted work.
 2. Agree a portable identity/migration RFC with schema-1/schema-2 fixtures. Decide coordinate/camera semantics and original-object reconstruction before changing serialization.

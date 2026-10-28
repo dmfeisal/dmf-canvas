@@ -10,7 +10,7 @@ related:
 
 # Excalidraw import
 
-Accept local `.excalidraw` JSON through a dedicated adapter; no upstream account or MCP is required. Current implementation: Planned.
+Accept local `.excalidraw` JSON through a dedicated adapter; no upstream account or MCP is required. Current implementation: **Experimental local slice** for Text and freehand strokes, with a deterministic report for every source object. The import lab previews before applying. All supported mappings are marked Converted because typography, colors, stroke pressure and destination containment can change appearance. Shapes, connectors, images and groups remain unsupported.
 
 | Source content | Proposed handling | Open issue |
 |---|---|---|
@@ -21,6 +21,6 @@ Accept local `.excalidraw` JSON through a dedicated adapter; no upstream account
 | Images | Validate bounded raster data and descriptions | Embedded files map and resource limits |
 | Groups / frames / deleted elements | Explicit mapping or reported exclusion | Scene/group semantics |
 
-These are candidate mappings, not verified Excalidraw format support. Inspect the upstream format and obtain representative fixtures before implementing. Never silently convert a supported-looking object into a screenshot.
+The table remains the broader target mapping; only Text/freehand conversion is implemented in the local experiment. The adapter follows the [official JSON envelope](https://docs.excalidraw.com/docs/codebase/json-schema/). Current fixtures are hand-authored synthetic data; obtain representative creator boards before claiming real-board fidelity. Never silently convert a supported-looking object into a screenshot.
 
 Acceptance: known supported fixture imports as editable objects, edits survive save/reload, unsupported objects get stable source IDs/reasons in the report, corrupt/oversized files leave the board unchanged, and repeated import gives deterministic reports. Dependencies: [importer](../architecture/IMPORTER-SPEC.md), portable IDs, geometry ownership and limit policy. M1 should start with a small declared subset; decide the subset from real boards.

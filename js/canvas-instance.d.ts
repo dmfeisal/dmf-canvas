@@ -82,7 +82,10 @@ export interface CommandResult {
   readonly ok: boolean;
   readonly reason: 'stale-revision' | 'read-only' | 'disabled' | 'destroyed' | 'busy' | 'invalid-delta' | 'invalid-color' | 'invalid-description' | 'invalid-style' | 'unsupported' | 'empty-history' | 'resource-limit' | 'bounds' | 'overlap' | null;
 }
+export interface CanvasPortableDocument {format: "dmf-canvas-portable";version:1;nodes:{id:string;data:CanvasObjectDocument;source?:{format:"excalidraw";id:string}}[];}
 export interface CanvasInstance {
+  savePortableDocument():CanvasPortableDocument;
+  loadPortableDocument(input:unknown):CommandResult;
   getTextStyle():Readonly<CanvasTextStyleView>|null;
   execute(command:'text-style',value:CanvasTextStyleCommand):CommandResult;
   getInspector():Readonly<{x:number;y:number;width:number;height:number;rotation:number;relativeRotation:boolean;editable:boolean}>|null;

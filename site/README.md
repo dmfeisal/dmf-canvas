@@ -61,3 +61,7 @@ Validation: 55 generated documentation pages plus the 404 page build; 3,859 loca
 After a production build, run `CANVAS_TEST_SPACE_ID=<agent-owned-space> npm run test:browser --prefix site`. The caller owns and closes the browser space. The runner serves the built site temporarily and checks Text editing/formatting/history, notes, images, Save/Open, Pencil, mobile controls, reset cancellation/confirmation, cleanup and navigation. The fixture rejects server writes.
 
 Playground validation on 27 October 2026: the static build checks 56 content/playground pages and 3,925 local page/asset references. The reusable browser suite passed all named flows and reported zero server writes. Desktop/mobile screenshots were inspected. These are Chromium checks, not certification of other engines or real touch hardware.
+
+## Experimental portable import lab (local development)
+
+`/labs/import/` uses an original-free editor to preview bounded Excalidraw version-2 files, report every conversion/unsupported element, apply editable Text/freehand records, and save/open independent portable documents. Legacy original-backed playground behavior is retained. Run `CANVAS_TEST_SPACE_ID=<agent-owned-space> npm run test:import:browser --prefix site` after building. Synthetic fixtures are not evidence of real-board fidelity. This is an experimental local development slice until separately approved for commit/deployment.

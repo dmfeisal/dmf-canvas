@@ -7,7 +7,8 @@
     "dev": "npm run sync && astro dev",
     "build": "npm run sync && astro build && node scripts/check-build.mjs",
     "preview": "astro preview",
-    "test:browser": "node scripts/test-playground-browser.mjs"
+    "test:browser": "node scripts/test-playground-browser.mjs",
+    "test:import:browser": "node scripts/test-import-browser.mjs"
   },
   "dependencies": {
     "@astrojs/starlight": "0.42.7",

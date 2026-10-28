@@ -59,3 +59,10 @@ canvas.execute('text-style',{field:'reset'});
 canvas.execute('text-style',{field:'font',value:'url(unsafe)'});
 // @ts-expect-error numeric style values are not coerced
 canvas.execute('text-style',{field:'size',value:'32'});
+
+import {validatePortableDocument,migrateLegacyDocument,importExcalidraw} from 'dmf-canvas/documents';
+const portable=canvas.savePortableDocument();canvas.loadPortableDocument(validatePortableDocument(portable));
+const imported=importExcalidraw('{}');const reason:string=imported.report[0].reasons[0];void reason;
+migrateLegacyDocument(canvas.saveDocument());
+// @ts-expect-error portable version is explicit
+portable.version=2;

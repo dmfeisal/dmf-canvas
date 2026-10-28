@@ -1,3 +1,4 @@
+import {validatePortable} from './canvas-portable-data.js';
 import { createChangeTracker } from './canvas-instance-changes.js';
 import { resolveSettings } from './canvas-instance-settings.js';
 import { validateTransfer } from './canvas-instance-clipboard.js';
@@ -645,6 +646,22 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const json=JSON.stringify(document);if(new TextEncoder().encode(json).byteLength>1048576)throw new RangeError('Board file exceeds 1 MiB.');
     return JSON.parse(json);
   }
+  function savePortableDocument(){
+    const board=saveDocument();let index=0;
+    const nodes=[...owners.values()].filter(entry=>entry.present).map(entry=>({id:entry.portableId,data:entry.created?board.objects[index++]:board.originals.find(item=>item.id===entry.id).data,...(entry.portableSource?{source:entry.portableSource}:{})}));
+    return validatePortable({format:'dmf-canvas-portable',version:1,nodes},documents?.validate);
+  }
+  function loadPortableDocument(input){
+    if(!alive)return result(false,'destroyed');
+    if(settings.readOnly)return result(false,'read-only');
+    if(!settings.tools.files)return result(false,'disabled');
+    if(!state().canSave)return result(false,'busy');
+    const value=validatePortable(input,documents?.validate);
+    if([...owners.values()].some(entry=>!entry.created))return result(false,'unsupported');
+    const loaded=loadDocument({format:'dmf-canvas',version:2,originals:[],objects:value.nodes.map(node=>node.data)});
+    if(loaded.ok)for(const [index,entry]of [...owners.values()].entries()){entry.portableId=value.nodes[index].id;entry.portableSource=value.nodes[index].source??null;}
+    return loaded;
+  }
   function loadDocument(document) {
     if(!alive)return result(false,'destroyed');
     if(settings.readOnly)return result(false,'read-only');
@@ -716,6 +733,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       root.toggleAttribute('data-canvas-instance-readonly',settings.readOnly);emit();return result(true);
     },
     saveDocument,
+    savePortableDocument,
+    loadPortableDocument,
     loadDocument,
     subscribe(listener) {
       if (!alive || typeof listener !== 'function' || subscribers.size >= 50) throw new Error('Canvas subscription unavailable.');
@@ -764,6 +783,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       let entry = { id: ++serial, element, adapter, alive: true, present:true, created, locked, group:null, name: String(adapter.name || 'Text').slice(0,100),
         layer:created?Math.max(-1,...[...owners.values()].map(entry=>entry.layer))+1:Number.parseInt(view.getComputedStyle(element).zIndex)||0,
         zIndex:element.style.getPropertyValue('z-index'),zPriority:element.style.getPropertyPriority('z-index'),lockedAttribute:element.getAttribute('data-canvas-instance-locked'),tab: element.getAttribute('tabindex'), selectedAttribute: element.getAttribute('data-canvas-instance-selected'), editingAttribute: element.getAttribute('data-canvas-instance-editing') };
+      let portableNumber=entry.id;while([...owners.values()].some(owner=>owner.portableId==='node:'+portableNumber))portableNumber++;entry.portableId='node:'+portableNumber;
       if (entry.tab === null) element.setAttribute('tabindex','0');
       owners.set(element,entry);registrations.set(element,entry);applyLock(entry,locked);
       if(created)element.style.setProperty('z-index',String(entry.layer+1));

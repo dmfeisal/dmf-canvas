@@ -5,7 +5,7 @@ const root=fileURLToPath(new URL('../',import.meta.url)),dist=join(root,'dist');
 const manifest=JSON.parse(await readFile(join(root,'.generated/docs.json'),'utf8'));
 const errors=[];
 let links=0;
-for(const slug of ['','playground',...manifest.map(page=>page.slug)]){
+for(const slug of ['','playground','labs/import',...manifest.map(page=>page.slug)]){
  const path=join(dist,slug,'index.html'),html=await readFile(path,'utf8');
  if(!html.includes('<h1'))errors.push(`${slug}: missing heading`);
  for(const match of html.matchAll(/(?:href|src)="([^"#]+)(?:#[^"]*)?"/g)){
@@ -19,4 +19,4 @@ for(const slug of ['','playground',...manifest.map(page=>page.slug)]){
 }
 await stat(join(dist,'pagefind/pagefind.js'));
 if(errors.length)throw new Error(errors.join('\n'));
-console.log(`PASS ${manifest.length+2} pages, ${links} local links/assets and Pagefind search output.`);
+console.log(`PASS ${manifest.length+3} pages, ${links} local links/assets and Pagefind search output.`);

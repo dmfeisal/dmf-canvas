@@ -42,6 +42,10 @@
     "./images": {
       "types": "./images.d.ts",
       "import": "./images.js"
+    },
+    "./documents": {
+      "types": "./documents.d.ts",
+      "import": "./documents.js"
     }
   },
   "files": [
@@ -71,7 +75,9 @@
     "docs/COMPATIBILITY.md",
     "docs/RELEASE-CHECKLIST.md",
     "docs/INSPECTOR.md",
-    "docs/TEXT-FORMATTING.md"
+    "docs/TEXT-FORMATTING.md",
+    "documents.js",
+    "documents.d.ts"
   ],
   "scripts": {
     "start": "node server.mjs",

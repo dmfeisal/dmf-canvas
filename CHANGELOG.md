@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — experimental portability
+
+- Add separate portable documents with stable node IDs, legacy migration and original-free host reconstruction. Existing board/clipboard/draft formats remain unchanged.
+- Add bounded Excalidraw Text/freehand conversion with explicit per-object loss reports and a local import lab. Current fixtures are synthetic; broader import fidelity remains unverified.
+
 ## 0.2.0 (prepared 24 October 2026, private)
 
 - Add owner-backed Selection inspector geometry and atomic mixed-selection transforms with Undo/Redo.

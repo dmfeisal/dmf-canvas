@@ -19,6 +19,7 @@ export default defineConfig({
   sidebar:[
    {label:'Overview',link:'/'},
    {label:'Try the live Canvas',link:'/playground/'},
+   {label:'Experimental import lab',link:'/labs/import/'},
    {label:'Current editor',items:[{slug:'getting-started'},{slug:'api'},{slug:'inspector'},{slug:'text-formatting'},{slug:'compatibility'},{slug:'changelog'}]},
    {label:'Integration recipes',items:[{autogenerate:{directory:'examples'}}]},
    {label:'Product direction',items:[{autogenerate:{directory:'product'}}],collapsed:true},

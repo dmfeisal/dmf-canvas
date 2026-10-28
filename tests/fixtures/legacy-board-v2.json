@@ -1,0 +1,36 @@
+{
+  "format": "dmf-canvas",
+  "version": 2,
+  "originals": [
+    {
+      "id": 7,
+      "data": {
+        "type": "text",
+        "layout": {
+          "left": 40,
+          "top": 40,
+          "width": 180,
+          "height": 30,
+          "fontSize": 20
+        },
+        "text": "Legacy fixture",
+        "state": {
+          "x": 0,
+          "y": 0,
+          "scale": 1,
+          "angle": 0,
+          "width": "180px",
+          "content": "Legacy fixture",
+          "typography": {
+            "font": "sans",
+            "size": 20,
+            "weight": 600,
+            "align": "left",
+            "wrap": "fixed"
+          }
+        }
+      }
+    }
+  ],
+  "objects": []
+}
