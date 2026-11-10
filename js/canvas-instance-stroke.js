@@ -1,5 +1,5 @@
 const ns='http://www.w3.org/2000/svg';
-export const inks={primary:'var(--dmf-color-text, CanvasText)',blue:'#1677ff',red:'#e5484d'};
+export const inks={primary:'var(--dmf-color-text,var(--foreground,CanvasText))',blue:'#1677ff',red:'#e5484d'};
 export const widths=[2,4,8];
 export const svgNode=(doc,name)=>doc.createElementNS(ns,name);
 export function makePath(doc,points,width,color){

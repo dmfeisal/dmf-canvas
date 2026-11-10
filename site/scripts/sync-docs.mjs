@@ -45,7 +45,7 @@ Make your ideas interactive on the web.
 
 DMF Canvas is a framework-free, embeddable editor for Text, Sticky Notes, Drawings and raster Images. It runs locally in your site, with explicit object owners, editing history and host-owned files.
 
-**Current state: private 0.2.0 development preview.** The package is not published to a public registry. Excalidraw import, an independent visitor viewer and interactive storytelling are proposed milestones.
+**Current state: private 0.3.0-alpha.1 development preview.** The package is not published to a public registry. Excalidraw Text/freehand import is experimental; broader import fidelity, an independent visitor viewer and interactive storytelling are proposed milestones.
 
 ## Build with Canvas
 
