@@ -5,6 +5,7 @@
 - Add separate portable documents with stable node IDs, legacy migration and original-free host reconstruction. Existing board/clipboard/draft formats remain unchanged.
 - Add bounded Excalidraw Text/freehand conversion with explicit per-object loss reports and a local import lab. Current fixtures are synthetic; broader import fidelity remains unverified.
 - Add dmf-ui token fallbacks (`--primary`, `--foreground`, `--background`, `--border`) behind every `--dmf-color-*` Canvas variable, including the primary Pencil ink, so selection, handles, halos and new strokes render in hosts that only load dmf-ui. Hosts that define `--dmf-color-*` render unchanged.
+- Remove blanket 44px minimum heights from inspector fields and buttons, the Done editing button, draft controls and image-description controls; padding and content now set their size. Focus outlines and keyboard behaviour are unchanged.
 
 Prerelease toward 0.3.0; the 0.3.0 milestone scope (Shapes, Highlighter, stroke Eraser) is unchanged. The immutable 0.2.0 archive is unchanged and does not contain `dmf-canvas/documents`.
 
