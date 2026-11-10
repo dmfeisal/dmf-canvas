@@ -17,7 +17,7 @@
     nav { min-width:0; } nav ol { list-style:none; padding:0; margin:0; } nav li { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     h1 { font-size:clamp(2rem,5vw,3.5rem); line-height:1.1; margin-block:0 20px; }
     p { max-width:72ch; } a { color:inherit; text-underline-offset:.2em; }
-    details { max-width:72ch; margin-block:16px; } summary { cursor:pointer; min-height:44px; padding-block:10px; }
+    details { max-width:72ch; margin-block:16px; } summary { cursor:pointer; padding-block:10px; }
     .examples { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin-block:32px; }
     h2 { font-size:1.25rem; margin-block:0 12px; }
     .surface { position:relative; height:360px; border:1px solid GrayText; background-image:radial-gradient(circle,color-mix(in srgb,CanvasText 20%,transparent) 1px,transparent 1px); background-size:24px 24px; }
@@ -26,8 +26,8 @@
     .text[data-canvas-instance-editing] { outline-style:dashed; }
     .canvas-instance-status { position:absolute; inset-block-end:12px; inset-inline-start:12px; margin:0; font-size:13px; pointer-events:none; }
     .actions { display:flex; flex-wrap:wrap; gap:8px; margin-block-start:12px; }
-    button { min-height:44px; padding:8px 16px; border:1px solid GrayText; background:Canvas; color:CanvasText; font:inherit; cursor:pointer; }
-    .actions label { display:flex; align-items:center; gap:8px; } select { min-height:44px; padding:8px; color:CanvasText; background:Canvas; border:1px solid GrayText; font:inherit; max-width:100%; }
+    button { padding:8px 16px; border:1px solid GrayText; background:Canvas; color:CanvasText; font:inherit; cursor:pointer; }
+    .actions label { display:flex; align-items:center; gap:8px; } select { padding:8px; color:CanvasText; background:Canvas; border:1px solid GrayText; font:inherit; max-width:100%; }
     button:disabled { opacity:.45; cursor:default; } :focus-visible { outline:2px solid var(--dmf-color-canvas-selection); outline-offset:3px; }
     @media(max-width:650px) { body { padding:16px; } .examples { grid-template-columns:minmax(0,1fr); } }
     @media(prefers-color-scheme:dark) { :root { --dmf-color-canvas-selection:#70b5ff; } }

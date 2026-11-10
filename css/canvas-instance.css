@@ -32,7 +32,7 @@
 [data-canvas-instance-editing] > .canvas-instance-handle { visibility: hidden; }
 .canvas-instance-edit-done {
   position: absolute; z-index: 103; inset-block-end: 8px; inset-inline-end: 8px;
-  box-sizing: border-box; min-height: 44px; max-width: calc(100% - 16px); padding: 8px 12px;
+  box-sizing: border-box; max-width: calc(100% - 16px); padding: 8px 12px;
   font: inherit; font-size: 13px; line-height: 1.2;
   color: var(--dmf-color-text,var(--foreground,CanvasText)); background: var(--dmf-color-paper-canvas,var(--background,Canvas));
   border: 1px solid var(--dmf-color-line,var(--border,GrayText)); cursor: pointer;
@@ -81,7 +81,7 @@
 .canvas-instance-settings { flex-basis:100%; max-width:100%; font-size:13px; }
 .canvas-instance-settings > summary { cursor:pointer; width:fit-content; padding-block:8px; }
 .canvas-instance-settings > div { display:flex; flex-wrap:wrap; gap:8px 16px; padding-block:8px; }
-.canvas-instance-settings label { display:inline-flex; align-items:center; gap:4px; min-height:36px; }
+.canvas-instance-settings label { display:inline-flex; align-items:center; gap:4px; padding-block:4px; }
 .canvas-instance-settings > summary:focus-visible { outline:2px solid var(--dmf-color-canvas-selection,var(--primary,Highlight)); outline-offset:2px; }
 
 .canvas-instance-settings [hidden], [data-example] [hidden], [data-canvas-instance-demo] [hidden] { display:none !important; }
@@ -89,10 +89,10 @@
 [data-document-dirty] { flex-basis:100%; font-size:13px; }
 
 .canvas-instance-drafts { flex-basis:100%; display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:13px; padding-block:8px; }
-.canvas-instance-drafts label { display:inline-flex; align-items:center; gap:8px; min-height:44px; }
+.canvas-instance-drafts label { display:inline-flex; align-items:center; gap:8px; padding-block:8px; }
 .canvas-instance-drafts output { flex-basis:100%; overflow-wrap:anywhere; }
 
-.canvas-instance-drafts button { min-height:44px; padding:8px 16px; font:inherit; }
+.canvas-instance-drafts button { padding:8px 16px; font:inherit; }
 
 /* Appearance belongs to each embed wrapper, including its toolbar/popovers. */
 [data-canvas-embed-theme] :is([data-canvas-theme-surface],[data-host],[data-instance-host]) {
@@ -103,7 +103,7 @@
 }
 .canvas-instance-appearance { flex-basis:100%; }
 .canvas-instance-appearance p { flex-basis:100%; margin:0; }
-.canvas-instance-appearance input { box-sizing:border-box; width:9rem; max-width:100%; min-height:36px; }
+.canvas-instance-appearance input { box-sizing:border-box; width:9rem; max-width:100%; padding:6px 8px; }
 
 .canvas-instance-image { position:absolute; margin:0; cursor:grab; user-select:none; touch-action:none; }
 .canvas-instance-image > img { display:block; width:100%; height:100%; object-fit:contain; pointer-events:none; user-select:none; }
@@ -112,7 +112,7 @@
 
 .canvas-instance-image-details { min-width:0; max-width:100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex-basis:100%; }
 .canvas-instance-image-details label { min-width:0; max-width:100%; display:flex; flex-wrap:wrap; gap:8px; }
-.canvas-instance-image-details input { width:22rem; max-width:100%; min-width:0; min-height:44px; box-sizing:border-box; font:inherit; }
+.canvas-instance-image-details input { width:22rem; max-width:100%; min-width:0; box-sizing:border-box; font:inherit; }
 .canvas-instance-image-details output { font-size:13px; direction:ltr; unicode-bidi:isolate; }
-.canvas-instance-image-details button,[data-image-cancel] { min-height:44px; padding:8px 12px; font:inherit; }
+.canvas-instance-image-details button,[data-image-cancel] { padding:8px 12px; font:inherit; }
 [data-image-progress] { width:8rem; align-self:center; }
