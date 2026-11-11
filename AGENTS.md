@@ -25,7 +25,7 @@ Never expand these abbreviations into client or company identities. Apply this r
 
 ## Package boundary
 
-- Keep native ESM, relative imports and relative assets. Do not add a bundler, framework or runtime dependency.
+- Keep native ESM, relative imports and relative assets. Node >=22.12.0 is the minimum (`engines`); CI covers Node 22 and 24. Do not add a bundler, framework or runtime dependency.
 - Importing any entrypoint must not mount UI, register listeners, touch storage or require a browser document. Core must not import toolbar icons, themes, demo controls, browser storage, portfolio globals or fonts.
 - A new or renamed entrypoint updates `package.json` `exports` and `files`, its `.d.ts`, `docs/API.md` and the type tests together. Demo panels, file pickers and downloads stay in `examples/` or host adapters.
 
@@ -56,7 +56,7 @@ Do not impose a blanket 44px (or other fixed) minimum width or height on control
 
 ## Verification
 
-- Run `npm run check` (unit tests, public types, installed archive) for every change. Packaging or integration changes also run `npm run test:astro`, `npm run test:frameworks` and `npm run test:configurator`, matching CI. CI ends with `git diff --exit-code`; checks must not modify tracked files.
+- Run `npm run check` (unit tests, public types, installed archive) for every change. Packaging or integration changes also run `npm run test:astro`, `npm run test:frameworks` and `npm run test:configurator`; documentation, example or site changes also run `npm run build --prefix site`. These match CI. CI ends with `git diff --exit-code`; checks must not modify tracked files.
 - Browser suites (`test:browser`, `test:*:browser`) require an existing agent-owned `CANVAS_TEST_SPACE_ID`. Run them only when one is supplied, one at a time, and never start an overlapping run.
 - Never report a browser, CI or hosted run that did not actually happen in this change; reused results must be labelled as reused.
 

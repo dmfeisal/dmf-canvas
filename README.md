@@ -72,7 +72,7 @@ GitHub Actions runs `npm run check` on Node 22 and 24 for main pushes, pull requ
 
 ## Astro integration
 
-`npm run test:astro` packs the library, installs it into a fresh temporary Astro 7.3.2 project, builds two routes and checks bundled CSS/cursor assets. Only the example depends on Astro; core remains framework-free. `node scripts/test-astro.mjs --keep` retains the generated project for local preview. It has actual ClientRouter navigation and a custom element that disposes its instances when disconnected. See [the Astro recipe](examples/astro/README.md).
+`npm run test:astro` packs the library, installs it into a fresh temporary Astro 7.4.2 project, builds two routes and checks bundled CSS/cursor assets. Only the example depends on Astro; core remains framework-free. `node scripts/test-astro.mjs --keep` retains the generated project for local preview. It has actual ClientRouter navigation and a custom element that disposes its instances when disconnected. See [the Astro recipe](examples/astro/README.md).
 
 `CANVAS_TEST_SPACE_ID=<agent-owned-space-id> npm run test:astro:browser` additionally checks editing, files, Pencil, mobile RTL, real navigation cleanup and ten repeated leave/return cycles. CI builds this installed-package fixture on Node 22/24; interactive tests still require the local browser.
 
