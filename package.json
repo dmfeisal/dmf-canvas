@@ -3,6 +3,9 @@
   "version": "0.3.0-alpha.1",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "description": "Embeddable DOM Canvas — internal extraction preview",
   "repository": {
     "type": "git",

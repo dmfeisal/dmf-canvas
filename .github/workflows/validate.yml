@@ -29,6 +29,7 @@ jobs:
             examples/astro/package-lock.json
             examples/react/package-lock.json
             examples/vue/package-lock.json
+            site/package-lock.json
       - name: Install locked development dependencies
         run: npm ci --ignore-scripts
       - name: Validate runtime contracts, public types and installed archive
@@ -39,5 +40,9 @@ jobs:
         run: npm run test:frameworks
       - name: Verify generated HTML, Astro, React and Vue examples
         run: npm run test:configurator
+      - name: Install locked documentation site dependencies
+        run: npm ci --prefix site --ignore-scripts
+      - name: Build documentation site and check pages, links and search
+        run: npm run build --prefix site
       - name: Verify checks leave tracked files unchanged
         run: git diff --exit-code
