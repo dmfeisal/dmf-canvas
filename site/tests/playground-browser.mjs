@@ -1,6 +1,6 @@
 const task=await taskSpace(playgroundTest.spaceId),page=task.page('p1');
 const assert=(value,message)=>{if(!value)throw new Error(message);};
-await page.goto(playgroundTest.base+'/playground/');
+await page.goto(playgroundTest.base+'/');
 await page.waitForFunction(()=>!!document.getElementById('canvas-demo').canvasEmbed?.canvas);
 await page.evaluate(()=>{window.playgroundErrors=[];window.addEventListener('error',e=>window.playgroundErrors.push(e.message));window.addEventListener('unhandledrejection',e=>window.playgroundErrors.push(String(e.reason)));window.storageBefore=JSON.stringify({...localStorage});});
 await page.click('#add-text');await page.keyboard.press('ControlOrMeta+a');await page.keyboard.type('My live Canvas');await page.keyboard.press('Escape');
@@ -33,6 +33,6 @@ assert(await page.evaluate(()=>document.getElementById('canvas-demo').canvasEmbe
 for(let i=0;i<5;i++)await page.click('#reset');
 assert(await page.evaluate(()=>document.querySelectorAll('[data-canvas-instance-status]').length===1&&document.querySelectorAll('.canvas-embed-toolbar').length===1&&JSON.stringify({...localStorage})===window.storageBefore&&window.playgroundErrors.length===0),'Reset leaked UI, stored data or raised errors');
 await page.click('header a[href="/"] >> nth=1');await page.waitForURL(playgroundTest.base+'/');
-await page.goto(playgroundTest.base+'/playground/');await page.waitForFunction(()=>document.getElementById('canvas-demo').canvasEmbed?.canvas?.getState().mounted);
+await page.goto(playgroundTest.base+'/');await page.waitForFunction(()=>document.getElementById('canvas-demo').canvasEmbed?.canvas?.getState().mounted);
 assert(await page.evaluate(()=>document.getElementById('canvas-demo').canvasEmbed.canvas.getState().objects===1),'Return from docs did not mount a fresh canvas');
 console.log('PASS live playground: Text, formatting/Undo/Redo, notes, local image, Save/Open, Pencil, mobile theme/inspector, reset cancel/confirm, repeated cleanup and navigation.');
