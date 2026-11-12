@@ -1,6 +1,6 @@
 # Canvas package boundary and API proposal
 
-Recorded: 23 October 2026. Status: proposed extraction contract, not an implemented public package API. Destination supplied by the owner: [dmfeisal/dmf-canvas](https://github.com/dmfeisal/dmf-canvas). The portfolio remains on its existing runtime until a separately verified migration.
+Recorded: 23 October 2026. Status: extraction contract implemented as a private local preview in this repository; not a stable public package API. Destination supplied by the owner: [dmfeisal/dmf-canvas](https://github.com/dmfeisal/dmf-canvas). The portfolio remains on its existing runtime until a separately verified migration.
 
 ## Entry points
 
@@ -80,3 +80,9 @@ The standalone implementation is ready for review only when:
 - A clean checkout runs structural/browser checks without portfolio files or services; package-install checks precede publication.
 
 Repository implementation order: copy the verified rehearsal with provenance; establish the entrypoints and pure settings split; split optional controllers/UI; complete types and consumer checks; rerun both hosts. Licensing, registry name, release version and publishing remain explicit unresolved choices. Creating or publishing a package is outside this change.
+
+## Implementation checkpoint — 23 October 2026
+
+This repository implements native package entrypoints, pure settings, separate Drawing/Pencil modules, optional example controls, complete exported declarations and consumer validation. Both browser hosts use package imports. All 27 standalone tests, strict type checks, eight browser scenarios and a clean archive-install check passed at that checkpoint. See [EXTRACTION.md](EXTRACTION.md) for provenance and review findings. No production migration is included. Licensing and public compatibility remain unresolved; `private: true` prevents publication.
+
+Astro/package integration checkpoint: the standalone `examples/astro/` recipe installs a packed archive and verifies real ClientRouter teardown/remount. Optional host raster helpers are available through `dmf-canvas/images`. The portfolio `/examples/canvas/` uses the pinned archive through a generated static mirror and native import map; existing controls remain host-owned. Archive integrity/mirror checks and a reproducible package rehearsal cover the boundary. Portfolio production and `/ui/` modules remain internal and unchanged.
