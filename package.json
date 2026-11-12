@@ -79,6 +79,7 @@
     "docs/RELEASE-CHECKLIST.md",
     "docs/INSPECTOR.md",
     "docs/TEXT-FORMATTING.md",
+    "docs/design/TOOLBAR.md",
     "documents.js",
     "documents.d.ts"
   ],
