@@ -28,8 +28,8 @@ canvas.execute('move');
 canvas.execute('undo','blue');
 // @ts-expect-error unsupported tool
 canvas.configure({tools:{highlighter:true}});
-// @ts-expect-error unsupported pencil width
-pencil.setWidth(12);
+// @ts-expect-error unsupported drawing width (neither Pencil nor Highlighter)
+pencil.setWidth(6);
 // @ts-expect-error owner capture must be finite JSON-compatible data
 const invalid:CanvasOwner={capture:()=>element,restore(){},dispose(){}};
 // @ts-expect-error image description is a string
@@ -68,5 +68,10 @@ import {validatePortableDocument,migrateLegacyDocument,importExcalidraw} from 'd
 const portable=canvas.savePortableDocument();canvas.loadPortableDocument(validatePortableDocument(portable));
 const imported=importExcalidraw('{}');const reason:string=imported.report[0].reasons[0];void reason;
 migrateLegacyDocument(canvas.saveDocument());
-// @ts-expect-error portable version is explicit
-portable.version=2;
+// @ts-expect-error portable version is explicit (1, or 2 with Highlighter strokes)
+portable.version=3;
+
+// Highlighter: one controller, per-tool settings and typed drawing options.
+{const pen=createPencil(canvas,host);pen.setTool('highlighter');pen.setColor('yellow');pen.setWidth(32);const tool:'pencil'|'highlighter'=pen.getState().tool;void tool;
+// @ts-expect-error unsupported drawing tool
+pen.setTool('marker');}

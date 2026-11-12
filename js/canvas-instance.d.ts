@@ -82,7 +82,8 @@ export interface CommandResult {
   readonly ok: boolean;
   readonly reason: 'stale-revision' | 'read-only' | 'disabled' | 'destroyed' | 'busy' | 'invalid-delta' | 'invalid-color' | 'invalid-description' | 'invalid-style' | 'unsupported' | 'empty-history' | 'resource-limit' | 'bounds' | 'overlap' | null;
 }
-export interface CanvasPortableDocument {format: "dmf-canvas-portable";version:1;nodes:{id:string;data:CanvasObjectDocument;source?:{format:"excalidraw";id:string}}[];}
+/** Portable version 2 adds Highlighter strokes; highlight-free documents stay version 1. */
+export interface CanvasPortableDocument {format: "dmf-canvas-portable";version:1|2;nodes:{id:string;data:CanvasObjectDocument;source?:{format:"excalidraw";id:string}}[];}
 export interface CanvasInstance {
   savePortableDocument():CanvasPortableDocument;
   loadPortableDocument(input:unknown):CommandResult;
@@ -134,9 +135,12 @@ export interface CanvasObjectDocument {
   points?:{x:number;y:number}[];
   strokeWidth?:number;
   ink?:string;
+  /** Drawing records only: omitted for Pencil; `highlighter` requires schema 3. */
+  tool?:'highlighter';
 }
 export interface CanvasDocument {
-  format:'dmf-canvas';version:1|2;
+  /** 1 plain records, 2 adds Text formatting, 3 adds Highlighter strokes. */
+  format:'dmf-canvas';version:1|2|3;
   originals:{id:number;data:CanvasObjectDocument}[];
   objects:CanvasObjectDocument[];
 }
@@ -147,7 +151,7 @@ export interface CanvasDocumentAdapter {
 export function createCanvas(host: HTMLElement, options?:CanvasSettingsPatch & {documents?:CanvasDocumentAdapter;clipboard?:CanvasObjectClipboard}): CanvasInstance;
 
 export interface CanvasObjectTransfer {
-  format:'dmf-canvas-clipboard';version:1|2;
+  format:'dmf-canvas-clipboard';version:1|2|3;
   objects:{data:CanvasObjectDocument;bounds:{left:number;top:number;width:number;height:number}}[];
 }
 export interface CanvasObjectClipboard {
