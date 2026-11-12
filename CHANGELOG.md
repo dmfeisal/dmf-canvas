@@ -13,6 +13,8 @@
 - Add the stroke Eraser (0.3.0 milestone item): E or the rail button; dragging fades touched strokes and release removes them as one Undo step via the new `execute('erase', elements)` command. Locked, grouped and authored objects are kept. Needs the `pencil` and `delete` permissions. No board-format change.
 - Add a tool options bar beside the rail while Pencil or Highlighter is armed: that tool's ink swatches and Thin/Medium/Bold widths, with the current choice pressed. `dmf-canvas/pencil` exports `drawingPalettes` for host swatches. Adds Lucide 1.60.0 `eraser`, `circle` and `minus`.
 
+- Fix the Selection inspector overflowing short viewports when its content grows while open (for example after Text options change): it now re-contains itself on resize. Found by the browser suites on 320px mobile.
+
 Migration: boards and transfers containing highlights use schema 3, and portable documents use version 2; readers accept 1–3 and 1–2, and reject older schemas that claim highlights. 0.2.0 and earlier alpha.1 readers reject schema 3 instead of drawing highlights as solid ink. Highlight-free files are written exactly as before. See [compatibility](docs/COMPATIBILITY.md#highlighter-schema-3).
 
 Prerelease toward 0.3.0; the 0.3.0 milestone scope (Shapes, Highlighter, stroke Eraser) is unchanged. The immutable 0.2.0 archive is unchanged and does not contain `dmf-canvas/documents`.

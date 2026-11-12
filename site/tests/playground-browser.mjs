@@ -31,8 +31,8 @@ await page.click('#reset');await page.dismissDialog();assert(await page.evaluate
 await page.click('#reset');await page.acceptDialog();
 assert(await page.evaluate(()=>document.getElementById('canvas-demo').canvasEmbed.canvas.getState().objects===1&&!document.querySelector('[data-toolbar-action=text]').disabled),'Reset did not reinitialize');
 for(let i=0;i<5;i++)await page.click('#reset');
-assert(await page.evaluate(()=>document.querySelectorAll('[data-canvas-instance-status]').length===1&&document.querySelectorAll('.canvas-embed-toolbar').length===4&&JSON.stringify({...localStorage})===window.storageBefore&&window.playgroundErrors.length===0),'Reset leaked UI, stored data or raised errors');
-await page.click('header a[href="/"] >> nth=1');await page.waitForURL(playgroundTest.base+'/');
+assert(await page.evaluate(()=>document.querySelectorAll('[data-canvas-instance-status]').length===1&&document.querySelectorAll('.canvas-embed-toolbar').length===5&&JSON.stringify({...localStorage})===window.storageBefore&&window.playgroundErrors.length===0),'Reset leaked UI, stored data or raised errors');
+await page.click('header a[href="/docs/"]');await page.waitForURL(playgroundTest.base+'/docs/');
 await page.goto(playgroundTest.base+'/');await page.waitForFunction(()=>document.getElementById('canvas-demo').canvasEmbed?.canvas?.getState().mounted);
 assert(await page.evaluate(()=>document.getElementById('canvas-demo').canvasEmbed.canvas.getState().objects===1),'Return from docs did not mount a fresh canvas');
 console.log('PASS live playground: Text, formatting/Undo/Redo, notes, local image, Save/Open, Pencil, mobile theme/inspector, reset cancel/confirm, repeated cleanup and navigation.');
