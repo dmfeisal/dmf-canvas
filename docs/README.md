@@ -49,6 +49,7 @@ No files were moved or replaced. Historical portfolio-only references are record
 - [architecture/decisions/README.md](architecture/decisions/README.md)
 - [design/ACCESSIBILITY.md](design/ACCESSIBILITY.md)
 - [design/DESIGN-SYSTEM.md](design/DESIGN-SYSTEM.md)
+- [design/TOOLBAR.md](design/TOOLBAR.md)
 - [design/EDITOR-UX.md](design/EDITOR-UX.md)
 - [engineering/CONTRIBUTING.md](engineering/CONTRIBUTING.md)
 - [engineering/RELEASE-PROCESS.md](engineering/RELEASE-PROCESS.md)

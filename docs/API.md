@@ -47,6 +47,10 @@ Custom owners opt in through `geometry.read()` and `geometry.prepare(target)`. R
 
 `createCanvasInspector(container, {canvas, trigger})` from `dmf-canvas/toolbar` mounts one optional native popover for a contained HTML button. Call its `toggle()` from the trigger's existing dispatcher, load `toolbar.css`, and dispose it before the canvas/toolbar. It restores trigger attributes and disabled state. The caller owns trigger dispatch; the inspector owns fields, subscriptions and dismissal listeners. No storage, persistence service or publication is added. See the configurator for the complete host recipe.
 
+## Toolbar and More menu (0.3.0-alpha.1)
+
+`createCanvasToolbar(container, {actions, label, orientation, moreLabel})` renders a roving-focus toolbar of icon buttons with one shared tooltip. `orientation:'vertical'` (default `horizontal`) renders a tool rail with Up/Down navigation and side tooltips. An action with `menu:true` moves into one generated More menu (`moreLabel`, default `More actions`): a manual native popover with `role="menu"`, sections named by each action's `group`, icon/label/shortcut rows, contextual hiding via `update(id,{hidden})`, checked rows via `pressed`, keyboard navigation, outside-press/scroll dismissal and focus return to More. The id `more` is reserved. Generated buttons and menu rows carry `data-toolbar-action="<id>"` as a stable host and test hook. `toolbar.css` also provides optional `.canvas-embed-chrome` slots (`tools`, `history`, `selection`, `help`) for the floating layout. Groups, icons, labels and placement follow the [toolbar standard](design/TOOLBAR.md); hosts still own commands, state and layout.
+
 ## Text formatting (0.2.0)
 
 `getTextStyle()` returns common `font`, `size`, `weight`, `align`, `wrap`, supported `weights` and `editable`; mixed values are null. It returns null during editing/creation/gestures or when any selected owner lacks the explicit textStyle capability. Original font choices compare actual families for mixed selections; alignment is physical Left/Center/Right, including RTL. Read-only, disabled Text and any lock prevent formatting.

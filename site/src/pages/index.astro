@@ -19,25 +19,23 @@ import '../../../examples/configurator/canvas-embed.css';
   <main>
    <div class="intro"><div><h1>Try Canvas.</h1><p>Write, sketch, and arrange your ideas. Everything you make stays in this browser tab until you save a board file.</p></div><span class="version">Editor preview · 0.3.0-alpha.1</span></div>
    <section class="workspace" aria-label="Canvas playground">
-    <div class="workspace-heading"><h2>Your canvas</h2><div class="host-actions"><button id="add-text" type="button" disabled>Add text</button><label>Theme <select id="theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label><button id="reset" type="button" disabled>Reset demo</button></div></div>
-    <p id="canvas-help" class="hint">Drag to move. Double-click Text to edit. Select an object, then open the Selection inspector to change its position or Text style.</p>
+    <div class="workspace-heading"><h2>Your canvas</h2><div class="host-actions"><label>Theme <select id="theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label><button id="reset" type="button" disabled>Reset demo</button></div></div>
+    <p id="canvas-help" class="hint">Pick a tool from the tool rail. Drag to move, double-click Text to edit, and use the bar below a selection for the inspector, Duplicate, Delete and More.</p>
     <div id="canvas-demo" tabindex="-1" aria-describedby="canvas-help"></div>
     <output id="playground-status" aria-live="polite">Loading the editor…</output>
     <noscript><p>JavaScript is required for this editor. You can still read the <a href="/docs/getting-started/">integration guide</a>.</p></noscript>
    </section>
-   <details class="help"><summary>Keyboard controls, saving, and limits</summary><div><p><strong>Keyboard:</strong> Tab to an object. Press Enter or F2 to edit Text, and Escape to finish. Arrow keys move a selected object. Use the toolbar for Undo, Redo, grouping, locks, and layers.</p><p><strong>Saving:</strong> Save board downloads a DMF Canvas JSON file. Open board restores that file. There is no automatic storage or upload; refreshing or leaving this page discards unsaved edits. Opening a board starts new history.</p><p><strong>Images:</strong> Add a local PNG, JPEG, or WebP. Images stay in the local board; they are not uploaded. Select an image to edit its description.</p><p><strong>Limits:</strong> Up to 50 objects on a bounded surface. This preview has no pan/zoom, general shapes, Excalidraw/FigJam import, or published visitor viewer. Touch-only use and other browser engines have not been certified.</p></div></details>
+   <details class="help"><summary>Keyboard controls, saving, and limits</summary><div><p><strong>Keyboard:</strong> Tab to an object. Press Enter or F2 to edit Text, and Escape to finish. Arrow keys move a selected object. Undo and Redo sit at the bottom left; More holds copy and paste, grouping, locks, layers, alignment, paper colour and board files. The ? button lists every shortcut.</p><p><strong>Saving:</strong> Save board downloads a DMF Canvas JSON file. Open board restores that file. There is no automatic storage or upload; refreshing or leaving this page discards unsaved edits. Opening a board starts new history.</p><p><strong>Images:</strong> Add a local PNG, JPEG, or WebP. Images stay in the local board; they are not uploaded. Select an image to edit its description.</p><p><strong>Limits:</strong> Up to 50 objects on a bounded surface. This preview has no pan/zoom, general shapes, Excalidraw/FigJam import, or published visitor viewer. Touch-only use and other browser engines have not been certified.</p></div></details>
    <footer><a href="/docs/text-formatting/">Text formatting guide</a><a href="/docs/product/product-roadmap/">What’s planned</a><a href="/docs/compatibility/">Compatibility</a></footer>
   </main>
   <script>
    import {mountEmbed} from '../../../examples/configurator/canvas-embed.js';
-   import {canvasDocuments} from '../../../owners.js';
-   const container=document.getElementById('canvas-demo')!;
+      const container=document.getElementById('canvas-demo')!;
    const status=document.getElementById('playground-status')!;
-   const add=document.getElementById('add-text') as HTMLButtonElement;
-   const reset=document.getElementById('reset') as HTMLButtonElement;
+      const reset=document.getElementById('reset') as HTMLButtonElement;
    const theme=document.getElementById('theme') as HTMLSelectElement;
    let embed:ReturnType<typeof mountEmbed>|null=null,unsubscribe:(()=>void)|null=null;
-   function render(){const state=embed?.canvas?.getState();add.disabled=!state?.canCreate;reset.disabled=!state;status.textContent=state?.dirty?'Unsaved changes — Save board to keep a local copy.':'Ready. Edits stay in this tab; save a board before leaving.';}
+   function render(){const state=embed?.canvas?.getState();reset.disabled=!state;status.textContent=state?.dirty?'Unsaved changes — Save board to keep a local copy.':'Ready. Edits stay in this tab; save a board before leaving.';}
    function mount(){
     embed=mountEmbed(container,{width:1600,height:480,theme:theme.value});
     embed.root!.querySelector('[data-host]')!.setAttribute('aria-describedby','canvas-help');
@@ -45,13 +43,6 @@ import '../../../examples/configurator/canvas-embed.css';
    }
    function dispose(){unsubscribe?.();unsubscribe=null;embed?.dispose();embed=null;}
    try{mount();}catch(error){dispose();status.textContent='The editor could not start. Please reload or check the compatibility guide.';console.error(error);}
-   add.addEventListener('click',()=>{
-    const canvas=embed?.canvas,host=embed?.root?.querySelector('[data-host]') as HTMLElement|null;
-    if(!canvas?.getState().canCreate||!host)return;
-    const text='New text',width=Math.min(180,host.clientWidth-48);
-    const item=canvasDocuments.create(host,{type:'text',text,layout:{left:24,top:120,width,height:32,fontSize:20},state:{x:0,y:0,scale:1,angle:0,width:width+'px',content:text}});
-    try{canvas.register(item.element,item.owner,{created:true});canvas.select(item.element);item.element.focus({preventScroll:true});canvas.execute('edit');}catch(error){item.owner.dispose();status.textContent='Text could not be added.';console.error(error);}
-   });
    theme.addEventListener('change',()=>{if(embed)embed.update({...embed.getConfig(),theme:theme.value});});
    reset.addEventListener('click',()=>{if(!embed)return;if(embed.canvas?.getState().dirty&&!confirm('Reset this demo and discard unsaved edits? Save a board first to keep them.'))return;dispose();mount();});
    window.addEventListener('pagehide',()=>{unsubscribe?.();unsubscribe=null;});

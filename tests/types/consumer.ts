@@ -16,6 +16,10 @@ canvas.subscribe(s=>{const count:number=s.selectionCount;void count;});
 canvas.subscribeChanges(change=>canvas.markSaved(change.revision));canvas.configure(resolveSettings({readOnly:true}));
 const pencil=createPencil(canvas,host,s=>{const active:boolean=s.active;void active;});pencil.setWidth(8);pencil.setColor('primary');pencil.cancel();pencil.dispose();
 const toolbar=createCanvasToolbar(host,{actions:[{id:'undo',label:'Undo',icon:'undo-2',run:()=>{canvas.execute('undo');}}]});toolbar.update('undo',{disabled:true});toolbar.dispose();
+const rail=createCanvasToolbar(host,{orientation:'vertical',label:'Tools',actions:[{id:'select',label:'Select',icon:'mouse-pointer-2',shortcut:'V',run:()=>{}}]});rail.dispose();
+const selection=createCanvasToolbar(host,{moreLabel:'More actions',actions:[{id:'duplicate',label:'Duplicate',icon:'copy-plus',run:()=>{}},{id:'paste',label:'Paste',icon:'clipboard-paste',menu:true,group:'Clipboard',run:()=>{}}]});selection.update('paste',{disabled:true,pressed:false});selection.dispose();
+// @ts-expect-error orientation is horizontal or vertical
+createCanvasToolbar(host,{orientation:'diagonal'});
 const theme=createCanvasTheme(host,resolveTheme({mode:'dark',colors:{selection:'#123456'}}));theme.configure({mode:'inherit'});theme.dispose();
 const draft=createLocalDraft(canvas,{key:'test',storage,onStatus:s=>{const pending:boolean=s.pending;void pending;}});draft.restore();draft.dispose();parseLocalDraft('{}');validateTransfer({});
 // @ts-expect-error move requires a vector

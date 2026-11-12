@@ -6,6 +6,9 @@
 - Add bounded Excalidraw Text/freehand conversion with explicit per-object loss reports and a local import lab. Current fixtures are synthetic; broader import fidelity remains unverified.
 - Add dmf-ui token fallbacks (`--primary`, `--foreground`, `--background`, `--border`) behind every `--dmf-color-*` Canvas variable, including the primary Pencil ink, so selection, handles, halos and new strokes render in hosts that only load dmf-ui. Hosts that define `--dmf-color-*` render unchanged.
 - Remove fixed 36px and 44px minimum heights from inspector fields and buttons, the Done editing button, draft, settings, appearance and image-description controls; padding and content now set their size. Focus outlines and keyboard behaviour are unchanged.
+- Standardize every toolbar on the [toolbar, icon and action menu standard](docs/design/TOOLBAR.md): floating tool rail, history, selection actions and help, modelled on feisal.id. `createCanvasToolbar` gains opt-in `orientation:'vertical'` and a More menu (`menu:true` actions, `moreLabel`); `toolbar.css` adds menu styles and optional `.canvas-embed-chrome` slots. Existing calls render as before.
+- Fix toolbar icon conflicts: Paste now uses `clipboard-paste` (it shared `sticky-note` with Add note) and Bring forward/Send backward use `arrow-up`/`arrow-down` (they shared `layers`). Add Lucide 1.60.0 `type`, `clipboard-paste`, `ellipsis`, `circle-question-mark`, `download`, `folder-open`, `arrow-up`, `arrow-down`, `palette` and `image-plus`.
+- The embed configurator, playground and generated integrations use the floating chrome with Add text in the rail; Arrange, Paper colour and Save/Open board move into More. The import lab and shared custom host adopt the same groups and icons.
 
 Prerelease toward 0.3.0; the 0.3.0 milestone scope (Shapes, Highlighter, stroke Eraser) is unchanged. The immutable 0.2.0 archive is unchanged and does not contain `dmf-canvas/documents`.
 

@@ -12,6 +12,39 @@
 .canvas-embed-tooltip { position:fixed; inset:auto; box-sizing:border-box; width:max-content; max-width:calc(100% - 16px); margin:0; padding:6px 9px; border:1px solid var(--dmf-color-line,var(--border,GrayText)); border-radius:6px; color:var(--dmf-color-text,var(--foreground,CanvasText)); background:var(--canvas-embed-toolbar,var(--dmf-color-paper-canvas,var(--background,Canvas))); font:13px/1.4 system-ui,sans-serif; pointer-events:none; overflow-wrap:anywhere; }
 .canvas-embed-toolbar [hidden],.canvas-embed-toolbar__group[hidden],.canvas-embed-tooltip[hidden] { display:none!important; }
 
+/* Vertical tool rail (orientation: 'vertical'). */
+.canvas-embed-toolbar--vertical { flex-direction:column; flex-basis:auto; width:max-content; max-width:none; max-height:100%; overflow:hidden auto; overscroll-behavior-block:contain; }
+.canvas-embed-toolbar--vertical .canvas-embed-toolbar__group { flex-direction:column; }
+.canvas-embed-toolbar--vertical .canvas-embed-toolbar__group + .canvas-embed-toolbar__group { border-inline-start:0; padding-inline-start:0; border-top:1px solid var(--dmf-color-line,var(--border,GrayText)); padding-top:4px; }
+.canvas-embed-toolbar__button[aria-expanded=true] { background:color-mix(in srgb,currentColor 8%,transparent); }
+
+/* More menu: one manual popover of icon, label and shortcut rows. */
+.canvas-embed-menu { position:fixed; inset:auto; box-sizing:border-box; min-width:220px; max-width:calc(100% - 16px); max-height:calc(100% - 16px); margin:0; padding:4px; overflow:auto; border:1px solid var(--dmf-color-line,var(--border,GrayText)); border-radius:10px; color:var(--dmf-color-text,var(--foreground,CanvasText)); background:var(--canvas-embed-toolbar,var(--dmf-color-paper-canvas,var(--background,Canvas))); box-shadow:0 8px 24px color-mix(in srgb,CanvasText 14%,transparent); font:13px/1.4 system-ui,sans-serif; }
+.canvas-embed-menu__section { display:grid; gap:1px; }
+.canvas-embed-menu__section + .canvas-embed-menu__section { margin-top:4px; padding-top:4px; border-top:1px solid var(--dmf-color-line,var(--border,GrayText)); }
+.canvas-embed-menu .canvas-embed-menu__item { box-sizing:border-box; display:grid; grid-template-columns:16px minmax(0,1fr) auto; align-items:center; gap:10px; width:100%; margin:0; padding:7px 10px; border:0; border-radius:6px; color:inherit; background:transparent; font:inherit; text-align:start; cursor:pointer; }
+.canvas-embed-menu__item svg { display:block; width:16px; height:16px; pointer-events:none; }
+.canvas-embed-menu__label { min-width:0; overflow-wrap:anywhere; }
+.canvas-embed-menu__key { font:11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace; color:color-mix(in srgb,currentColor 65%,transparent); white-space:nowrap; }
+.canvas-embed-menu__item:not(:disabled):hover,.canvas-embed-menu__item:focus-visible { background:color-mix(in srgb,currentColor 8%,transparent); }
+.canvas-embed-menu__item:focus-visible { outline:2px solid var(--dmf-color-canvas-selection,var(--primary,Highlight)); outline-offset:-2px; }
+.canvas-embed-menu__item:disabled { opacity:.35; cursor:default; }
+.canvas-embed-menu__item[aria-checked=true] { color:var(--dmf-color-canvas-selection,var(--primary,Highlight)); }
+.canvas-embed-menu [hidden] { display:none!important; }
+
+/* Optional floating chrome: tool rail, history, selection actions and help over a positioned stage. */
+.canvas-embed-chrome { position:relative; container-type:inline-size; }
+.canvas-embed-chrome__slot { position:absolute; z-index:3; display:flex; max-width:calc(100% - 24px); pointer-events:none; }
+.canvas-embed-chrome__slot > * { pointer-events:auto; }
+.canvas-embed-chrome__slot[data-chrome-slot=tools] { inset-block-start:12px; inset-inline-start:12px; max-height:calc(100% - 80px); }
+.canvas-embed-chrome__slot[data-chrome-slot=history] { inset-block-end:12px; inset-inline-start:12px; }
+.canvas-embed-chrome__slot[data-chrome-slot=selection] { inset-block-end:12px; inset-inline:0; justify-content:center; max-width:none; }
+.canvas-embed-chrome__slot[data-chrome-slot=help] { inset-block-end:12px; inset-inline-end:12px; }
+.canvas-embed-chrome .canvas-embed-toolbar { flex-basis:auto; width:max-content; border-radius:12px; box-shadow:0 4px 16px color-mix(in srgb,CanvasText 12%,transparent); }
+.canvas-embed-chrome__slot:empty,.canvas-embed-chrome__slot[hidden] { display:none; }
+/* Narrow stages lift selection actions above the corner groups instead of overlapping them. */
+@container (max-width:560px) { .canvas-embed-chrome__slot[data-chrome-slot=selection] { inset-block-end:64px; } }
+
 .canvas-embed-inspector { position:fixed; inset:auto; box-sizing:border-box; width:300px; margin:0; padding:16px; overflow:auto; border:1px solid var(--dmf-color-line,var(--border,GrayText)); border-radius:10px; color:var(--dmf-color-text,var(--foreground,CanvasText)); background:var(--canvas-embed-toolbar,Canvas); font:13px/1.45 system-ui,sans-serif; }
 .canvas-embed-inspector h2 { margin:0 0 8px; font-size:15px; line-height:1.4; }
 .canvas-embed-inspector p { margin:0 0 12px; }
