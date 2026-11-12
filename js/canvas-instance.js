@@ -422,7 +422,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if (command === 'cancel') { cancelCreation();finishEdit();finish(true);return result(true); }
     if (command === 'finish-edit') { finishEdit(true);return result(true); }
     if(settings.readOnly&&!['cancel','finish-edit','contain','select-all','copy'].includes(command))return result(false,'read-only');
-    const feature=['copy','paste'].includes(command)?'clipboard':['group','ungroup'].includes(command)?'group':command.startsWith('align-')||command.startsWith('distribute-')?'arrange':['bring-forward','bring-front','send-backward','send-back'].includes(command)?'layers':['undo','redo'].includes(command)?'history':command==='image-description'?'image':command==='paper-color'?'paperColor':command==='edit'?'text':['lock','delete','duplicate'].includes(command)?command:null;
+    const feature=command==='erase'?'delete':['copy','paste'].includes(command)?'clipboard':['group','ungroup'].includes(command)?'group':command.startsWith('align-')||command.startsWith('distribute-')?'arrange':['bring-forward','bring-front','send-backward','send-back'].includes(command)?'layers':['undo','redo'].includes(command)?'history':command==='image-description'?'image':command==='paper-color'?'paperColor':command==='edit'?'text':['lock','delete','duplicate'].includes(command)?command:null;
     if(feature&&!settings.tools[feature])return result(false,'disabled');
     if(command==='text-style'&&!settings.tools.text)return result(false,'disabled');
     if (command === 'edit') {const ok=startEdit(selected);return result(ok,ok?null:'unsupported');}
@@ -489,6 +489,19 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       const entries=[...selection];applyPresence(entries.map(entry=>({entry,present:false})));
       pushAction({presenceItems:entries.map(entry=>({entry,before:true,after:false})),beforeSelection:entries,afterSelection:[]},'delete');
       select(null);root.focus({preventScroll:true});status.textContent=`${entries.length} object${entries.length===1?'':'s'} deleted. Undo restores the selection.`;return result(true);
+    }
+    if(command==='erase'){
+      // Stroke eraser: remove whole created, unlocked, ungrouped Drawings (Pencil or Highlighter) as one history action.
+      // Selection is not expanded, so grouped or non-drawing objects are never removed.
+      if(!Array.isArray(value)||!value.length||value.length>50||new Set(value).size!==value.length)return result(false,'unsupported');
+      const grouped=entry=>!!entry.group&&[...owners.values()].some(other=>other!==entry&&usable(other)&&other.group===entry.group);
+      // Locked, grouped, authored and non-drawing targets are kept; the rest are erased together.
+      const entries=value.map(element=>owners.get(element)).filter(entry=>usable(entry)&&entry.created&&!entry.locked&&!grouped(entry)&&entry.element.hasAttribute('data-canvas-instance-drawing')),kept=value.length-entries.length;
+      if(!entries.length)return result(false,'unsupported');
+      const before=[...selection],after=before.filter(entry=>!entries.includes(entry));
+      applyPresence(entries.map(entry=>({entry,present:false})));
+      pushAction({presenceItems:entries.map(entry=>({entry,before:true,after:false})),beforeSelection:before,afterSelection:after},'erase');
+      selectEntries(after,after.includes(selected)?selected:after[0]??null,false);status.textContent=`${entries.length} stroke${entries.length===1?'':'s'} erased${kept?`; ${kept} locked or grouped kept`:''}. Undo restores ${entries.length===1?'it':'them'}.`;return result(true);
     }
     if(command==='copy')return copySelection();
     if(command==='paste')return pasteSelection();

@@ -40,7 +40,7 @@ export interface CanvasOwner<T extends JsonValue = JsonValue> {
 export type CanvasTool = 'text' | 'sticky' | 'image' | 'pencil' | 'clipboard' | 'group' | 'arrange' | 'layers' | 'lock' | 'delete' | 'duplicate' | 'files' | 'history' | 'paperColor';
 export interface CanvasEmbedSettings { readonly readOnly:boolean; readonly tools:Readonly<Record<CanvasTool,boolean>>; }
 export interface CanvasSettingsPatch { readOnly?:boolean; tools?:Partial<Record<CanvasTool,boolean>>; }
-export type CanvasChangeSource = 'text' | 'text-style' | 'move' | 'transform' | 'create' | 'duplicate' | 'delete' | 'paste' | 'lock' | 'paper-color' | 'image-description' | 'group' | 'ungroup' | 'bring-forward' | 'bring-front' | 'send-backward' | 'send-back' | 'align-left' | 'align-center' | 'align-right' | 'align-top' | 'align-middle' | 'align-bottom' | 'distribute-horizontal' | 'distribute-vertical' | 'undo' | 'redo' | 'open';
+export type CanvasChangeSource = 'text' | 'text-style' | 'move' | 'transform' | 'create' | 'duplicate' | 'delete' | 'erase' | 'paste' | 'lock' | 'paper-color' | 'image-description' | 'group' | 'ungroup' | 'bring-forward' | 'bring-front' | 'send-backward' | 'send-back' | 'align-left' | 'align-center' | 'align-right' | 'align-top' | 'align-middle' | 'align-bottom' | 'distribute-horizontal' | 'distribute-vertical' | 'undo' | 'redo' | 'open';
 export interface CanvasChange { readonly revision:number; readonly dirty:boolean; readonly source:CanvasChangeSource; }
 export interface CanvasState {
   readonly imageDescription:string|null;
@@ -109,6 +109,8 @@ export interface CanvasInstance {
   execute(command: 'move', value: { dx: number; dy: number }): CommandResult;
   execute(command: 'image-description', value: string): CommandResult;
   execute(command: 'paper-color', value: string): CommandResult;
+  /** Stroke eraser: of 1-50 elements, removes the created, unlocked, ungrouped Drawings as one history action and keeps the rest; fails only when none qualify. Needs the `delete` tool. */
+  execute(command: 'erase', value: HTMLElement[]): CommandResult;
   execute(command: 'copy' | 'paste' | 'group' | 'ungroup' | 'align-left' | 'align-center' | 'align-right' | 'align-top' | 'align-middle' | 'align-bottom' | 'distribute-horizontal' | 'distribute-vertical' | 'bring-forward' | 'send-backward' | 'bring-front' | 'send-back' | 'undo' | 'redo' | 'cancel' | 'edit' | 'finish-edit' | 'contain' | 'select-all' | 'delete' | 'duplicate'): CommandResult;
   register<T extends JsonValue>(element: HTMLElement, owner: CanvasOwner<T>, options?: { created?: boolean; locked?:boolean }): Readonly<{ dispose(): void }>;
   subscribe(listener: (state: Readonly<CanvasState>) => void): () => boolean;

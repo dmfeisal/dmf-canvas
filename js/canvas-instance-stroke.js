@@ -6,6 +6,8 @@ export const highlightInks={yellow:'#ffd84d',pink:'#ff79b0',blue:'#70c9ff'};
 export const highlightWidths=[12,20,32];
 export const highlightOpacity=.32;
 export const strokeTools=Object.freeze({pencil:{inks,widths},highlighter:{inks:highlightInks,widths:highlightWidths}});
+// Host-facing palettes: semantic ink keys with their display colours, and the allowed widths (thin, medium, bold).
+export const drawingPalettes=Object.freeze({pencil:Object.freeze({inks:Object.freeze({...inks}),widths:Object.freeze([...widths])}),highlighter:Object.freeze({inks:Object.freeze({...highlightInks}),widths:Object.freeze([...highlightWidths]),opacity:highlightOpacity})});
 export const validStroke=(tool,width,color)=>Object.hasOwn(strokeTools,tool)&&strokeTools[tool].widths.includes(width)&&Object.hasOwn(strokeTools[tool].inks,color);
 export const svgNode=(doc,name)=>doc.createElementNS(ns,name);
 export function makePath(doc,points,width,color,tool='pencil'){

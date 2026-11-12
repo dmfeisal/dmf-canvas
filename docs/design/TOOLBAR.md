@@ -22,7 +22,8 @@ Editor surfaces use **floating chrome**: four groups placed over the canvas stag
 
 | Group | Position | Orientation | Actions, in order |
 |---|---|---|---|
-| Tools | Top, inline start | Vertical rail | Select, Add text, Add note, Add image, Pencil, Highlighter |
+| Tools | Top, inline start | Vertical rail | Select, Add text, Add note, Add image, Pencil, Highlighter, Stroke eraser |
+| Tool options | Top, beside the rail | Horizontal | The armed tool's three inks, then Thin, Medium, Bold (Pencil and Highlighter only) |
 | History | Bottom, inline start | Horizontal | Undo, Redo |
 | Selection actions | Bottom, centre | Horizontal | Selection inspector, Duplicate, Delete, More |
 | Help | Bottom, inline end | Horizontal | Keyboard help |
@@ -48,6 +49,10 @@ All artwork is local [Lucide](https://lucide.dev) from `js/canvas-instance-toolb
 | `image` | Add image | `image` |  | Tools |
 | `pencil` | Pencil | `pencil` | P | Tools |
 | `highlighter` | Highlighter | `highlighter` | Shift P | Tools |
+| `eraser` | Stroke eraser | `eraser` | E | Tools |
+| `ink-pencil-primary` / `-blue` / `-red` | Primary/Blue/Red ink | `circle` filled with the ink (`data-swatch`, `--canvas-swatch`) |  | Tool options (Pencil) |
+| `ink-highlighter-yellow` / `-pink` / `-blue` | Yellow/Pink/Blue highlight | `circle` filled with the ink |  | Tool options (Highlighter) |
+| `width-thin` / `-medium` / `-bold` | Thin/Medium/Bold · *n*px | `minus` at stroke 1.5/3/5 (`data-stroke-size`) |  | Tool options |
 | `multiple` | Select multiple | `lasso-select` |  | Tools (authored specimen) |
 | `undo` | Undo | `undo-2` | ⌘/Ctrl Z | History |
 | `redo` | Redo | `redo-2` | ⌘/Ctrl Shift Z | History |
@@ -79,7 +84,7 @@ The sprite also carries `image-plus` and `layers` for hosts that need them. To a
 - Floating groups use a 12px radius and a soft shadow; inline toolbars use a 10px radius and no shadow.
 - Menu rows have a 16px icon, a 13px label and an 11px monospace shortcut, sized by padding rather than a fixed height.
 - Bar buttons are icon-only. Their name and real shortcut appear in one shared hover/focus tooltip ("Duplicate · ⌘ D") and in the accessible name. Never show a shortcut the canvas does not implement.
-- Pressed tools (Select, Pencil or Highlighter; one at a time) and checked menu rows use the selection colour. Disabled controls stay visible at reduced opacity and are skipped by arrow-key navigation.
+- Pressed tools (Select, Pencil, Highlighter or Stroke eraser; one at a time), the current ink and width, and checked menu rows use the selection colour. Disabled controls stay visible at reduced opacity and are skipped by arrow-key navigation.
 - Colours come from the six theme roles (toolbar, ink, line, selection, surface, grid) with dmf-ui and system fallbacks; see [design system boundaries](DESIGN-SYSTEM.md).
 
 ## More menu
@@ -89,6 +94,10 @@ The sprite also carries `image-plus` and `layers` for hosts that need them. To a
 - It opens toward the side of the trigger with more room, stays inside the viewport, and scrolls if it is still too tall.
 - Keyboard: Enter, Space or ArrowDown on More opens it on the first enabled row (ArrowUp opens on the last); ArrowUp/ArrowDown move with wrap-around, Home/End jump; Enter runs the row and closes the menu; Escape closes it and returns focus to More; Tab closes it and continues normally.
 - Pointer: clicking More again, pressing outside, or scrolling the page closes it. Running a row keeps the canvas selection.
+
+## Stroke eraser
+
+The Eraser removes whole Pencil and Highlighter strokes, as on feisal.id. Drag across strokes: each one it touches fades until release, then all of them are removed as one Undo step. The Eraser stays armed for the next pass; V or Escape returns to Select, and Escape mid-drag cancels without erasing. Locked strokes, strokes in a group, authored originals and non-drawing objects are never erased. It needs both the `pencil` and `delete` tool permissions, and it ignores touch like Pencil.
 
 ## Help
 
@@ -122,4 +131,4 @@ const selection=createCanvasToolbar(slot('selection'),{label:'Selection actions'
 
 ## Differences from feisal.id
 
-feisal.id also has Stroke eraser in the rail, Pencil/Highlighter colour and width options, a direct Reset canvas edits (`brush-cleaning`) button in the selection group, a Layers panel, and camera controls (Fit all, Zoom to selection). The library does not provide those capabilities yet, so they are not in this standard; add them here with their icons when they ship (Eraser is planned for 0.3.0).
+feisal.id also has a direct Reset canvas edits (`brush-cleaning`) button in the selection group, a Layers panel, and camera controls (Fit all, Zoom to selection). The library does not provide those capabilities yet, so they are not in this standard; add them here with their icons when they ship. Compact hosts may omit the tool options bar; strokes then use each tool's defaults.

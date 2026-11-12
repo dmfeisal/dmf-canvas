@@ -7,7 +7,7 @@ export interface ToolbarAction {
   group?:string;
   /** Place this action in the toolbar's More menu instead of on the bar. */
   menu?:boolean;
-  /** Canvas-context key hint. Z/G/C/V etc use the platform command modifier; P, Shift P, Delete and Select's V are unmodified. */
+  /** Canvas-context key hint. Z/G/C/V etc use the platform command modifier; P, Shift P, E, Delete and Select's V are unmodified. */
   shortcut?:string;
   run():void;
   disabled?:boolean; hidden?:boolean; pressed?:boolean|'mixed';
