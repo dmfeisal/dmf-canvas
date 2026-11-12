@@ -87,7 +87,7 @@ GitHub Actions runs `npm run check` on Node 22 and 24 for main pushes, pull requ
 
 ## Limits and provenance
 
-This preview has no camera, PNG export, Eraser, general shapes or production owner migration. Browser validation used Ego Lite/Chromium; other browsers, real touch devices and cross-origin iframes are not certified. Native Popover and ResizeObserver are required by the optional adapters/example hosts.
+This preview has no camera, PNG export, general shapes or production owner migration. Browser validation used Ego Lite/Chromium; other browsers, real touch devices and cross-origin iframes are not certified. Native Popover and ResizeObserver are required by the optional adapters/example hosts.
 
 [Extraction notes](docs/EXTRACTION.md) record source provenance, changes and validation. Historical source hashes are in `docs/SOURCE-MANIFEST.json`; they describe the copied seed, not hashes of refactored files. Existing portfolio source remains unchanged. Required Lucide licensing is in [LICENSES/lucide.txt](LICENSES/lucide.txt); no new source license is granted by this preview. Choose licensing and release policy before publishing.
 

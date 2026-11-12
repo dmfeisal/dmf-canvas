@@ -31,3 +31,11 @@ test('only schema 3 boards, transfers, drafts and migrations carry highlights',(
   assert.equal(validatePortableDocument(portable(2)).version,2);assert.throws(()=>validatePortableDocument(portable(1)),TypeError);assert.throws(()=>validatePortableDocument(portable(3)),TypeError);
   assert.equal(validatePortableDocument({format:'dmf-canvas-portable',version:2,nodes:[{id:'d1',data:drawing()}]}).version,1,'Highlight-free documents normalize to version 1');
 });
+
+test('drawing palettes expose frozen semantic inks and widths for host swatches',async()=>{
+  const {drawingPalettes}=await import('../pencil.js');
+  assert.deepEqual(Object.keys(drawingPalettes.pencil.inks),['primary','blue','red']);assert.deepEqual([...drawingPalettes.pencil.widths],[2,4,8]);
+  assert.deepEqual(drawingPalettes.highlighter.inks,{yellow:'#ffd84d',pink:'#ff79b0',blue:'#70c9ff'});assert.deepEqual([...drawingPalettes.highlighter.widths],[12,20,32]);assert.equal(drawingPalettes.highlighter.opacity,.32);
+  assert(Object.isFrozen(drawingPalettes)&&Object.isFrozen(drawingPalettes.highlighter.inks)&&Object.isFrozen(drawingPalettes.pencil.widths));
+  assert.throws(()=>{'use strict';drawingPalettes.highlighter.inks.yellow='red';});
+});

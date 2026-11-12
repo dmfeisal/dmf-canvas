@@ -72,6 +72,8 @@ migrateLegacyDocument(canvas.saveDocument());
 portable.version=3;
 
 // Highlighter: one controller, per-tool settings and typed drawing options.
-{const pen=createPencil(canvas,host);pen.setTool('highlighter');pen.setColor('yellow');pen.setWidth(32);const tool:'pencil'|'highlighter'=pen.getState().tool;void tool;
+{const pen=createPencil(canvas,host);pen.setTool('highlighter');pen.setColor('yellow');pen.setWidth(32);const tool:'pencil'|'highlighter'|'eraser'=pen.getState().tool;void tool;pen.setTool('eraser');const width:number|null=pen.getState().width;void width;canvas.execute('erase',[host]);
 // @ts-expect-error unsupported drawing tool
 pen.setTool('marker');}
+// @ts-expect-error erase needs drawing elements
+canvas.execute('erase','all');

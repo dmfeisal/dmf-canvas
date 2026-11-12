@@ -17,6 +17,11 @@
 .canvas-embed-toolbar--vertical .canvas-embed-toolbar__group { flex-direction:column; }
 .canvas-embed-toolbar--vertical .canvas-embed-toolbar__group + .canvas-embed-toolbar__group { border-inline-start:0; padding-inline-start:0; border-top:1px solid var(--dmf-color-line,var(--border,GrayText)); padding-top:4px; }
 .canvas-embed-toolbar__button[aria-expanded=true] { background:color-mix(in srgb,currentColor 8%,transparent); }
+/* Tool options: ink swatches fill Lucide Circle with --canvas-swatch; widths thicken Lucide Minus. */
+.canvas-embed-toolbar__button[data-swatch] svg circle { fill:var(--canvas-swatch); stroke:color-mix(in srgb,currentColor 35%,transparent); }
+.canvas-embed-toolbar__button[data-stroke-size=thin] svg { stroke-width:1.5; }
+.canvas-embed-toolbar__button[data-stroke-size=medium] svg { stroke-width:3; }
+.canvas-embed-toolbar__button[data-stroke-size=bold] svg { stroke-width:5; }
 
 /* More menu: one manual popover of icon, label and shortcut rows. */
 .canvas-embed-menu { position:fixed; inset:auto; box-sizing:border-box; min-width:220px; max-width:calc(100% - 16px); max-height:calc(100% - 16px); margin:0; padding:4px; overflow:auto; border:1px solid var(--dmf-color-line,var(--border,GrayText)); border-radius:10px; color:var(--dmf-color-text,var(--foreground,CanvasText)); background:var(--canvas-embed-toolbar,var(--dmf-color-paper-canvas,var(--background,Canvas))); box-shadow:0 8px 24px color-mix(in srgb,CanvasText 14%,transparent); font:13px/1.4 system-ui,sans-serif; }
@@ -40,6 +45,7 @@
 .canvas-embed-chrome__slot[data-chrome-slot=history] { inset-block-end:12px; inset-inline-start:12px; }
 .canvas-embed-chrome__slot[data-chrome-slot=selection] { inset-block-end:12px; inset-inline:0; justify-content:center; max-width:none; }
 .canvas-embed-chrome__slot[data-chrome-slot=help] { inset-block-end:12px; inset-inline-end:12px; }
+.canvas-embed-chrome__slot[data-chrome-slot=options] { inset-block-start:12px; inset-inline-start:66px; }
 .canvas-embed-chrome .canvas-embed-toolbar { flex-basis:auto; width:max-content; border-radius:12px; box-shadow:0 4px 16px color-mix(in srgb,CanvasText 12%,transparent); }
 .canvas-embed-chrome__slot:empty,.canvas-embed-chrome__slot[hidden] { display:none; }
 /* Narrow stages lift selection actions above the corner groups instead of overlapping them. */
