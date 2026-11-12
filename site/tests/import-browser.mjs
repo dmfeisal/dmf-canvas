@@ -10,7 +10,7 @@ assert(await page.evaluate(()=>document.querySelector('#host').canvasLab.getStat
 await page.focus('#host p.canvas-instance-local-text');await page.keyboard.press('F2');await page.keyboard.press('ControlOrMeta+a');await page.keyboard.type('Edited imported idea');await page.keyboard.press('Escape');
 await page.click('[aria-label="Selection inspector"]');await page.fill('[data-inspector-text=size]','28');await page.press('[data-inspector-text=size]','Enter');await page.click('.canvas-embed-inspector__close');
 assert(await page.evaluate(()=>{const c=document.querySelector('#host').canvasLab,d=c.savePortableDocument();window.importSaved=d;return d.nodes[0].id==='excalidraw:title'&&d.nodes[0].source.id==='title'&&d.nodes[0].data.text==='Edited imported idea'&&d.nodes[0].data.state.typography.size===28;}),'Editing lost source identity or typography');
-await page.click('[aria-label=undo]');assert(await page.evaluate(()=>document.querySelector('#host').canvasLab.getTextStyle().size===20),'Imported formatting Undo failed');await page.click('[aria-label=redo]');
+await page.click('[aria-label=Undo]');assert(await page.evaluate(()=>document.querySelector('#host').canvasLab.getTextStyle().size===20),'Imported formatting Undo failed');await page.click('[aria-label=Redo]');
 const download=page.waitForEvent('download');await page.click('#save');await(await download).saveAs(importTest.board);
 assert(await page.evaluate(()=>window.importErrors.length===0),'Import lab raised browser errors before reload');
 await page.reload();await page.waitForFunction(()=>!!document.querySelector('#host')?.canvasLab);await page.evaluate(()=>{window.importErrors=[];window.addEventListener('error',e=>window.importErrors.push(e.message));window.addEventListener('unhandledrejection',e=>window.importErrors.push(String(e.reason)));});await page.setInputFiles('#portable-file',[importTest.board]);await page.waitForFunction(()=>document.querySelector('#message').textContent==='Portable document opened.');
@@ -20,7 +20,7 @@ assert(await page.evaluate(async()=>{
  const ok=target.loadPortableDocument(source).ok&&JSON.stringify(target.savePortableDocument())===JSON.stringify(source);target.destroy();iframe.remove();return ok;
 }),'Independent empty host did not preserve the complete document');
 assert(await page.evaluate(()=>{const c=document.querySelector('#host').canvasLab,before=JSON.stringify(c.savePortableDocument()),bad=JSON.parse(before);bad.nodes[1].id=bad.nodes[0].id;let rejected=false;try{c.loadPortableDocument(bad);}catch{rejected=true;}return rejected&&JSON.stringify(c.savePortableDocument())===before;}),'Invalid IDs mutated the current scene');
-await page.click('#host p.canvas-instance-local-text');await page.click('[aria-label=duplicate]');
+await page.click('#host p.canvas-instance-local-text');await page.click('[aria-label=Duplicate]');
 assert(await page.evaluate(()=>{const c=document.querySelector('#host').canvasLab,d=c.savePortableDocument();return d.nodes.length===3&&new Set(d.nodes.map(n=>n.id)).size===3;}),'Duplicate reused stable identity');
 await page.cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
 assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Import lab overflowed on mobile');
