@@ -7,3 +7,4 @@ site/.astro/
 site/.generated/
 site/src/content/docs/
 site/dist/
+site/public/_redirects

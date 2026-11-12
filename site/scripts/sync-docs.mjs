@@ -6,7 +6,9 @@ const content=resolve(repo,'site/src/content/docs');
 const github='https://github.com/dmfeisal/dmf-canvas/blob/main/';
 async function walk(dir){const found=[];for(const entry of await readdir(dir,{withFileTypes:true})){const path=resolve(dir,entry.name);if(entry.isDirectory())found.push(...await walk(path));else if(entry.name.endsWith('.md'))found.push(path);}return found.sort();}
 const files=[resolve(repo,'README.md'),resolve(repo,'CHANGELOG.md'),...await walk(resolve(repo,'docs')),...['astro','react','vue','configurator'].map(name=>resolve(repo,'examples',name,'README.md'))];
-function route(file){const path=relative(repo,file).split(sep).join('/');if(path==='README.md')return 'getting-started';if(path==='CHANGELOG.md')return 'changelog';if(path==='docs/README.md')return 'documentation-index';if(path.startsWith('examples/'))return path.replace('/README.md','').toLowerCase();return path.replace(/^docs\//,'').replace(/\.md$/,'').replace(/\/README$/,'').toLowerCase();}
+// Documentation is served under /docs/; the site root is the editor playground.
+function page(path){if(path==='README.md')return 'getting-started';if(path==='CHANGELOG.md')return 'changelog';if(path==='docs/README.md')return 'documentation-index';if(path.startsWith('examples/'))return path.replace('/README.md','').toLowerCase();return path.replace(/^docs\//,'').replace(/\.md$/,'').replace(/\/README$/,'').toLowerCase();}
+function route(file){return 'docs/'+page(relative(repo,file).split(sep).join('/'));}
 const routes=new Map(files.map(file=>[file,route(file)]));
 await rm(content,{recursive:true,force:true});await mkdir(content,{recursive:true});
 const manifest=[];
@@ -28,15 +30,15 @@ for(const file of files){
   return `](${github}${relativePath}${hash?'#'+hash:''})`;
  })).join('');
  let notice='';
- if(route(file).startsWith('research/'))notice='> **Research, not verified product claims.** This material includes supplied synthesis and unvalidated hypotheses. Prices, financials and capabilities require source verification before external decisions. [Research provenance](/research/provenance/).\n\n';
- else if(status==='proposed'||relative(repo,file).startsWith('docs/prd/'))notice='> **Proposed direction.** This page describes planned requirements or decisions. It is not a claim that these capabilities are available. [Current feature inventory](/product/feature-inventory/).\n\n';
- else if(status==='draft')notice='> **Working documentation.** Status and test results apply to the dated assessment on this page. [Latest change review](/engineering/preexisting-change-review/).\n\n';
+ if(route(file).startsWith('docs/research/'))notice='> **Research, not verified product claims.** This material includes supplied synthesis and unvalidated hypotheses. Prices, financials and capabilities require source verification before external decisions. [Research provenance](/docs/research/provenance/).\n\n';
+ else if(status==='proposed'||relative(repo,file).startsWith('docs/prd/'))notice='> **Proposed direction.** This page describes planned requirements or decisions. It is not a claim that these capabilities are available. [Current feature inventory](/docs/product/feature-inventory/).\n\n';
+ else if(status==='draft')notice='> **Working documentation.** Status and test results apply to the dated assessment on this page. [Latest change review](/docs/engineering/preexisting-change-review/).\n\n';
  const slug=route(file),output=resolve(content,slug+'.md');await mkdir(dirname(output),{recursive:true});
  const url=github+relative(repo,file).split(sep).join('/');
  await writeFile(output,`---\ntitle: ${JSON.stringify(title)}\ndescription: ${JSON.stringify(title+' — DMF Canvas documentation')}\neditUrl: ${JSON.stringify(url)}\n---\n\n${notice}${body.trim()}\n`);
  manifest.push({source:relative(repo,file).split(sep).join('/'),slug,title});
 }
-await writeFile(resolve(content,'index.md'),`---
+await writeFile(resolve(content,'docs/index.md'),`---
 title: DMF Canvas documentation
 description: Build with the private Canvas editor and follow the interactive publishing roadmap.
 ---
@@ -49,24 +51,26 @@ DMF Canvas is a framework-free, embeddable editor for Text, Sticky Notes, Drawin
 
 ## Build with Canvas
 
-[Try the live Canvas](/playground/) to edit Text, add notes, draw, and save a local board in your browser.
+[Try the live Canvas](/) to edit Text, add notes, draw, and save a local board in your browser.
 
-Start with the [integration guide](/getting-started/), then use the [API contract](/api/) and your host's recipe: [Astro](/examples/astro/), [React](/examples/react/), [Vue](/examples/vue/) or the [embed configurator](/examples/configurator/).
+Start with the [integration guide](/docs/getting-started/), then use the [API contract](/docs/api/) and your host's recipe: [Astro](/docs/examples/astro/), [React](/docs/examples/react/), [Vue](/docs/examples/vue/) or the [embed configurator](/docs/examples/configurator/).
 
-The [Selection inspector](/inspector/) and [Text formatting guide](/text-formatting/) explain the current authoring controls. The [compatibility baseline](/compatibility/) records known limits.
+The [Selection inspector](/docs/inspector/) and [Text formatting guide](/docs/text-formatting/) explain the current authoring controls. The [compatibility baseline](/docs/compatibility/) records known limits.
 
 ## Follow development
 
-The [feature inventory](/product/feature-inventory/) separates implemented work from planned capabilities. Read the [product vision](/product/product-vision/), [roadmap](/product/product-roadmap/) and [architecture](/architecture/architecture/) for the proposed import → edit → interact → publish workflow.
+The [feature inventory](/docs/product/feature-inventory/) separates implemented work from planned capabilities. Read the [product vision](/docs/product/product-vision/), [roadmap](/docs/product/product-roadmap/) and [architecture](/docs/architecture/architecture/) for the proposed import → edit → interact → publish workflow.
 
 ## Explore the research
 
-The [25-product benchmark](/research/competitor-benchmark/) is a supplied research synthesis, with unverified pricing and market claims clearly identified. Start with its [provenance and verification notes](/research/provenance/).
+The [25-product benchmark](/docs/research/competitor-benchmark/) is a supplied research synthesis, with unverified pricing and market claims clearly identified. Start with its [provenance and verification notes](/docs/research/provenance/).
 
 ## Source and evidence
 
-Documentation is generated from the repository's Markdown sources. [Browse the full index](/documentation-index/), [review the latest validation](/engineering/preexisting-change-review/) or [view the changelog](/changelog/).
+Documentation is generated from the repository's Markdown sources. [Browse the full index](/docs/documentation-index/), [review the latest validation](/docs/engineering/preexisting-change-review/) or [view the changelog](/docs/changelog/).
 `);
+const redirects=['# Generated by scripts/sync-docs.mjs. Documentation moved under /docs/ on 12 November 2026.','/playground/ / 301',...manifest.map(({slug})=>`/${slug.slice(5)}/ /${slug}/ 301`)];
+await writeFile(resolve(repo,'site/public/_redirects'),redirects.join('\n')+'\n');
 await mkdir(resolve(repo,'site/.generated'),{recursive:true});
 await writeFile(resolve(repo,'site/.generated/docs.json'),JSON.stringify(manifest,null,2));
 console.log(`Prepared ${manifest.length+1} documentation pages from canonical Markdown.`);

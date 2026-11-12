@@ -9,13 +9,13 @@ import '../../../examples/configurator/canvas-embed.css';
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Try the DMF Canvas editor: edit Text, add sticky notes, draw, and save a board locally." />
-  <link rel="canonical" href="https://canvas.feisal.id/playground/" />
+  <link rel="canonical" href="https://canvas.feisal.id/" />
   <link rel="icon" href="/favicon.svg" />
   <title>Try Canvas | DMF Canvas</title>
  </head>
  <body>
   <a class="skip" href="#canvas-demo">Skip to Canvas</a>
-  <header class="site-header"><a class="brand" href="/">DMF Canvas</a><nav aria-label="Main"><a href="/">Documentation</a><a href="https://github.com/dmfeisal/dmf-canvas">GitHub</a></nav></header>
+  <header class="site-header"><a class="brand" href="/">DMF Canvas</a><nav aria-label="Main"><a href="/docs/">Documentation</a><a href="https://github.com/dmfeisal/dmf-canvas">GitHub</a></nav></header>
   <main>
    <div class="intro"><div><h1>Try Canvas.</h1><p>Write, sketch, and arrange your ideas. Everything you make stays in this browser tab until you save a board file.</p></div><span class="version">Editor preview · 0.3.0-alpha.1</span></div>
    <section class="workspace" aria-label="Canvas playground">
@@ -23,10 +23,10 @@ import '../../../examples/configurator/canvas-embed.css';
     <p id="canvas-help" class="hint">Drag to move. Double-click Text to edit. Select an object, then open the Selection inspector to change its position or Text style.</p>
     <div id="canvas-demo" tabindex="-1" aria-describedby="canvas-help"></div>
     <output id="playground-status" aria-live="polite">Loading the editor…</output>
-    <noscript><p>JavaScript is required for this editor. You can still read the <a href="/getting-started/">integration guide</a>.</p></noscript>
+    <noscript><p>JavaScript is required for this editor. You can still read the <a href="/docs/getting-started/">integration guide</a>.</p></noscript>
    </section>
    <details class="help"><summary>Keyboard controls, saving, and limits</summary><div><p><strong>Keyboard:</strong> Tab to an object. Press Enter or F2 to edit Text, and Escape to finish. Arrow keys move a selected object. Use the toolbar for Undo, Redo, grouping, locks, and layers.</p><p><strong>Saving:</strong> Save board downloads a DMF Canvas JSON file. Open board restores that file. There is no automatic storage or upload; refreshing or leaving this page discards unsaved edits. Opening a board starts new history.</p><p><strong>Images:</strong> Add a local PNG, JPEG, or WebP. Images stay in the local board; they are not uploaded. Select an image to edit its description.</p><p><strong>Limits:</strong> Up to 50 objects on a bounded surface. This preview has no pan/zoom, general shapes, Excalidraw/FigJam import, or published visitor viewer. Touch-only use and other browser engines have not been certified.</p></div></details>
-   <footer><a href="/text-formatting/">Text formatting guide</a><a href="/product/product-roadmap/">What’s planned</a><a href="/compatibility/">Compatibility</a></footer>
+   <footer><a href="/docs/text-formatting/">Text formatting guide</a><a href="/docs/product/product-roadmap/">What’s planned</a><a href="/docs/compatibility/">Compatibility</a></footer>
   </main>
   <script>
    import {mountEmbed} from '../../../examples/configurator/canvas-embed.js';

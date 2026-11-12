@@ -1,6 +1,6 @@
 # Canvas documentation website
 
-Static Astro/Starlight documentation for `https://canvas.feisal.id`. The library remains a separate package with no website runtime dependencies.
+Static Astro/Starlight site for `https://canvas.feisal.id`. The home page `/` is the live editor playground; generated documentation lives under `/docs/` (for example `/docs/api/`), and the experimental import lab stays at `/labs/import/`. The library remains a separate package with no website runtime dependencies.
 
 ## Local workflow
 
@@ -11,7 +11,7 @@ npm run build --prefix site
 npm run preview --prefix site
 ```
 
-Edit canonical Markdown in `docs/`, root README/changelog or the example guides. `scripts/sync-docs.mjs` generates the site's content before development/builds, normalizes metadata without changing the research source, rewrites Markdown links into routes and sends source-code links to GitHub. Never edit `src/content/docs/` directly. Generated content, search output, build files and `.netlify/` project state are ignored.
+Edit canonical Markdown in `docs/`, root README/changelog or the example guides. `scripts/sync-docs.mjs` generates the site's content before development/builds, normalizes metadata without changing the research source, rewrites Markdown links into routes and sends source-code links to GitHub. Every generated page is placed under `src/content/docs/docs/`, so its route starts with `/docs/`. Sync also writes the ignored `public/_redirects`, which sends each pre-12 November 2026 root URL (such as `/api/`) and `/playground/` to its new address with a Netlify 301; `scripts/check-build.mjs` fails if a redirect is malformed, its target is missing or a real page shadows it. Never edit `src/content/docs/` directly. Generated content, search output, build files and `.netlify/` project state are ignored.
 
 `npm run build --prefix site` builds static HTML and Pagefind search, then checks every generated page and its local links/assets. It fails on missing local targets. Publication status notices distinguish proposed capabilities and unverified research. No telemetry or third-party font requests are added.
 
@@ -56,7 +56,7 @@ Validation: 55 generated documentation pages plus the 404 page build; 3,859 loca
 
 ## Live editor playground
 
-`/playground/` bundles the existing Canvas library and configurator host through explicit package-export aliases. It adds host-owned Text creation, theme and reset controls without changing library runtime modules. No files are uploaded and no board autosave is enabled. The public documentation links to the playground; planned importer/viewer capabilities remain excluded.
+The home page (`/`, formerly `/playground/`) bundles the existing Canvas library and configurator host through explicit package-export aliases. It adds host-owned Text creation, theme and reset controls without changing library runtime modules. No files are uploaded and no board autosave is enabled. The public documentation links to the playground; planned importer/viewer capabilities remain excluded.
 
 After a production build, run `CANVAS_TEST_SPACE_ID=<agent-owned-space> npm run test:browser --prefix site`. The caller owns and closes the browser space. The runner serves the built site temporarily and checks Text editing/formatting/history, notes, images, Save/Open, Pencil, mobile controls, reset cancellation/confirmation, cleanup and navigation. The fixture rejects server writes.
 
