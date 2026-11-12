@@ -39,8 +39,8 @@ export function createCanvasToolbar(container,{actions=null,label='Canvas editin
   // Arrange retains its authored disclosure and real controls; no clones or extra dispatch.
   if(!generated)for(const [rowId,icon]of Object.entries(arrangement)){const button=container.querySelector(`[data-document-action="${rowId}"]`);if(button)add(button,{id:rowId,icon},false);}
   const tip=doc.createElement('div');tip.className='canvas-embed-tooltip';tip.id=`canvas-embed-tip-${id}`;tip.setAttribute('role','tooltip');tip.setAttribute('popover','manual');bar.append(tip);
-  // P, Delete and Select's V are unmodified tool hints; every other shortcut uses the platform command key.
-  const shortcut=row=>row.key?(row.key==='P'||row.id==='select'&&row.key==='V'||row.key==='Delete'?row.key:`${mod} ${row.key}`):'';
+  // P, Shift P, Delete and Select's V are unmodified tool hints; every other shortcut uses the platform command key.
+  const shortcut=row=>row.key?(['P','Shift P','Delete'].includes(row.key)||row.id==='select'&&row.key==='V'?row.key:`${mod} ${row.key}`):'';
   const hide=()=>{if(tipTarget){const original=restore.find(item=>item.button===tipTarget)?.described;if(original===null)tipTarget.removeAttribute('aria-describedby');else if(original!==undefined)tipTarget.setAttribute('aria-describedby',original);}tipTarget=null;if(tip.matches(':popover-open'))tip.hidePopover();tip.hidden=true;};
   const describe=row=>{const key=shortcut(row);return row.label+(key?` · ${key}`:'');};
   const rtl=()=>view.getComputedStyle(bar).direction==='rtl';

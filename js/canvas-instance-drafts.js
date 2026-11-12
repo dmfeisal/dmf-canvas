@@ -3,7 +3,7 @@ const limit=1049600;
 export function parseLocalDraft(raw) {
   if(typeof raw!=='string'||raw.length>limit||new TextEncoder().encode(raw).byteLength>limit)throw new RangeError('Local draft exceeds its size limit.');
   const value=JSON.parse(raw),doc=value?.document;
-  if(value?.format!=='dmf-canvas-draft'||value.version!==1||!Number.isSafeInteger(value.savedAt)||value.savedAt<0||doc?.format!=='dmf-canvas'||![1,2].includes(doc.version)||!Array.isArray(doc.originals)||!Array.isArray(doc.objects)||doc.originals.length+doc.objects.length>50)throw new TypeError('Unsupported local draft.');
+  if(value?.format!=='dmf-canvas-draft'||value.version!==1||!Number.isSafeInteger(value.savedAt)||value.savedAt<0||doc?.format!=='dmf-canvas'||![1,2,3].includes(doc.version)||!Array.isArray(doc.originals)||!Array.isArray(doc.objects)||doc.originals.length+doc.objects.length>50)throw new TypeError('Unsupported local draft.');
   return value;
 }
 export function createLocalDraft(canvas,{key,storage,delay=600,onStatus=()=>{},now=Date.now,setTimer=setTimeout,clearTimer=clearTimeout}={}) {

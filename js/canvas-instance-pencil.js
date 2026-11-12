@@ -1,11 +1,12 @@
 import {createDrawing} from './canvas-instance-drawing.js';
-import {svgNode,makePath,pathFor} from './canvas-instance-stroke.js';
-const widths=[2,4,8],inks={primary:1,blue:1,red:1};
+import {svgNode,makePath,pathFor,validStroke,strokeTools} from './canvas-instance-stroke.js';
 const native='input,textarea,select,button,a,[contenteditable]:not([contenteditable="false"]),dialog,[popover]';
 export function createPencil(canvas,host,onChange=()=>{}) {
-  let root=host,instance=canvas,active=false,width=4,color='primary',stroke=null,frame=null,disposed=false;
+  // One controller arms at most one drawing tool; each tool keeps its own width and ink.
+  let root=host,instance=canvas,active=false,tool='pencil',stroke=null,frame=null,disposed=false;
+  const settings={pencil:{width:4,color:'primary'},highlighter:{width:20,color:'yellow'}};
   const view=host.ownerDocument.defaultView;
-  const getState=()=>Object.freeze({active,width,color,drawing:!!stroke});
+  const getState=()=>Object.freeze({active,tool,width:settings[tool].width,color:settings[tool].color,drawing:!!stroke});
   const notify=()=>{if(!disposed)onChange(getState());};
   const cleanup=()=>{
     if(frame!==null){view.cancelAnimationFrame(frame);frame=null;}
@@ -16,7 +17,7 @@ export function createPencil(canvas,host,onChange=()=>{}) {
   const setActive=value=>{
     if(disposed)return false;
     if(value&&(!instance.getState().mounted||instance.getState().settings.readOnly||!instance.getState().settings.tools.pencil||instance.getState().editing))return false;
-    cancel();if(value){instance.execute('cancel');instance.setMultiple(false);if(!instance.getState().canCreate)return false;}active=!!value;root.toggleAttribute('data-instance-pencil-active',active);notify();return true;
+    cancel();if(value){instance.execute('cancel');instance.setMultiple(false);if(!instance.getState().canCreate)return false;}active=!!value;root.toggleAttribute('data-instance-pencil-active',active);if(active)root.dataset.instancePencilTool=tool;else delete root.dataset.instancePencilTool;notify();return true;
   };
   const addPoint=event=>{
     const s=stroke,point={x:Math.max(20,Math.min(s.width-20,event.clientX-s.left)),y:Math.max(20,Math.min(s.height-44,event.clientY-s.top))},last=s.points.at(-1);
@@ -27,9 +28,9 @@ export function createPencil(canvas,host,onChange=()=>{}) {
     if(!active||event.button!==0||!event.isPrimary||event.pointerType==='touch'||event.target.closest(native)||!instance.getState().canCreate)return;
     if(root.clientWidth<80||root.clientHeight<100)return;
     const reservation=instance.beginCreation(cleanup,'pencil');if(!reservation)return;
-    const rect=root.getBoundingClientRect(),svg=svgNode(root.ownerDocument,'svg'),path=makePath(root.ownerDocument,[],width,color);
+    const {width,color}=settings[tool],rect=root.getBoundingClientRect(),svg=svgNode(root.ownerDocument,'svg'),path=makePath(root.ownerDocument,[],width,color,tool);
     svg.dataset.canvasInstancePreview='';svg.setAttribute('aria-hidden','true');svg.append(path);root.append(svg);
-    stroke={id:event.pointerId,reservation,svg,path,points:[],left:rect.left+root.clientLeft,top:rect.top+root.clientTop,width:root.clientWidth,height:root.clientHeight,ink:color,weight:width};
+    stroke={id:event.pointerId,reservation,svg,path,points:[],left:rect.left+root.clientLeft,top:rect.top+root.clientTop,width:root.clientWidth,height:root.clientHeight,ink:color,weight:width,tool};
     root.focus({preventScroll:true});addPoint(event);path.setAttribute('d',pathFor(stroke.points));
     try{root.setPointerCapture(event.pointerId);}catch{reservation.cancel();return;}
     event.preventDefault();event.stopImmediatePropagation();notify();
@@ -49,7 +50,7 @@ export function createPencil(canvas,host,onChange=()=>{}) {
     if(root.clientWidth!==stroke.width||root.clientHeight!==stroke.height||Math.abs(rect.left+root.clientLeft-stroke.left)>.5||Math.abs(rect.top+root.clientTop-stroke.top)>.5){cancel();return;}
     addPoint(event);const completed=stroke;cleanup();let drawing;
     try{
-      drawing=createDrawing(root,completed.points,{width:completed.weight,color:completed.ink});
+      drawing=createDrawing(root,completed.points,{width:completed.weight,color:completed.ink,tool:completed.tool});
       if(!completed.reservation.commit(drawing.element,drawing.owner)){drawing.owner.dispose();return;}
       instance.select(drawing.element);drawing.element.focus({preventScroll:true});
     }catch(error){drawing?.owner.dispose();completed.reservation.cancel();throw error;}
@@ -58,9 +59,12 @@ export function createPencil(canvas,host,onChange=()=>{}) {
   };
   const key=event=>{
     if(event.defaultPrevented||event.isComposing||event.keyCode===229||event.target.closest(native))return;
-    if(!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.shiftKey&&!event.repeat&&['p','v','Escape'].includes(event.key==='Escape'?event.key:event.key.toLowerCase())){
+    const name=event.key==='Escape'?event.key:event.key.toLowerCase();
+    if(!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.repeat&&(name==='p'||!event.shiftKey&&['v','Escape'].includes(name))){
       if(event.key==='Escape'&&!active&&!stroke)return;
-      event.preventDefault();event.stopImmediatePropagation();setActive(event.key.toLowerCase()==='p'?!active:false);return;
+      event.preventDefault();event.stopImmediatePropagation();
+      if(name!=='p'){setActive(false);return;}
+      const next=event.shiftKey?'highlighter':'pencil';if(active&&tool===next)setActive(false);else if(setTool(next))setActive(true);return;
     }
     if(stroke){if(event.key==='Tab')cancel();else event.preventDefault();event.stopImmediatePropagation();}
   };
@@ -71,10 +75,11 @@ export function createPencil(canvas,host,onChange=()=>{}) {
   function dispose(){
     if(disposed)return;cancel();disposed=true;active=false;
     for(const [type,listener]of Object.entries(listeners))root.removeEventListener(type,listener,true);
-    root.removeAttribute('data-instance-pencil-active');unsubscribe();root=instance=null;
+    root.removeAttribute('data-instance-pencil-active');delete root.dataset.instancePencilTool;unsubscribe();root=instance=null;
   }
-  return Object.freeze({getState,setActive,cancel,
-    setWidth(value){if(disposed||stroke||!widths.includes(value))return false;width=value;notify();return true;},
-    setColor(value){if(disposed||stroke||!Object.hasOwn(inks,value))return false;color=value;notify();return true;},dispose,
+  function setTool(value){if(disposed||stroke||!Object.hasOwn(strokeTools,value))return false;if(tool!==value){tool=value;if(active)root.dataset.instancePencilTool=tool;notify();}return true;}
+  return Object.freeze({getState,setActive,setTool,cancel,
+    setWidth(value){if(disposed||stroke||!validStroke(tool,value,settings[tool].color))return false;settings[tool].width=value;notify();return true;},
+    setColor(value){if(disposed||stroke||!validStroke(tool,settings[tool].width,value))return false;settings[tool].color=value;notify();return true;},dispose,
   });
 }

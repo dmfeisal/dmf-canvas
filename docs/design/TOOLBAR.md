@@ -22,7 +22,7 @@ Editor surfaces use **floating chrome**: four groups placed over the canvas stag
 
 | Group | Position | Orientation | Actions, in order |
 |---|---|---|---|
-| Tools | Top, inline start | Vertical rail | Select, Add text, Add note, Add image, Pencil |
+| Tools | Top, inline start | Vertical rail | Select, Add text, Add note, Add image, Pencil, Highlighter |
 | History | Bottom, inline start | Horizontal | Undo, Redo |
 | Selection actions | Bottom, centre | Horizontal | Selection inspector, Duplicate, Delete, More |
 | Help | Bottom, inline end | Horizontal | Keyboard help |
@@ -47,6 +47,7 @@ All artwork is local [Lucide](https://lucide.dev) from `js/canvas-instance-toolb
 | `sticky` | Add note | `sticky-note` |  | Tools |
 | `image` | Add image | `image` |  | Tools |
 | `pencil` | Pencil | `pencil` | P | Tools |
+| `highlighter` | Highlighter | `highlighter` | Shift P | Tools |
 | `multiple` | Select multiple | `lasso-select` |  | Tools (authored specimen) |
 | `undo` | Undo | `undo-2` | ⌘/Ctrl Z | History |
 | `redo` | Redo | `redo-2` | ⌘/Ctrl Shift Z | History |
@@ -78,7 +79,7 @@ The sprite also carries `image-plus` and `layers` for hosts that need them. To a
 - Floating groups use a 12px radius and a soft shadow; inline toolbars use a 10px radius and no shadow.
 - Menu rows have a 16px icon, a 13px label and an 11px monospace shortcut, sized by padding rather than a fixed height.
 - Bar buttons are icon-only. Their name and real shortcut appear in one shared hover/focus tooltip ("Duplicate · ⌘ D") and in the accessible name. Never show a shortcut the canvas does not implement.
-- Pressed tools (Select or Pencil) and checked menu rows use the selection colour. Disabled controls stay visible at reduced opacity and are skipped by arrow-key navigation.
+- Pressed tools (Select, Pencil or Highlighter; one at a time) and checked menu rows use the selection colour. Disabled controls stay visible at reduced opacity and are skipped by arrow-key navigation.
 - Colours come from the six theme roles (toolbar, ink, line, selection, surface, grid) with dmf-ui and system fallbacks; see [design system boundaries](DESIGN-SYSTEM.md).
 
 ## More menu
@@ -121,4 +122,4 @@ const selection=createCanvasToolbar(slot('selection'),{label:'Selection actions'
 
 ## Differences from feisal.id
 
-feisal.id also has Highlighter and Stroke eraser in the rail, a direct Reset canvas edits (`brush-cleaning`) button in the selection group, a Layers panel, and camera controls (Fit all, Zoom to selection). The library does not provide those capabilities yet, so they are not in this standard; add them here with their icons when they ship (Highlighter and Eraser are planned for 0.3.0).
+feisal.id also has Stroke eraser in the rail, Pencil/Highlighter colour and width options, a direct Reset canvas edits (`brush-cleaning`) button in the selection group, a Layers panel, and camera controls (Fit all, Zoom to selection). The library does not provide those capabilities yet, so they are not in this standard; add them here with their icons when they ship (Eraser is planned for 0.3.0).

@@ -11,3 +11,9 @@ The standalone baseline includes bounded Text/Sticky Note/Drawing/Image objects,
 The package stays private. Source licensing and public distribution decisions remain unresolved; bundled Lucide notices remain required. A local archive or Git tag is not registry publication or a public compatibility promise.
 
 Unreleased inspector work uses native Popover and the existing owners' untransformed-host coordinates. It does not establish camera, CSS-transformed-ancestor, iframe or additional browser-engine support. The configurator's generated files must be paired with the corresponding unreleased package source until a new version is released.
+
+## Highlighter (schema 3)
+
+Board files and clipboard transfers that contain a Highlighter stroke use **schema 3**; otherwise saving keeps schema 1 or 2 exactly as before. Portable documents use **version 2** only when they contain a highlight. Readers accept schemas 1–3 and portable versions 1–2. A schema 1 or 2 board or transfer, or a version 1 portable document, that claims a highlight is rejected. Draft envelopes stay version 1 and carry the board's own schema.
+
+Older readers (0.2.0 and earlier 0.3.0-alpha.1 builds) reject schema 3 boards and transfers instead of drawing highlights as solid Pencil ink. Highlight records persist only semantic `tool`, `ink` and `strokeWidth` keys. An explicit `tool:'pencil'` is accepted and normalized away, so Pencil records are unchanged.
