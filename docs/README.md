@@ -27,9 +27,9 @@ Latest recorded review: [private 0.2.0 change review](engineering/PREEXISTING-CH
 | COMPATIBILITY.md | Retain versioned 0.1.0 compatibility history; no new browser certification |
 | INSPECTOR.md / TEXT-FORMATTING.md | Retain current local feature contracts and in-progress work |
 | EXTRACTION.md / SOURCE-MANIFEST.json | Retain provenance and historical validation; not fresh results |
-| CANVAS-OWNER-ADAPTERS.md | Retain owner rationale; current declarations/API win for exported contract |
-| CANVAS-PACKAGE-BOUNDARY.md | Retain historical proposal; current package/API establish implementation |
-| CANVAS-EXTRACTION-REHEARSAL.md | Retain historical portfolio rehearsal; portfolio-only CANVAS-ROADMAP.md and CANVAS-PRD.md links are unresolved here; use product roadmap/MVP for current proposals |
+| CANVAS-OWNER-ADAPTERS.md | Canonical (dmf-web links here); retain owner rationale; current declarations/API win for exported contract |
+| CANVAS-PACKAGE-BOUNDARY.md | Canonical (dmf-web links here); retain historical proposal and implementation checkpoints; current package/API establish implementation |
+| CANVAS-EXTRACTION-REHEARSAL.md | Canonical (dmf-web links here); retain historical portfolio rehearsal; portfolio-only CANVAS-ROADMAP.md and CANVAS-PRD.md links are unresolved here; use product roadmap/MVP for current proposals |
 | ROADMAP-AND-REFERENCES.md | Retain version policy/reference history; product/PRODUCT-ROADMAP.md owns proposed product sequencing |
 | RELEASE-CHECKLIST.md | Retain detailed release gates; engineering/RELEASE-PROCESS.md explains context |
 | Root CHANGELOG.md | Retain version record; no duplicated changelog |
