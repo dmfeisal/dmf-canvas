@@ -69,7 +69,7 @@ The PNG export previously planned for 0.5.0 moves here.
 
 ## Decisions to confirm
 
-1. **Order:** the four phases above, or another order.
+1. **Order:** accepted on 13 November 2026 as the four phases above. Phase 1 starts with its own proposal, [editing precision](EDITING-PRECISION.md).
 2. **Layer names:** saved in board files, or visit-local like dmf-web.
 3. **PNG export:** host-supplied exporter hook, or built-in capture.
 4. **Sticky colours:** adopt dmf-web's 16 swatches as package keys, or keep 3 built-in keys and let hosts add more.
