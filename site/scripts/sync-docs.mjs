@@ -47,7 +47,7 @@ Make your ideas interactive on the web.
 
 DMF Canvas is a framework-free, embeddable editor for Text, Sticky Notes, Drawings and raster Images. It runs locally in your site, with explicit object owners, editing history and host-owned files.
 
-**Current state: private 0.3.0-alpha.1 development preview.** The package is not published to a public registry. Excalidraw Text/freehand import is experimental; broader import fidelity, an independent visitor viewer and interactive storytelling are proposed milestones.
+**Current state: private 0.3.0-alpha.2 development preview.** The package is not published to a public registry. Excalidraw Text/freehand import is experimental; broader import fidelity, an independent visitor viewer and interactive storytelling are proposed milestones.
 
 ## Build with Canvas
 
@@ -55,7 +55,7 @@ DMF Canvas is a framework-free, embeddable editor for Text, Sticky Notes, Drawin
 
 Start with the [integration guide](/docs/getting-started/), then use the [API contract](/docs/api/) and your host's recipe: [Astro](/docs/examples/astro/), [React](/docs/examples/react/), [Vue](/docs/examples/vue/) or the [embed configurator](/docs/examples/configurator/).
 
-The [Selection inspector](/docs/inspector/) and [Text formatting guide](/docs/text-formatting/) explain the current authoring controls. The [compatibility baseline](/docs/compatibility/) records known limits.
+The [glossary](/docs/glossary/) names every part of the editor. The [Selection inspector](/docs/inspector/) and [Text formatting guide](/docs/text-formatting/) explain the current authoring controls. The [compatibility baseline](/docs/compatibility/) records known limits.
 
 ## Follow development
 
