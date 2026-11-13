@@ -78,5 +78,7 @@ jobs:
         run: npm run test:frameworks:browser
       - name: Configurator and generated examples
         run: npm run test:configurator:browser
+      - name: Shapes drawing, resizing, styling and saving
+        run: npm run test:shapes:browser
       - name: Verify checks leave tracked files unchanged
         run: git diff --exit-code

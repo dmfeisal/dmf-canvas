@@ -100,7 +100,7 @@ Fixtures stay synthetic until representative creator boards are available, as th
 3. Rail button, options bar, shortcuts, keyboard placement and the `shapes` permission in the configurator. **Done in 0.3.0-alpha.3.**
 4. More › Shape style and clipboard/duplicate/group coverage. **Done in 0.3.0-alpha.3.** The inspector's Width and Height still scale shapes proportionally; free inspector resizing needs the shared inspector planner to know which field changed and is left for later.
 5. Excalidraw mapping and import-lab report rows. **Done in 0.3.0-alpha.3** (adapter version 2).
-6. Docs: API, compatibility, toolbar standard, glossary and changelog; browser suite scenarios for drawing, resizing, styling, Save/Open and mobile RTL.
+6. Docs: API, compatibility, toolbar standard, glossary and changelog; browser suite scenarios for drawing, resizing, styling, Save/Open and mobile RTL. **Done in 0.3.0-alpha.3:** `npm run test:shapes:browser` (headless Chromium, in CI) covers the rail and options bar, drawing by drag, Shift constraints, click and Enter placement, free resize with 24px handles, More › Shape style with one Undo step, Save/Open, the `shapes` permission and mobile RTL.
 
 Release: land as `0.3.0-alpha.3`. Promote to `0.3.0` only after the browser suites pass and the archive checks in the [release checklist](../RELEASE-CHECKLIST.md) run.
 

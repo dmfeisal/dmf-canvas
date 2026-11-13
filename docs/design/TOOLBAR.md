@@ -31,7 +31,7 @@ Editor surfaces use **floating chrome**: four groups placed over the canvas stag
 - Positions are logical (`inline-start`/`inline-end`), so the rail and history move to the right and help to the left in right-to-left pages.
 - On stages narrower than 560px, the selection group lifts above the corner groups instead of overlapping them.
 - Status text that core announces (`.canvas-instance-status`) sits top, inline end, clear of every group.
-- Original content starts at least 72px from the inline-start edge so the rail does not cover it on first load. Objects may be moved under the rail later, as on feisal.id.
+- Original content starts at least 72px from the inline-start edge so the rail does not cover it on first load. Objects may be moved under the rail later, as on feisal.id. The floating chrome always stays above objects: `toolbar.css` isolates the host's stacking context, so object layer order (z-index 1–50) never rises over the toolbar slots.
 
 **Compact hosts** (test fixtures and recipe consumers with their own surrounding controls) may render the same groups, in the same order, as one inline horizontal toolbar, with secondary actions in the same More menu. `examples/shared/custom-host.js` is the reference. Never invent a different grouping.
 

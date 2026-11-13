@@ -97,7 +97,8 @@
     "test:configurator": "node scripts/test-configurator.mjs",
     "test:configurator:browser": "node scripts/test-configurator-browser.mjs",
     "test:inspector:browser": "node scripts/test-inspector-browser.mjs",
-    "test:text:browser": "node scripts/test-text-browser.mjs"
+    "test:text:browser": "node scripts/test-text-browser.mjs",
+    "test:shapes:browser": "node scripts/test-shapes-browser.mjs"
   },
   "devDependencies": {
     "playwright": "1.64.1",

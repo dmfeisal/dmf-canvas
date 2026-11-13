@@ -39,6 +39,8 @@
 
 /* Optional floating chrome: tool rail, history, selection actions and help over a positioned stage. */
 .canvas-embed-chrome { position:relative; container-type:inline-size; }
+/* Objects stack by layer (z-index 1-50) inside their host; isolating the host keeps every object below the floating chrome. */
+.canvas-embed-chrome > [data-host] { isolation:isolate; }
 .canvas-embed-chrome__slot { position:absolute; z-index:3; display:flex; max-width:calc(100% - 24px); pointer-events:none; }
 .canvas-embed-chrome__slot > * { pointer-events:auto; }
 .canvas-embed-chrome__slot[data-chrome-slot=tools] { inset-block-start:12px; inset-inline-start:12px; max-height:calc(100% - 80px); }
