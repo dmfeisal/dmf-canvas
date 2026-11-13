@@ -25,7 +25,7 @@ This is the proposed dependency order for the product vision, not a release sche
 
 ## Reconciliation with existing release planning
 
-The [older release plan](../ROADMAP-AND-REFERENCES.md) proposes 0.3 shapes/Highlighter/Eraser, 0.4 touch/camera/snapping and 0.5 PNG export. Retain those proposals as a capability backlog, not a second authoritative product sequence. Do not automatically map M1 to 0.3 or declare the old plan cancelled. Prioritize shapes/connectors needed by real import fixtures; defer Highlighter/Eraser, snapping and PNG unless validation establishes a dependency. Camera work may become necessary for large imported boards and visitor navigation.
+The [older release plan](../ROADMAP-AND-REFERENCES.md) proposes 0.3 shapes/Highlighter/Eraser, 0.4 touch/camera/snapping and 0.5 PNG export. Retain those proposals as a capability backlog, not a second authoritative product sequence. Do not automatically map M1 to 0.3 or declare the old plan cancelled. Prioritize shapes/connectors needed by real import fixtures; defer snapping and PNG unless validation establishes a dependency. (Highlighter and stroke Eraser have since landed early in the private 0.3.0-alpha.1 prerelease; Shapes remain open.) Camera work may become necessary for large imported boards and visitor navigation.
 
 Use user-outcome dependency first, verified regression/security severity second, then evidence of demand and implementation cost. No numeric opportunity score or velocity estimate is available.
 

@@ -14,7 +14,7 @@ npm start
 
 Open `http://127.0.0.1:8000/` for two independent custom hosts, or `/examples/canvas/` for the more complete controls specimen. There is no build step and no runtime dependency. TypeScript is a development checker only.
 
-The examples include Text, Sticky Notes, Drawings and local raster Images; selection/marquee, editing, transforms, groups, arrangement, layer ordering, locks, Undo/Redo, duplication/deletion, page-local clipboard and local board files. Settings, theme and optional draft persistence belong to each host. No service, upload, publication or portfolio script is required.
+The examples include Text, Sticky Notes, Pencil and Highlighter Drawings, the stroke Eraser and local raster Images; selection/marquee, editing, transforms, groups, arrangement, layer ordering, locks, Undo/Redo, duplication/deletion, page-local clipboard and local board files. Settings, theme and optional draft persistence belong to each host. No service, upload, publication or portfolio script is required.
 
 ## Embed configurator
 
@@ -50,10 +50,11 @@ Host CSS owns surface dimensions and original-object layout. Keep owner objects 
 | `dmf-canvas/owners` | Text, Sticky Note, Image and Drawing factories; `canvasDocuments`, `validateObject` |
 | `dmf-canvas/clipboard` | `createObjectClipboard`, `validateTransfer` |
 | `dmf-canvas/images` | Optional bounded raster validation, dimension reading and progressive encoding helpers |
-| `dmf-canvas/pencil` | `createPencil` input controller |
-| `dmf-canvas/toolbar` | `createCanvasToolbar` with host-owned actions |
+| `dmf-canvas/pencil` | `createPencil` controller for Pencil, Highlighter and Eraser; `drawingPalettes` |
+| `dmf-canvas/toolbar` | `createCanvasToolbar` with host-owned actions and More menu; optional `createCanvasInspector` |
 | `dmf-canvas/theme` | `createCanvasTheme`, `resolveTheme` |
 | `dmf-canvas/drafts` | `createLocalDraft`, `parseLocalDraft` with injected storage |
+| `dmf-canvas/documents` | Experimental portable documents: `validatePortableDocument`, `migrateLegacyDocument`, `importExcalidraw` |
 
 Core import does not initialize DOM, UI, theme, persistence or Pencil. Optional file/image/settings panels live under `examples/shared/` and are excluded from the archive. Tool restrictions guard interaction and commands as well as UI; `readOnly` still permits selection and Copy/Save. Board files never include tool permissions or theme.
 
