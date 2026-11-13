@@ -60,6 +60,8 @@ const hasSearch=Astro.slots.has('search');
 </script>
 
 <style is:global>
+ /* Own the box model so the row is identical on any host page, whatever its global reset. */
+ .site-nav,.site-nav *{box-sizing:border-box}
  .site-nav{display:flex;align-items:center;gap:16px;height:100%;min-width:0;font-family:-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif}
  .site-nav svg{flex:none}
  .site-nav__logo{flex:none;font-size:1.3rem;font-weight:700;letter-spacing:-.04em;line-height:1.5;color:var(--foreground);text-decoration:none}

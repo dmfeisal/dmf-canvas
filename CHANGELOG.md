@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0-alpha.2 (prepared 13 November 2026, private, experimental)
+
+Documentation-only prerelease. Runtime modules, exports, styles, assets and board, clipboard, draft and portable formats are unchanged from 0.3.0-alpha.1; this version exists because shipped documentation changed after the alpha.1 archive was recorded.
+
+- Correct shipped docs to match alpha.1 behaviour: the Selection inspector re-contains itself with a panel ResizeObserver (`docs/INSPECTOR.md`), portable documents are version 2 when they contain a highlight (`docs/API.md`), and the README lists the Highlighter, stroke Eraser, `dmf-canvas/documents`, `drawingPalettes`, the More menu and `createCanvasInspector`.
+- Add a [glossary](docs/GLOSSARY.md) of Canvas parts, code names and not-yet-available terms, with a labelled anatomy diagram, linked from the documentation index. The glossary is published with the documentation site rather than the archive.
+
+Migration: none. The immutable 0.3.0-alpha.1 archive is unchanged.
+
 ## 0.3.0-alpha.1 (prepared 10 November 2026, private, experimental)
 
 - Add separate portable documents with stable node IDs, legacy migration and original-free host reconstruction. Existing board/clipboard/draft formats remain unchanged.

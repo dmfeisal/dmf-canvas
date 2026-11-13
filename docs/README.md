@@ -14,7 +14,9 @@ Current private implementation contracts remain in the existing root guides. Pro
 
 ## Read first
 
-Latest recorded review: [private 0.2.0 change review](engineering/PREEXISTING-CHANGE-REVIEW.md). The current package is private `0.3.0-alpha.1`; see the [changelog](../CHANGELOG.md) for what changed since that review.
+New to the vocabulary? The [glossary](GLOSSARY.md) names every Canvas part, from the stage and handles to toolbar groups and command results, with a labelled diagram.
+
+Latest recorded review: [private 0.2.0 change review](engineering/PREEXISTING-CHANGE-REVIEW.md). The current package is private `0.3.0-alpha.2`; see the [changelog](../CHANGELOG.md) for what changed since that review.
 
 [Repository assessment](engineering/REPOSITORY-ASSESSMENT.md) → [feature evidence](product/FEATURE-INVENTORY.md) → [roadmap and next sprint](product/PRODUCT-ROADMAP.md). [Vision](product/PRODUCT-VISION.md), [MVP](prd/MVP-PRD.md) and [architecture](architecture/ARCHITECTURE.md) define the proposed direction. [Research provenance](research/PROVENANCE.md) explains the imported benchmark's limits.
 
@@ -25,6 +27,7 @@ Latest recorded review: [private 0.2.0 change review](engineering/PREEXISTING-CH
 | Root README | Retain integration quickstart; product direction links here |
 | API.md | Retain current private API; architecture specs link to it |
 | COMPATIBILITY.md | Retain versioned 0.1.0 compatibility history; no new browser certification |
+| GLOSSARY.md | Canonical names for Canvas parts, code names and not-yet-available terms |
 | INSPECTOR.md / TEXT-FORMATTING.md | Retain current local feature contracts and in-progress work |
 | EXTRACTION.md / SOURCE-MANIFEST.json | Retain provenance and historical validation; not fresh results |
 | CANVAS-OWNER-ADAPTERS.md | Canonical (dmf-web links here); retain owner rationale; current declarations/API win for exported contract |

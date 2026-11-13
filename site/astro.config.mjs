@@ -21,7 +21,7 @@ export default defineConfig({
    {label:'Overview',link:'/docs/'},
    {label:'Try the live Canvas',link:'/'},
    {label:'Experimental import lab',link:'/labs/import/'},
-   {label:'Current editor',items:['getting-started','api','inspector','text-formatting','compatibility','changelog'].map(slug=>({slug:'docs/'+slug}))},
+   {label:'Current editor',items:['getting-started','glossary','api','inspector','text-formatting','compatibility','changelog'].map(slug=>({slug:'docs/'+slug}))},
    {label:'Integration recipes',items:[{autogenerate:{directory:'docs/examples'}}]},
    {label:'Product direction',items:[{autogenerate:{directory:'docs/product'}}],collapsed:true},
    {label:'Proposed features',items:[{autogenerate:{directory:'docs/prd'}}],collapsed:true},
