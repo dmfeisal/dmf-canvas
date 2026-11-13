@@ -11,6 +11,9 @@ const names={rectangle:'Rectangle',ellipse:'Ellipse',diamond:'Diamond',line:'Lin
 const open=kind=>kind==='line'||kind==='arrow';
 const finite=(value,min,max)=>typeof value==='number'&&Number.isFinite(value)&&value>=min&&value<=max;
 
+/** The style keys a shape can change after creation; kind and points are fixed. */
+export const styleOf=data=>({ink:data.ink,strokeWidth:data.strokeWidth,fill:data.fill,...(data.corners?{corners:data.corners}:{})});
+
 /** Validates and normalizes a shape's style and points; layout bounds the points. Throws TypeError. */
 export function validShape(input,layout){
   const {shape,ink,strokeWidth}=input??{};
@@ -65,7 +68,7 @@ export function drawShape(doc,style,width,height){
 export function createShape(host,style,layout){
   if(!host?.isConnected||host.clientWidth<80||host.clientHeight<100)throw new TypeError('Shapes need a connected host.');
   if(!layout||!finite(layout.left,-100000,100000)||!finite(layout.top,-100000,100000)||!finite(layout.width,1,100000)||!finite(layout.height,1,100000))throw new TypeError('Invalid shape layout.');
-  const data=validShape(style,layout),name=names[data.shape];
+  let data=validShape(style,layout);const name=names[data.shape];
   let root=host,node=host.ownerDocument.createElement('div');
   node.className='canvas-instance-shape';node.dataset.canvasInstanceShape=data.shape;node.setAttribute('aria-label',name);
   if(host.getAttribute('aria-describedby'))node.setAttribute('aria-describedby',host.getAttribute('aria-describedby'));
@@ -81,11 +84,25 @@ export function createShape(host,style,layout){
   };
   let base;try{base=createTextOwner(node,root,{name,widthHandles:false,editable:false,freeResize:true,onBox:redraw});}catch(error){node.remove();throw error;}
   redraw(layout.width,layout.height);
-  const {beginEdit,...geometry}=base;
-  base.restore(base.capture());
-  const owner=Object.freeze({...geometry,
-    serialize:()=>({type:'shape',layout:{left:node.offsetLeft,top:node.offsetTop,width:size.width,height:size.height,fontSize:18},...data,...(data.points?{points:scaled()}:{}),state:base.capture()}),
-    setPresent(present){if(!node)return;if(present){root.append(node);base.restore(base.capture());}else node.remove();},
+  const {beginEdit,capture:captureBox,restore:restoreBox,...geometry}=base;
+  // Style travels with geometry in captures, so history and Open restore both; kind and points never change.
+  const restyle=next=>{data=validShape({shape:data.shape,...next,...(data.points?{points:data.points}:{})},layout);redraw(size.width,size.height);};
+  const capture=()=>({...captureBox(),style:styleOf(data)});
+  const restore=value=>{if(value?.style!==undefined)restyle(value.style);restoreBox(value);};
+  restore(capture());
+  const owner=Object.freeze({...geometry,capture,restore,
+    shapeStyle:Object.freeze({
+      read:()=>({shape:data.shape,...styleOf(data)}),
+      // Applies only the keys this kind supports (fill skips lines and arrows; corners only rectangles). Null when nothing applies.
+      prepare(patch){
+        if(!node)return null;const open=data.shape==='line'||data.shape==='arrow',next=styleOf(data);let changed=false;
+        for(const [key,value]of Object.entries(patch)){if(key==='fill'&&open||key==='corners'&&data.shape!=='rectangle')continue;next[key]=value;changed=true;}
+        if(!changed)return null;validShape({shape:data.shape,...next,...(data.points?{points:data.points}:{})},layout);
+        return {apply:()=>restyle(next)};
+      },
+    }),
+    serialize:()=>({type:'shape',layout:{left:node.offsetLeft,top:node.offsetTop,width:size.width,height:size.height,fontSize:18},...data,...(data.points?{points:scaled()}:{}),state:capture()}),
+    setPresent(present){if(!node)return;if(present){root.append(node);restore(capture());}else node.remove();},
     dispose(){if(!node)return;base.dispose();node.remove();node=root=artwork=null;},
   });
   return Object.freeze({element:node,owner});

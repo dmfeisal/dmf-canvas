@@ -82,7 +82,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     imageDescription:selection.size===1&&usable(selected)?selected.adapter.description?.read()??null:null,
     canDescribeImage:alive&&!settings.readOnly&&settings.tools.image&&!editing&&!creation&&!gesture&&selection.size===1&&!selected?.locked&&usable(selected)&&!!selected.adapter.description,
     imageDimensions:selection.size===1&&usable(selected)&&selected.adapter.imageSize?Object.freeze({...selected.adapter.imageSize}):null,
-    paperColor:!settings.readOnly&&settings.tools.paperColor&&selection.size===1&&!selected?.locked?selected?.adapter.paperColor?.read()??null:null, canCreate:alive&&!settings.readOnly&&(settings.tools.text||settings.tools.sticky||settings.tools.image||settings.tools.pencil)&&!editing&&!gesture&&!creation&&owners.size<50, editing: !!editing, creating:!!creation,
+    paperColor:!settings.readOnly&&settings.tools.paperColor&&selection.size===1&&!selected?.locked?selected?.adapter.paperColor?.read()??null:null, shapeStyle:shapeStyleView(), canCreate:alive&&!settings.readOnly&&(settings.tools.text||settings.tools.sticky||settings.tools.image||settings.tools.pencil||settings.tools.shapes)&&!editing&&!gesture&&!creation&&owners.size<50, editing: !!editing, creating:!!creation,
     canDelete:alive&&!settings.readOnly&&settings.tools.delete&&!editing&&!creation&&!gesture&&selection.size>0&&[...selection].every(entry=>usable(entry)&&entry.created&&!entry.locked),
     canCopy:alive&&settings.tools.clipboard&&!editing&&!creation&&!gesture&&!!documents&&!!clipboard&&selection.size>0&&[...selection].every(entry=>usable(entry)&&!entry.locked&&typeof entry.adapter.serialize==='function'),
     canPaste:alive&&!settings.readOnly&&settings.tools.clipboard&&!editing&&!creation&&!gesture&&!!documents&&!!clipboard&&clipboard.count>0&&owners.size+clipboard.count<=50,
@@ -127,6 +127,14 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     selectEntries(entries,selected);
   }
   const actionEntries=action=>(action.groupItems??action.layerItems??action.lockItems??action.presenceItems??action.items)?.map(item=>item.entry)??[action.entry];
+  // Shared style of a selection made only of unlocked shapes; null keys are mixed or do not apply.
+  function shapeStyleView(){
+    if(settings.readOnly||!settings.tools.shapes||!selection.size)return null;
+    const entries=[...selection];if(entries.some(entry=>!usable(entry)||entry.locked||!entry.adapter.shapeStyle))return null;
+    const styles=entries.map(entry=>entry.adapter.shapeStyle.read()),closed=styles.filter(style=>style.shape!=='line'&&style.shape!=='arrow'),rects=styles.filter(style=>style.shape==='rectangle');
+    const common=(list,key)=>list.length&&list.every(style=>style[key]===list[0][key])?list[0][key]:null;
+    return Object.freeze({ink:common(styles,'ink'),strokeWidth:common(styles,'strokeWidth'),fill:common(closed,'fill'),corners:common(rects,'corners'),canFill:closed.length>0,canRound:rects.length>0});
+  }
   function record(entry, before, source='move') {
     const after = capture(entry);
     if (JSON.stringify(before) === JSON.stringify(after)) return;
@@ -422,7 +430,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if (command === 'cancel') { cancelCreation();finishEdit();finish(true);return result(true); }
     if (command === 'finish-edit') { finishEdit(true);return result(true); }
     if(settings.readOnly&&!['cancel','finish-edit','contain','select-all','copy'].includes(command))return result(false,'read-only');
-    const feature=command==='erase'?'delete':['copy','paste'].includes(command)?'clipboard':['group','ungroup'].includes(command)?'group':command.startsWith('align-')||command.startsWith('distribute-')?'arrange':['bring-forward','bring-front','send-backward','send-back'].includes(command)?'layers':['undo','redo'].includes(command)?'history':command==='image-description'?'image':command==='paper-color'?'paperColor':command==='edit'?'text':['lock','delete','duplicate'].includes(command)?command:null;
+    const feature=command==='erase'?'delete':['copy','paste'].includes(command)?'clipboard':['group','ungroup'].includes(command)?'group':command.startsWith('align-')||command.startsWith('distribute-')?'arrange':['bring-forward','bring-front','send-backward','send-back'].includes(command)?'layers':['undo','redo'].includes(command)?'history':command==='image-description'?'image':command==='paper-color'?'paperColor':command==='shape-style'?'shapes':command==='edit'?'text':['lock','delete','duplicate'].includes(command)?command:null;
     if(feature&&!settings.tools[feature])return result(false,'disabled');
     if(command==='text-style'&&!settings.tools.text)return result(false,'disabled');
     if (command === 'edit') {const ok=startEdit(selected);return result(ok,ok?null:'unsupported');}
@@ -516,6 +524,21 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if(command==='image-description'){
       if(selection.size!==1||!usable(selected)||!selected.adapter.description||selected.locked)return result(false,'unsupported');
       const before=capture(selected);if(!selected.adapter.description.set(value))return result(false,'invalid-description');record(selected,before,'image-description');emit();return result(true);
+    }
+    if(command==='shape-style'){
+      // Every selected object must be an unlocked shape; each applies the keys its kind supports, as one Undo step.
+      if(!value||Object.getPrototypeOf(value)!==Object.prototype||!Object.keys(value).length||Object.keys(value).some(key=>!['ink','strokeWidth','fill','corners'].includes(key)))return result(false,'invalid-style');
+      const entries=[...selection];
+      if(!entries.length||entries.some(entry=>!usable(entry)||entry.locked||!entry.adapter.shapeStyle))return result(false,'unsupported');
+      let plans;try{plans=entries.map(entry=>entry.adapter.shapeStyle.prepare(value));}catch{return result(false,'invalid-style');}
+      if(plans.every(plan=>!plan))return result(false,'unsupported');
+      const items=entries.map(entry=>({entry,before:capture(entry)}));
+      try{
+        for(const plan of plans)plan?.apply();
+        for(const item of items)item.after=capture(item.entry);
+        if(items.some(item=>JSON.stringify(item.before)!==JSON.stringify(item.after)))pushAction({items},'shape-style');
+      }catch(error){for(const item of items)item.entry.adapter.restore(clone(item.before));emit();throw error;}
+      emit();return result(true);
     }
     if(command==='paper-color'){
       if(selection.size!==1||!usable(selected)||!selected.adapter.paperColor||selected.locked)return result(false,'unsupported');

@@ -16,7 +16,7 @@ Unreleased inspector work uses native Popover and the existing owners' untransfo
 
 Board files and clipboard transfers that contain a shape use **schema 4**; portable documents use **version 3**. Content without shapes is written exactly as before (schema 1–3, portable 1–2). Readers accept schemas 1–4 and portable versions 1–3, and reject a lower version that claims a shape. Draft envelopes stay version 1 and carry the board's own schema.
 
-Older readers (0.3.0-alpha.2 and earlier) reject schema 4 and portable version 3 instead of dropping shapes. Shape records persist only semantic `shape`, `ink`, `strokeWidth`, `fill`, `corners` (rectangles) and two box-local `points` (lines and arrows), plus the resized box as `state.width` and `state.height` in pixels; only shapes may carry `state.height`.
+Older readers (0.3.0-alpha.2 and earlier) reject schema 4 and portable version 3 instead of dropping shapes. Shape records persist only semantic `shape`, `ink`, `strokeWidth`, `fill`, `corners` (rectangles) and two box-local `points` (lines and arrows), plus the resized box as `state.width` and `state.height` in pixels; only shapes may carry `state.height`. `state.style` mirrors the record's `ink`, `strokeWidth`, `fill` and `corners` so Open can restore the style of authored shapes; it must match the record when present and is filled in when absent.
 
 ## Highlighter (schema 3)
 

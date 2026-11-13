@@ -98,7 +98,7 @@ Fixtures stay synthetic until representative creator boards are available, as th
 1. Shape owner, renderer and validation, with unit tests and schema 1–4 fixtures. **Done in 0.3.0-alpha.3.**
 2. Free-resize handles and the `TransformHandle` addition, with geometry and inspector tests. **Done in 0.3.0-alpha.3.**
 3. Rail button, options bar, shortcuts, keyboard placement and the `shapes` permission in the configurator. **Done in 0.3.0-alpha.3.**
-4. More › Shape style and clipboard/duplicate/group coverage.
+4. More › Shape style and clipboard/duplicate/group coverage. **Done in 0.3.0-alpha.3.** The inspector's Width and Height still scale shapes proportionally; free inspector resizing needs the shared inspector planner to know which field changed and is left for later.
 5. Excalidraw mapping and import-lab report rows.
 6. Docs: API, compatibility, toolbar standard, glossary and changelog; browser suite scenarios for drawing, resizing, styling, Save/Open and mobile RTL.
 
