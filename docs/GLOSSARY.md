@@ -188,7 +188,7 @@ These terms come up in other editors and on feisal.id, but this library does not
 | Guide lines, snapping | Proposed for 0.4.0. |
 | Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.4.0. |
 | Touch controls | Proposed for 0.4.0. Pencil, Highlighter and Eraser ignore touch today. |
-| Shape import, connectors | Shapes can be drawn, resized, restyled and saved since 0.3.0-alpha.3; importing Excalidraw shapes follows the [Shapes proposal](prd/SHAPES.md). Connectors are not scheduled. |
+| Connectors | Arrows that stay attached to objects, and multi-point lines, are not scheduled. Excalidraw imports report them as unsupported. |
 | Layers panel, Reset canvas edits | On feisal.id only. |
 | PNG export | Proposed for 0.5.0. |
 | Visitor viewer | A proposed embed mode; see the [viewer spec](architecture/VIEWER-EMBED-SPEC.md). |

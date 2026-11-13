@@ -1,0 +1,12 @@
+{"type":"excalidraw","version":2,"source":"synthetic fixture for Shapes step 5","elements":[
+{"id":"card","type":"rectangle","x":40,"y":40,"width":160,"height":90,"angle":0,"strokeColor":"#1971c2","backgroundColor":"#a5d8ff","fillStyle":"hachure","strokeWidth":1,"roughness":1,"roundness":{"type":3},"boundElements":[{"type":"text","id":"label"}]},
+{"id":"label","type":"text","x":60,"y":70,"width":120,"height":25,"angle":0,"fontSize":20,"fontFamily":1,"text":"Idea","textAlign":"center","containerId":"card"},
+{"id":"oval","type":"ellipse","x":240,"y":40,"width":120,"height":80,"angle":0.5,"strokeColor":"#1e1e1e","backgroundColor":"transparent","strokeWidth":2,"roughness":0},
+{"id":"gem","type":"diamond","x":400,"y":40,"width":90,"height":90,"angle":0,"strokeColor":"#e03131","backgroundColor":"#ffc9c9","fillStyle":"solid","strokeWidth":4,"roughness":0},
+{"id":"rule","type":"line","x":40,"y":180,"angle":0,"strokeColor":"#2f9e44","strokeWidth":2,"strokeStyle":"dashed","opacity":60,"roughness":0,"points":[[0,0],[200,0]]},
+{"id":"pointer","type":"arrow","x":300,"y":180,"angle":0,"strokeColor":"#1e1e1e","strokeWidth":2,"roughness":0,"points":[[0,0],[120,60]],"startArrowhead":null,"endArrowhead":"arrow"},
+{"id":"back","type":"arrow","x":460,"y":180,"angle":0,"strokeWidth":2,"roughness":0,"points":[[0,0],[80,0]],"startArrowhead":"triangle","endArrowhead":null},
+{"id":"both","type":"arrow","x":40,"y":260,"angle":0,"strokeWidth":2,"roughness":0,"points":[[0,0],[100,40]],"startArrowhead":"arrow","endArrowhead":"arrow"},
+{"id":"linked","type":"arrow","x":200,"y":260,"angle":0,"strokeWidth":2,"points":[[0,0],[100,0]],"startBinding":{"elementId":"card","focus":0,"gap":4},"endBinding":null},
+{"id":"zigzag","type":"line","x":340,"y":260,"angle":0,"strokeWidth":2,"points":[[0,0],[40,30],[80,0]]}
+]}

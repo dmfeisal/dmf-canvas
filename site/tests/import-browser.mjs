@@ -6,7 +6,7 @@ await page.evaluate(()=>{window.importErrors=[];window.addEventListener('error',
 await page.click('#sample');
 assert(await page.evaluate(()=>document.querySelectorAll('#report li').length===4&&document.querySelector('#host').canvasLab.getState().objects===0&&!document.querySelector('#apply').disabled),'Preview mutated the scene or omitted report entries');
 await page.click('#apply');
-assert(await page.evaluate(()=>document.querySelector('#host').canvasLab.getState().objects===2),'Apply failed');
+assert(await page.evaluate(()=>document.querySelector('#host').canvasLab.getState().objects===3),'Apply failed');
 await page.focus('#host p.canvas-instance-local-text');await page.keyboard.press('F2');await page.keyboard.press('ControlOrMeta+a');await page.keyboard.type('Edited imported idea');await page.keyboard.press('Escape');
 await page.click('[aria-label="Selection inspector"]');await page.fill('[data-inspector-text=size]','28');await page.press('[data-inspector-text=size]','Enter');await page.click('.canvas-embed-inspector__close');
 assert(await page.evaluate(()=>{const c=document.querySelector('#host').canvasLab,d=c.savePortableDocument();window.importSaved=d;return d.nodes[0].id==='excalidraw:title'&&d.nodes[0].source.id==='title'&&d.nodes[0].data.text==='Edited imported idea'&&d.nodes[0].data.state.typography.size===28;}),'Editing lost source identity or typography');
@@ -14,7 +14,7 @@ await page.click('[aria-label=Undo]');assert(await page.evaluate(()=>document.qu
 const download=page.waitForEvent('download');await page.click('#save');await(await download).saveAs(importTest.board);
 assert(await page.evaluate(()=>window.importErrors.length===0),'Import lab raised browser errors before reload');
 await page.reload();await page.waitForFunction(()=>!!document.querySelector('#host')?.canvasLab);await page.evaluate(()=>{window.importErrors=[];window.addEventListener('error',e=>window.importErrors.push(e.message));window.addEventListener('unhandledrejection',e=>window.importErrors.push(String(e.reason)));});await page.setInputFiles('#portable-file',[importTest.board]);await page.waitForFunction(()=>document.querySelector('#message').textContent==='Portable document opened.');
-assert(await page.evaluate(()=>{const c=document.querySelector('#host').canvasLab,d=c.savePortableDocument();window.importSaved=d;return d.nodes.length===2&&d.nodes[0].id==='excalidraw:title'&&d.nodes[0].data.text==='Edited imported idea'&&d.nodes[0].data.state.typography.size===28;}),'Fresh page failed portable roundtrip');
+assert(await page.evaluate(()=>{const c=document.querySelector('#host').canvasLab,d=c.savePortableDocument();window.importSaved=d;return d.nodes.length===3&&d.nodes[0].id==='excalidraw:title'&&d.nodes[0].data.text==='Edited imported idea'&&d.nodes[0].data.state.typography.size===28;}),'Fresh page failed portable roundtrip');
 assert(await page.evaluate(async()=>{
  const source=document.querySelector('#host').canvasLab.savePortableDocument(),iframe=document.createElement('iframe');iframe.src='/labs/import/';document.body.append(iframe);await new Promise(resolve=>iframe.onload=resolve);const target=iframe.contentDocument.querySelector('#host').canvasLab;
  const ok=target.loadPortableDocument(source).ok&&JSON.stringify(target.savePortableDocument())===JSON.stringify(source);target.destroy();iframe.remove();return ok;

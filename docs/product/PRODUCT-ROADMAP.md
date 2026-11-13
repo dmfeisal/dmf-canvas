@@ -15,7 +15,7 @@ This is the proposed dependency order for the product vision, not a release sche
 | Stage | Current state | Outcome / exit gate | Dependency / blocker |
 |---|---|---|---|
 | M0 baseline | Partial | Reproducible unit/types/package checks plus browser regressions, accurate inventory | Browser rerun; historical mobile-navigation issue unresolved |
-| M1 portable document + Excalidraw | Partial; experimental portable IDs/migrations and Text/freehand adapter exist locally | Representative supported objects import/edit/save/reload; stable IDs; deterministic loss report; old files remain readable | Schema/migration approval; shape/connector mapping; bounds policy |
+| M1 portable document + Excalidraw | Partial; experimental portable IDs/migrations and a Text/freehand/basic-shape adapter exist locally | Representative supported objects import/edit/save/reload; stable IDs; deterministic loss report; old files remain readable | Schema/migration approval; shape/connector mapping; bounds policy |
 | M2 independent viewer/embed | Planned; editor embeds exist | Separate visitor runtime renders portable artifact on real Astro iframe host; keyboard, resize and origin tests pass | M1; asset policy; measured runtime budget |
 | M3 stories | Planned | Hotspots/reveals/scenes operate by keyboard and pointer with reduced motion | M2 plus declarative interaction contract |
 | M4 interoperability | Planned | Authorized FigJam and later JSON/SVG ingestion with explicit fidelity report | M1 adapter interface; permissions and license review |

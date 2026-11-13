@@ -696,7 +696,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if(!state().canSave)return result(false,'busy');
     const value=validatePortable(input,documents?.validate);
     if([...owners.values()].some(entry=>!entry.created))return result(false,'unsupported');
-    const loaded=loadDocument({format:'dmf-canvas',version:3,originals:[],objects:value.nodes.map(node=>node.data)});
+    // The internal board uses the newest schema this reader accepts, so every validated portable record (shapes included) loads.
+    const loaded=loadDocument({format:'dmf-canvas',version:4,originals:[],objects:value.nodes.map(node=>node.data)});
     if(loaded.ok)for(const [index,entry]of [...owners.values()].entries()){entry.portableId=value.nodes[index].id;entry.portableSource=value.nodes[index].source??null;}
     return loaded;
   }

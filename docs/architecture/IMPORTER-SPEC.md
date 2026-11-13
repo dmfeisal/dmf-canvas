@@ -10,7 +10,7 @@ related:
 
 # Importer contract proposal
 
-Current local file loading restores DMF boards; raster intake is separate. An experimental Excalidraw Text/freehand adapter now exists locally in [source](../../js/canvas-import-excalidraw.js); FigJam is still planned. Introduce adapters outside core that parse untrusted input into validated portable records, with adapter name/version and source-format metadata.
+Current local file loading restores DMF boards; raster intake is separate. An experimental Excalidraw adapter (Text, freehand and, since adapter version 2, basic shapes and two-point lines/arrows) now exists locally in [source](../../js/canvas-import-excalidraw.js); FigJam is still planned. Introduce adapters outside core that parse untrusted input into validated portable records, with adapter name/version and source-format metadata.
 
 Return a deterministic report per source object: source ID, destination IDs, fidelity **Editable / Converted / Flattened / Unsupported**, reason and any warnings. Editable means supported semantics remain editable; Converted means an explicit semantic change; Flattened means visual-only output; Unsupported must never disappear silently.
 
