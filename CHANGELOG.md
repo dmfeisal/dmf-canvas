@@ -8,7 +8,7 @@ Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 1, [editing precision]
 - New `snapping: {align, grid}` setting on `createCanvas` and `configure()`, default `{align: true, grid: false}`, reported in `getState().settings`. It is a host preference and never enters board, clipboard, draft or portable data.
 - More gains a Snapping section with checked "Align to objects" (`magnet`) and "Snap to grid" (`grid-2x2`) rows in the configurator embed (so the playground and generated integrations) and the shared custom host. Adds Lucide 1.60.0 `magnet` and `grid-2x2`.
 - Add the editing precision browser suite, `npm run test:editing:browser`, in CI.
-- Snapping shows no guide lines yet; guides and gap labels are the next step.
+- Add snapping guides (step 2): while snapping, a selection-coloured line marks each axis's snapped edge, centre or grid line, and pink gap guides label the nearest distance to a neighbour on the same row or column, in screen pixels to a tenth (white on `#d6336c`, 4.8:1). They are pointer-inert, `aria-hidden` and hidden on drop, Alt and cancellation.
 
 Migration: no format change. Snapping is on by default, so pointer drags near another object's edge now land on it; pass `snapping: {align: false}` to keep free movement.
 

@@ -153,7 +153,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   }
   function finish(cancel = false) {
     if (!gesture) return;
-    const active = gesture; gesture = null;
+    const active = gesture; gesture = null;hideGuides();
     try {
       if(active.marquee){
         active.overlay?.remove();
@@ -249,28 +249,70 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const peers = [...owners.values()].filter(entry => usable(entry) && !entries.includes(entry)).slice(0, snapPeers)
       .map(entry => entry.element.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
     const area = root.getBoundingClientRect();
-    return { left, top, width: right - left, height: bottom - top, scale,
+    return { left, top, width: right - left, height: bottom - top, scale, peers,
       xs: peers.flatMap(r => [r.left, r.left + r.width / 2, r.right]), ys: peers.flatMap(r => [r.top, r.top + r.height / 2, r.bottom]),
       originX: area.left + root.clientLeft, originY: area.top + root.clientTop };
   }
   function snapAxis(start, size, movement, lines, origin, scale, minimum, maximum) {
     const fits = correction => movement + correction >= minimum - .001 && movement + correction <= maximum + .001;
-    let best = snapDistance + .01, correction = 0, aligned = false;
+    let best = snapDistance + .01, correction = 0, target = null;
     // Align: the selection's start, centre or end meets a peer's start, centre or end.
     if (settings.snapping.align) for (const anchor of [start + movement, start + movement + size / 2, start + movement + size]) {
-      for (const line of lines) { const delta = line - anchor; if (Math.abs(delta) < best && fits(delta)) { best = Math.abs(delta); correction = delta; aligned = true; } }
+      for (const line of lines) { const delta = line - anchor; if (Math.abs(delta) < best && fits(delta)) { best = Math.abs(delta); correction = delta; target = line; } }
     }
     // Grid: otherwise the selection's start meets the nearest background dot (12px into each 24px tile).
-    if (!aligned && settings.snapping.grid) {
+    if (target === null && settings.snapping.grid) {
       const point = (start + movement - origin) / scale, delta = (Math.round((point - gridOffset) / gridSize) * gridSize + gridOffset - point) * scale;
-      if (fits(delta)) correction = delta;
+      if (fits(delta)) { correction = delta; target = start + movement + delta; }
     }
-    return movement + correction;
+    return [movement + correction, target];
   }
   function snapMove(active, dx, dy) {
     const context = active.snap ??= snapContext(active), limits = active.session.limits;
-    return [snapAxis(context.left, context.width, dx, context.xs, context.originX, context.scale, limits.left, limits.right),
-      snapAxis(context.top, context.height, dy, context.ys, context.originY, context.scale, limits.top, limits.bottom)];
+    const [x, targetX] = snapAxis(context.left, context.width, dx, context.xs, context.originX, context.scale, limits.left, limits.right);
+    const [y, targetY] = snapAxis(context.top, context.height, dy, context.ys, context.originY, context.scale, limits.top, limits.bottom);
+    return { x, y, targetX, targetY };
+  }
+  // Guides: two alignment lines and two gap guides per host, reused across drags, pointer-inert and hidden from
+  // assistive technology (status and the inspector carry the same information). Never part of saved data.
+  let guides = null;
+  function guideNodes() {
+    if (guides) return guides;
+    const make = (className, label) => {
+      const node = root.ownerDocument.createElement('div');node.className = className;node.setAttribute('aria-hidden', 'true');node.hidden = true;
+      if (label) node.append(root.ownerDocument.createElement('span'));root.append(node);return node;
+    };
+    guides = { x: make('canvas-instance-guide canvas-instance-guide--x'), y: make('canvas-instance-guide canvas-instance-guide--y'),
+      gapX: make('canvas-instance-gap canvas-instance-gap--x', true), gapY: make('canvas-instance-gap canvas-instance-gap--y', true) };
+    return guides;
+  }
+  function hideGuides() { if (guides) for (const node of Object.values(guides)) node.hidden = true; }
+  // The nearest non-overlapping gap to a peer that shares the other axis, in screen pixels (to a tenth, up to 1000).
+  function nearestGap(moving, peers, axis) {
+    const [start, end, crossStart, crossEnd] = axis === 'x' ? ['left', 'right', 'top', 'bottom'] : ['top', 'bottom', 'left', 'right'];
+    let best = null;
+    for (const peer of peers) {
+      if (peer[crossEnd] <= moving[crossStart] || peer[crossStart] >= moving[crossEnd]) continue;
+      for (const [from, to] of [[moving[end], peer[start]], [peer[end], moving[start]]]) {
+        const gap = to - from;
+        if (gap > .05 && gap <= 1000 && (!best || gap < best.gap)) best = { gap, from, cross: (Math.max(peer[crossStart], moving[crossStart]) + Math.min(peer[crossEnd], moving[crossEnd])) / 2 };
+      }
+    }
+    return best;
+  }
+  function showGuides(active, snapped) {
+    const context = active.snap, limits = active.session.limits, nodes = guideNodes();
+    const dx = Math.max(limits.left, Math.min(limits.right, snapped.x)), dy = Math.max(limits.top, Math.min(limits.bottom, snapped.y));
+    const place = (node, styles) => { node.hidden = false; Object.assign(node.style, styles); };
+    if (snapped.targetX === null) nodes.x.hidden = true; else place(nodes.x, { left: snapped.targetX - context.originX + 'px' });
+    if (snapped.targetY === null) nodes.y.hidden = true; else place(nodes.y, { top: snapped.targetY - context.originY + 'px' });
+    const moving = { left: context.left + dx, top: context.top + dy, right: context.left + context.width + dx, bottom: context.top + context.height + dy };
+    const label = value => String(Math.round(value * 10) / 10);
+    const gapX = nearestGap(moving, context.peers, 'x'), gapY = nearestGap(moving, context.peers, 'y');
+    if (!gapX) nodes.gapX.hidden = true;
+    else { place(nodes.gapX, { left: gapX.from - context.originX + 'px', top: gapX.cross - context.originY + 'px', width: gapX.gap + 'px' }); nodes.gapX.firstChild.textContent = label(gapX.gap); }
+    if (!gapY) nodes.gapY.hidden = true;
+    else { place(nodes.gapY, { top: gapY.from - context.originY + 'px', left: gapY.cross - context.originX + 'px', height: gapY.gap + 'px' }); nodes.gapY.firstChild.textContent = label(gapY.gap); }
   }
   function move(active, dx, dy) {
     const limits = active.session.limits;
@@ -357,8 +399,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     try{
       if (gesture.kind) gesture.session.pointer(dx,dy,event.shiftKey);
       // Alt/Option bypasses snapping for as long as it is held.
-      else if (!event.altKey && (settings.snapping.align || settings.snapping.grid)) move(gesture, ...snapMove(gesture, dx, dy));
-      else move(gesture, dx, dy);
+      else if (!event.altKey && (settings.snapping.align || settings.snapping.grid)) { const snapped = snapMove(gesture, dx, dy); move(gesture, snapped.x, snapped.y); showGuides(gesture, snapped); }
+      else { hideGuides(); move(gesture, dx, dy); }
     }
     catch(error){finish(true);view.reportError(error);}
   }
@@ -909,7 +951,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       alive = focused = false;
       undo.length = redo.length = 0;selected = null;selection.clear();multiple=false;
       for (const [type,listener] of Object.entries(listeners)) root.removeEventListener(type,listener);
-      mounted.delete(root);status.remove();done.remove();
+      mounted.delete(root);status.remove();done.remove();if(guides)for(const node of Object.values(guides))node.remove();guides=null;
       if (addedTabIndex && root.getAttribute('tabindex') === '0') root.removeAttribute('tabindex');
       if(originalMultiple===null)root.removeAttribute('data-canvas-instance-multiple');else root.setAttribute('data-canvas-instance-multiple',originalMultiple);
       if(originalReadOnly===null)root.removeAttribute('data-canvas-instance-readonly');else root.setAttribute('data-canvas-instance-readonly',originalReadOnly);

@@ -81,6 +81,17 @@
 .canvas-instance-local-text[data-canvas-instance-editing] { outline-style:dashed; cursor:text; }
 .canvas-instance-local-text:focus-visible { outline:2px solid var(--dmf-color-canvas-selection,var(--primary,Highlight)); outline-offset:3px; }
 
+/* Snapping guides (docs/prd/EDITING-PRECISION.md): pointer-inert overlays inside the host, above objects (z-index 1-50)
+   and the marquee. Alignment lines use the selection colour; gap guides use a fixed pink with a white label (4.8:1). */
+.canvas-instance-guide, .canvas-instance-gap { position:absolute; z-index:104; box-sizing:border-box; margin:0; pointer-events:none; }
+.canvas-instance-guide[hidden], .canvas-instance-gap[hidden] { display:none; }
+.canvas-instance-guide--x { top:0; bottom:0; width:0; border-left:1px solid var(--dmf-color-canvas-selection,var(--primary,Highlight)); }
+.canvas-instance-guide--y { left:0; right:0; height:0; border-top:1px solid var(--dmf-color-canvas-selection,var(--primary,Highlight)); }
+.canvas-instance-gap--x { height:0; border-top:1px solid #d6336c; }
+.canvas-instance-gap--y { width:0; border-left:1px solid #d6336c; }
+.canvas-instance-gap > span { position:absolute; padding:0 4px; border-radius:4px; background:#d6336c; color:#fff; font:600 11px/16px system-ui,sans-serif; white-space:nowrap; }
+.canvas-instance-gap--x > span { left:50%; bottom:2px; transform:translateX(-50%); }
+.canvas-instance-gap--y > span { top:50%; left:4px; transform:translateY(-50%); }
 .canvas-instance-marquee { position:absolute; box-sizing:border-box; z-index:102; border:1px solid var(--dmf-color-canvas-selection,var(--primary,#1677ff)); background:var(--dmf-color-canvas-marquee,color-mix(in srgb,var(--dmf-color-canvas-selection,var(--primary,#1677ff)) 8%,transparent)); pointer-events:none; }
 
 .canvas-instance-status { pointer-events:none; }

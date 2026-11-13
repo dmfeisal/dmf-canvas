@@ -36,6 +36,38 @@ await check('Alt bypasses snapping for the drag',async()=>{
  const r=await box(RECT);assert(Math.abs(r.left-(text.left+3))<0.5,`Alt drag snapped anyway: ${r.left} vs ${text.left+3}`);
 });
 
+// Holds a drag of the rectangle part-way (pointer still down) so guides can be measured, then releases.
+async function holdRectAt(left,top,{alt=false}={},inspect){
+ const r=await box(RECT),x=r.left+r.width/2,y=r.top+r.height/2,dx=left-r.left,dy=top-r.top;
+ await page.mouse.move(x,y);await page.mouse.down();if(alt)await page.keyboard.down('Alt');
+ await page.mouse.move(x+dx/2,y+dy/2,{steps:4});await page.mouse.move(x+dx,y+dy,{steps:4});
+ const seen=await page.evaluate(sel=>{const pick=cls=>{const n=document.querySelector(sel+' .'+cls);if(!n||n.hidden)return null;const b=n.getBoundingClientRect();return {left:b.left,top:b.top,width:b.width,height:b.height,label:n.textContent,pointer:getComputedStyle(n).pointerEvents,ariaHidden:n.getAttribute('aria-hidden')};};return {x:pick('canvas-instance-guide--x'),y:pick('canvas-instance-guide--y'),gapX:pick('canvas-instance-gap--x'),gapY:pick('canvas-instance-gap--y')};},A);
+ await page.mouse.up();if(alt)await page.keyboard.up('Alt');
+ const after=await page.evaluate(sel=>[...document.querySelectorAll(sel+' .canvas-instance-guide,'+sel+' .canvas-instance-gap')].every(n=>n.hidden),A);
+ return {...seen,hiddenAfter:after};
+}
+
+await check('an alignment guide marks the snapped edge while dragging and hides on drop',async()=>{
+ const text=await box(' [data-original]');await dragRectTo(text.left+90,text.bottom+80);
+ const seen=await holdRectAt(text.left+3,text.bottom+80);
+ assert(seen.x&&Math.abs(seen.x.left-text.left)<1,'Vertical guide missing or misplaced: '+JSON.stringify(seen.x)+' vs '+text.left);
+ assert(seen.x.pointer==='none'&&seen.x.ariaHidden==='true','Guide must be pointer-inert and aria-hidden');
+ assert(seen.hiddenAfter,'Guides stayed visible after the drop');
+});
+
+await check('Alt hides the guides along with snapping',async()=>{
+ const text=await box(' [data-original]');const seen=await holdRectAt(text.left+60,text.bottom+80,{alt:true});
+ assert(!seen.x&&!seen.y&&!seen.gapX&&!seen.gapY,'Guides showed during an Alt drag: '+JSON.stringify(seen));
+});
+
+await check('a gap guide labels the distance to a neighbour on the same row',async()=>{
+ // Right of the Text, overlapping it vertically, 40px away and clear of every 6px snap line.
+ const text=await box(' [data-original]');const seen=await holdRectAt(text.right+40,text.top-10);
+ const r=await box(RECT),gap=r.left-text.right;
+ assert(seen.gapX&&Math.abs(Number(seen.gapX.label)-Math.round(gap*10)/10)<0.15&&Math.abs(seen.gapX.width-gap)<1,'Gap guide wrong: '+JSON.stringify(seen.gapX)+' actual gap '+gap);
+ assert(seen.gapX.pointer==='none'&&seen.hiddenAfter,'Gap guide must be pointer-inert and hide on drop');
+});
+
 await check('More toggles show and change the snapping settings',async()=>{
  await page.click(action('more'));
  const rows=await page.evaluate(sel=>Object.fromEntries(['snap-align','snap-grid'].map(id=>{const b=document.querySelector(sel+` [data-toolbar-action="${id}"]`);return [id,{visible:!b.hidden,checked:b.getAttribute('aria-checked')??b.getAttribute('aria-pressed')}];})),A);
