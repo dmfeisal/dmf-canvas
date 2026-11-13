@@ -168,7 +168,7 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 | Term | Code name | Meaning |
 |---|---|---|
 | Tool permissions | `settings.tools` | Switches for `text`, `sticky`, `image`, `pencil`, `shapes`, `clipboard`, `group`, `arrange`, `layers`, `lock`, `delete`, `duplicate`, `files`, `history` and `paperColor`. Hidden in the UI and refused by commands when off. |
-| Snapping | `settings.snapping` | Pointer drags snap to other objects' edges and centres (`align`, on by default) or to the 24px grid (`grid`). Alt bypasses it; arrow keys never snap. Not saved in boards. |
+| Snapping | `settings.snapping` | Pointer drags snap to other objects' edges and centres (`align`, on by default) or to the 24px grid (`grid`). Alt bypasses it, Shift after a drag starts locks one axis, and arrow keys never snap. Not saved in boards. |
 | Guides | `.canvas-instance-guide`, `.canvas-instance-gap` | While snapping, a line on the snapped edge or grid line, and pink labels with the distance to the nearest neighbour. Pointer-inert; gone on drop. |
 | Read-only | `readOnly` | Selection, Copy and Save still work; nothing can change. |
 | Theme roles | surface, grid, selection, toolbar, ink, line | The six colours a host sets, with dmf-ui and system fallbacks. |

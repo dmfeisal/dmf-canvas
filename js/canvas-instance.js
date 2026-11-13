@@ -314,6 +314,29 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if (!gapY) nodes.gapY.hidden = true;
     else { place(nodes.gapY, { top: gapY.from - context.originY + 'px', left: gapY.cross - context.originX + 'px', height: gapY.gap + 'px' }); nodes.gapY.firstChild.textContent = label(gapY.gap); }
   }
+  // One pointer-drag step: Shift after the drag starts locks the dominant axis (chosen after 4px from where Shift
+  // took effect, anchored at the last applied position); snapping then works only along that axis, and Alt bypasses it.
+  function dragTo(active, event, dx, dy) {
+    let x = dx, y = dy, snapX = true, snapY = true;
+    if (event.shiftKey) {
+      const lock = active.constraint ??= { x: active.lastX ?? 0, y: active.lastY ?? 0, rawX: dx, rawY: dy, axis: null };
+      const ddx = dx - lock.rawX, ddy = dy - lock.rawY;
+      if (!lock.axis && Math.hypot(ddx, ddy) > 4) {
+        lock.axis = Math.abs(ddx) >= Math.abs(ddy) ? 'x' : 'y';
+        status.textContent = `${lock.axis === 'x' ? 'Horizontal' : 'Vertical'} movement constrained. Release Shift for free movement.`;
+      }
+      x = lock.axis === 'x' ? lock.x + ddx : lock.x; y = lock.axis === 'y' ? lock.y + ddy : lock.y;
+      snapX = lock.axis === 'x'; snapY = lock.axis === 'y';
+    } else if (active.constraint) { active.constraint = null; status.textContent = 'Free movement.'; }
+    if (!event.altKey && (settings.snapping.align || settings.snapping.grid)) {
+      // Never let Align or Grid pull a locked coordinate away; the perpendicular guide hides.
+      const snapped = snapMove(active, x, y);
+      if (snapX) x = snapped.x; if (snapY) y = snapped.y;
+      move(active, x, y); showGuides(active, { x, y, targetX: snapX ? snapped.targetX : null, targetY: snapY ? snapped.targetY : null });
+    } else { hideGuides(); move(active, x, y); }
+    const limits = active.session.limits;
+    active.lastX = Math.max(limits.left, Math.min(limits.right, x)); active.lastY = Math.max(limits.top, Math.min(limits.bottom, y));
+  }
   function move(active, dx, dy) {
     const limits = active.session.limits;
     active.session.move(Math.max(limits.left, Math.min(limits.right, dx)), Math.max(limits.top, Math.min(limits.bottom, dy)));
@@ -399,8 +422,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     try{
       if (gesture.kind) gesture.session.pointer(dx,dy,event.shiftKey);
       // Alt/Option bypasses snapping for as long as it is held.
-      else if (!event.altKey && (settings.snapping.align || settings.snapping.grid)) { const snapped = snapMove(gesture, dx, dy); move(gesture, snapped.x, snapped.y); showGuides(gesture, snapped); }
-      else { hideGuides(); move(gesture, dx, dy); }
+      else dragTo(gesture, event, dx, dy);
     }
     catch(error){finish(true);view.reportError(error);}
   }

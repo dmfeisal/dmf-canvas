@@ -84,6 +84,23 @@ await check('Grid snaps the selection to the background dots, and arrow keys sta
  const moved=await box(RECT);assert(Math.abs(moved.left-r.left-1)<0.5,'Arrow nudge was not exactly 1px: '+(moved.left-r.left));
 });
 
+await check('Shift after a drag starts locks the dominant axis until it is released',async()=>{
+ // Start near the top so containment leaves room to move down once Shift is released.
+ const h=await host();await dragRectTo(h.x+260,h.y+40);
+ const r=await box(RECT),x=r.left+r.width/2,y=r.top+r.height/2;
+ await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+30,y+30,{steps:4});
+ const before=await box(RECT);await page.keyboard.down('Shift');
+ await page.mouse.move(x+70,y+38,{steps:4});await page.mouse.move(x+110,y+46,{steps:4});
+ const locked=await box(RECT),message=await page.evaluate(sel=>document.querySelector(sel+' [data-canvas-instance-status]').textContent,A);
+ const perpendicular=await page.evaluate(sel=>document.querySelector(sel+' .canvas-instance-guide--y')?.hidden!==false,A);
+ await page.keyboard.up('Shift');await page.mouse.move(x+110,y+100,{steps:4});
+ const freed=await box(RECT);await page.mouse.up();
+ assert(Math.abs(locked.top-before.top)<0.5&&locked.left>before.left+30,'Shift did not lock to horizontal: '+JSON.stringify({before:before.top,locked:locked.top,left:[before.left,locked.left]}));
+ assert(/Horizontal movement constrained/.test(message),'No axis-lock announcement: '+message);
+ assert(perpendicular,'The vertical-axis guide showed while movement was locked horizontally');
+ assert(freed.top>locked.top+20,'Releasing Shift did not restore free movement');
+});
+
 await check('snapping never enters saved boards',async()=>{
  const json=await page.evaluate(()=>JSON.stringify(document.querySelector('main').configurator.previews.A.canvas.saveDocument()));
  assert(!/snapping|"align"|"grid"/.test(json),'Snapping leaked into the board file');
