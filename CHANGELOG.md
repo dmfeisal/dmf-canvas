@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0-alpha.1 (prepared 14 November 2026, private, experimental)
+
+Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 2, [navigation](docs/prd/NAVIGATION.md), with step 1: the camera model in core.
+
+- Add an opt-in camera: `createCanvas(host, {camera: {world, minScale, maxScale}})` with a host-marked world element that holds the objects and takes one CSS transform. `getState().camera` reports `{x, y, scale}`, and `getState().settings.camera` reports the zoom limits (default 0.2–4×), or `false` on hosts without a camera. `configure({camera})` changes the limits.
+- Add `execute('camera')`, `execute('zoom')` (by or to, around a point), `execute('fit')` (Fit all) and `execute('zoom-to-selection')`. They work read-only and while editing, never enter history, change events or saved data, and announce zoom changes.
+- At any zoom, pointer drags follow the pointer and keyboard nudges move whole screen pixels. Snapping keeps its 6px screen distance and the 24px world grid, transform handles stay 24px, and the host's dotted background follows the camera.
+- On camera hosts the world is unbounded: dragging, transforms, Duplicate and paste never clamp objects to the host. Built-in owners convert screen-pixel deltas to world units inside a camera world.
+
+Migration: hosts without `camera` are unchanged. No board, clipboard, draft or portable format change.
+
 ## 0.4.0 (prepared 14 November 2026, private)
 
 Completes [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 1, [editing precision](docs/prd/EDITING-PRECISION.md). Promotes 0.4.0-alpha.1 with no runtime change; the alpha entry below holds the details.

@@ -39,6 +39,13 @@ canvas.configure({tools:{highlighter:true}});
 canvas.configure({snapping:{grid:true}});canvas.configure({labels:false});{const shown:boolean=canvas.getState().settings.labels;void shown;}{const snap:boolean=canvas.getState().settings.snapping.align;void snap;}
 // @ts-expect-error snapping keys are align and grid
 canvas.configure({snapping:{magnet:true}});
+const camera=createCanvas(host,{camera:{world:element,maxScale:2}});
+camera.execute('zoom',{by:1.2,around:{x:10,y:20}});camera.execute('zoom',{to:1});camera.execute('fit');camera.execute('zoom-to-selection');camera.execute('camera',{x:0,y:0});camera.configure({camera:{minScale:.5}});
+{const view=camera.getState().camera;if(view){const zoom:number=view.scale;void zoom;}const limits=camera.getState().settings.camera;if(limits){const max:number=limits.maxScale;void max;}}
+// @ts-expect-error zoom takes by or to, not both
+camera.execute('zoom',{by:2,to:1});
+// @ts-expect-error the camera needs a world element
+createCanvas(host,{camera:{maxScale:2}});
 // @ts-expect-error unsupported drawing width (neither Pencil nor Highlighter)
 pencil.setWidth(6);
 // @ts-expect-error owner capture must be finite JSON-compatible data

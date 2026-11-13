@@ -12,6 +12,10 @@ The package stays private. Source licensing and public distribution decisions re
 
 Unreleased inspector work uses native Popover and the existing owners' untransformed-host coordinates. It does not establish camera, CSS-transformed-ancestor, iframe or additional browser-engine support. The configurator's generated files must be paired with the corresponding unreleased package source until a new version is released.
 
+## Camera (0.5.0-alpha.1, experimental)
+
+The opt-in camera changes no data format. Its position and zoom are host view state: they are never written to board, clipboard, draft or portable files, never enter history and never trigger change events. Hosts without `camera` behave exactly as in 0.4.0. On camera hosts, objects live in world coordinates inside the host-marked world element and are not clamped to the host, so a board saved from a camera host can hold positions outside the host's visible area; opening it on a bounded host clamps them as before. The inspector still reports screen-relative values at zoom in this prerelease.
+
 ## Shapes (schema 4)
 
 Board files and clipboard transfers that contain a shape use **schema 4**; portable documents use **version 3**. Content without shapes is written exactly as before (schema 1–3, portable 1–2). Readers accept schemas 1–4 and portable versions 1–3, and reject a lower version that claims a shape. Draft envelopes stay version 1 and carry the board's own schema.

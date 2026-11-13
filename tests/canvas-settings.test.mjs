@@ -27,3 +27,12 @@ test('selection labels default on, persist across other patches and must be bool
  assert.equal(resolveSettings({snapping:{grid:true}},off).labels,false,'Other patches keep labels');
  for(const labels of ['no',0,null])assert.throws(()=>resolveSettings({labels}),TypeError,String(labels));
 });
+
+test('camera defaults off, takes bounded zoom limits that include 100% and keeps them across other patches',()=>{
+ const defaults=resolveSettings();assert.equal(defaults.camera,false);
+ const on=resolveSettings({camera:{}},defaults);assert.deepEqual({...on.camera},{minScale:.2,maxScale:4});assert.ok(Object.isFrozen(on.camera));
+ const tight=resolveSettings({camera:{maxScale:2}},on);assert.deepEqual({...tight.camera},{minScale:.2,maxScale:2},'Patches keep the other limit');
+ assert.deepEqual({...resolveSettings({labels:false},tight).camera},{minScale:.2,maxScale:2},'Other patches keep the camera');
+ assert.equal(resolveSettings({camera:false},tight).camera,false);
+ for(const camera of [null,[],true,{world:1},{minScale:0},{minScale:1.5},{maxScale:.5},{maxScale:9},{minScale:'.2'}])assert.throws(()=>resolveSettings({camera}),TypeError,JSON.stringify(camera));
+});

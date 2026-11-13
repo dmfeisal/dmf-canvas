@@ -5,12 +5,12 @@ import { validateTransfer } from './canvas-instance-clipboard.js';
 import {combinedGeometry,validGeometry,planInspector} from './canvas-instance-inspector-plan.js';
 import {defaultTextStyle,resolveTextStyle} from './canvas-instance-text-style.js';
 // Internal lifecycle spike. Production object owners still use DMFCanvasTools.
-// No document/window listeners, storage, camera or owner geometry writes.
+// No document/window listeners, storage or owner geometry writes. The optional camera transforms one host-marked world element.
 const mounted = new WeakMap(), registrations = new WeakMap();
 const nativeControl = 'input,textarea,select,button,a,[contenteditable]:not([contenteditable="false"]),dialog,[popover]';
 const result = (ok, reason = null) => Object.freeze({ ok, reason });
 
-export function createCanvas(host, { documents = null, clipboard = null, readOnly = false, tools = {}, snapping = {}, labels = true } = {}) {
+export function createCanvas(host, { documents = null, clipboard = null, readOnly = false, tools = {}, snapping = {}, labels = true, camera = false } = {}) {
   const view = host?.ownerDocument?.defaultView;
   if (!view || !(host instanceof view.HTMLElement) || ['HTML', 'BODY'].includes(host.tagName)) {
     throw new TypeError('Canvas needs a dedicated HTML host.');
@@ -23,7 +23,16 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   }
 
   if(clipboard&&(!['read','write','subscribe'].every(key=>typeof clipboard[key]==='function')||!Number.isInteger(clipboard.count)||clipboard.count<0||clipboard.count>50))throw new TypeError('Canvas needs an explicit object clipboard.');
-  let settings=resolveSettings({readOnly,tools,snapping,labels});
+  // Camera (docs/prd/NAVIGATION.md): opt-in. The host marks one world element, a direct child of the host that covers
+  // it; objects live inside it in world coordinates and the package never moves authored nodes into it.
+  let world=null,cameraLimits=false;
+  if(camera!==false){
+    if(!camera||Object.getPrototypeOf(camera)!==Object.prototype)throw new TypeError('Invalid canvas camera.');
+    const {world:element,...limits}=camera;
+    if(!(element instanceof view.HTMLElement)||element.parentElement!==host)throw new TypeError('Canvas camera needs a world element that is a direct child of the host.');
+    world=element;cameraLimits=limits;
+  }
+  let settings=resolveSettings({readOnly,tools,snapping,labels,camera:cameraLimits});
   const changes=createChangeTracker(error=>view.reportError(error));
   let unsubscribeClipboard=null;
   let root = host;
@@ -47,6 +56,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   done.textContent='Done editing';done.hidden=true;root.append(done);
 
   const usable = entry => alive && entry?.alive && entry.present && root.contains(entry.element) && entry.element.isConnected;
+  // Objects live in the world element on camera hosts and directly in the host otherwise.
+  const container = () => world ?? root;
   const clone = value => {
     const encoded = JSON.stringify(value, function(key, current) {
       const raw = this[key];
@@ -61,7 +72,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   const stack = () => [...owners.values()].sort((a,b)=>a.layer-b.layer||a.id-b.id);
   function layerPlan(command) {
     const all=stack(),before=all.filter(entry=>entry.present);
-    if(!selection.size||[...selection].some(entry=>!usable(entry)||entry.locked||entry.element.parentElement!==root)||before.some(entry=>entry.present&&entry.element.parentElement!==root))return null;
+    if(!selection.size||[...selection].some(entry=>!usable(entry)||entry.locked||entry.element.parentElement!==container())||before.some(entry=>entry.present&&entry.element.parentElement!==container()))return null;
     const after=[...before], chosen=entry=>selection.has(entry);
     if(command==='bring-front')after.splice(0,after.length,...before.filter(entry=>!chosen(entry)),...before.filter(chosen));
     else if(command==='send-back')after.splice(0,after.length,...before.filter(chosen),...before.filter(entry=>!chosen(entry)));
@@ -77,7 +88,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     entries.forEach((entry,index)=>{entry.layer=index;entry.element.style.setProperty('z-index',String(index+1));});
   }
   const arrangeEligible = count => alive&&!settings.readOnly&&settings.tools.arrange&&!editing&&!creation&&!gesture&&selection.size>=count&&[...selection].every(entry=>usable(entry)&&!entry.locked&&!entry.group&&typeof entry.adapter.beginMove==='function');
-  const state = () => Object.freeze({ mounted: alive, focused, settings, ...changes.state(), objects: [...owners.values()].filter(entry=>entry.present).length, selection: selected?.id ?? null, selectionName:selection.size>1?`${selection.size} objects`:selected?.name??null,
+  const state = () => Object.freeze({ mounted: alive, focused, settings, camera:world?Object.freeze({...cameraView}):null, ...changes.state(), objects: [...owners.values()].filter(entry=>entry.present).length, selection: selected?.id ?? null, selectionName:selection.size>1?`${selection.size} objects`:selected?.name??null,
     selectionIds:Object.freeze([...selection].map(entry=>entry.id)), selectionCount:selection.size, multiple,
     imageDescription:selection.size===1&&usable(selected)?selected.adapter.description?.read()??null:null,
     canDescribeImage:alive&&!settings.readOnly&&settings.tools.image&&!editing&&!creation&&!gesture&&selection.size===1&&!selected?.locked&&usable(selected)&&!!selected.adapter.description,
@@ -114,7 +125,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     })();
     const rects = entries.map(entry => entry.element.getBoundingClientRect()), area = root.getBoundingClientRect();
     const left = Math.min(...rects.map(r => r.left)), top = Math.min(...rects.map(r => r.top)), right = Math.max(...rects.map(r => r.right)), bottom = Math.max(...rects.map(r => r.bottom));
-    let width = right - left, height = bottom - top;
+    let width = (right - left) / cameraView.scale, height = (bottom - top) / cameraView.scale;
     // One object reports its own (unrotated, scaled) size; several report their combined visible bounds.
     if (entries.length === 1) { const geometry = entries[0].adapter.geometry?.read?.(); if (geometry) { width = geometry.localWidth * geometry.scale; height = geometry.localHeight * geometry.scale; } }
     const originX = area.left + root.clientLeft, originY = area.top + root.clientTop;
@@ -133,6 +144,66 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       const shift = Math.max(0, hostRect.left - r.left) - Math.max(0, r.right - hostRect.right);
       if (shift) node.style.left = parseFloat(node.style.left) + shift + 'px';
     }
+  }
+  // Camera: {x, y} is the world point at the world element's untransformed top-left and `scale` the zoom. It is one
+  // CSS transform on the world element, and the host's dotted background follows it. Camera changes never enter
+  // history, change events or saved data.
+  let cameraView = { x: 0, y: 0, scale: 1 };
+  const cameraOriginal = world ? { transform: world.style.transform, origin: world.style.transformOrigin, marked: world.hasAttribute('data-canvas-instance-world'),
+    inverse: world.style.getPropertyValue('--canvas-instance-camera-inverse'), size: root.style.backgroundSize, position: root.style.backgroundPosition } : null;
+  function applyCamera() {
+    if (!world) return;
+    const { x, y, scale } = cameraView, tile = 24 * scale, offset = value => ((value % tile) + tile) % tile;
+    world.toggleAttribute('data-canvas-instance-world', true); world.style.transformOrigin = '0 0';
+    world.style.transform = `translate(${-x * scale}px, ${-y * scale}px) scale(${scale})`;
+    world.style.setProperty('--canvas-instance-camera-inverse', String(1 / scale));
+    // Dots keep the 24px world gap and stay 1 screen pixel; their offset follows the pan.
+    root.style.backgroundSize = `${tile}px ${tile}px`; root.style.backgroundPosition = `${offset(-x * scale)}px ${offset(-y * scale)}px`;
+  }
+  // Screen geometry for camera maths: the world element's untransformed top-left and the host's origin. World point p
+  // is drawn at left + (p - x) * scale, so a screen point s is world x + (s - left) / scale.
+  function cameraFrame() {
+    const rect = world.getBoundingClientRect(), area = root.getBoundingClientRect();
+    return { left: rect.left + cameraView.x * cameraView.scale, top: rect.top + cameraView.y * cameraView.scale, hostLeft: area.left + root.clientLeft, hostTop: area.top + root.clientTop };
+  }
+  function setCamera(next, floor = false) {
+    const limits = settings.camera, scale = Math.min(limits.maxScale, Math.max(floor ? .05 : limits.minScale, next.scale));
+    if (![next.x, next.y, scale].every(Number.isFinite)) return result(false, 'invalid-camera');
+    const zoomed = scale !== cameraView.scale, moved = zoomed || next.x !== cameraView.x || next.y !== cameraView.y;
+    cameraView = { x: next.x, y: next.y, scale };
+    if (moved) { applyCamera(); emit(); if (zoomed) status.textContent = `Zoom ${Math.round(scale * 100)}%.`; }
+    return result(true);
+  }
+  const plain = value => !!value && Object.getPrototypeOf(value) === Object.prototype;
+  function cameraCommand(command, value) {
+    if (!world) return result(false, 'unsupported');
+    if (gesture) return result(false, 'busy');
+    const { x, y, scale } = cameraView, frame = cameraFrame(), limits = settings.camera;
+    if (command === 'camera') {
+      if (!plain(value) || Object.keys(value).some(key => !['x', 'y', 'scale'].includes(key)) || Object.values(value).some(item => !Number.isFinite(item)) || value.scale <= 0) return result(false, 'invalid-camera');
+      return setCamera({ x: value.x ?? x, y: value.y ?? y, scale: value.scale ?? scale });
+    }
+    if (command === 'zoom') {
+      // `by` multiplies and `to` sets the scale; `around` is a host-local screen point that stays put (default: centre).
+      if (!plain(value) || Object.keys(value).some(key => !['by', 'to', 'around'].includes(key)) || (value.by === undefined) === (value.to === undefined)) return result(false, 'invalid-camera');
+      const target = value.to ?? scale * value.by, around = value.around ?? { x: root.clientWidth / 2, y: root.clientHeight / 2 };
+      if (!Number.isFinite(target) || target <= 0 || !plain(around) || ![around.x, around.y].every(Number.isFinite)) return result(false, 'invalid-camera');
+      const next = Math.min(limits.maxScale, Math.max(limits.minScale, target)), sx = frame.hostLeft + around.x, sy = frame.hostTop + around.y;
+      const px = x + (sx - frame.left) / scale, py = y + (sy - frame.top) / scale;
+      return setCamera({ x: px - (sx - frame.left) / next, y: py - (sy - frame.top) / next, scale: next });
+    }
+    // Fit all and Zoom to selection centre the objects with 32px of room. Fit all never zooms past 100%, Zoom to
+    // selection never past the maximum; both may go below the minimum only so that everything fits.
+    const entries = command === 'fit' ? [...owners.values()].filter(usable) : [...selection].filter(usable);
+    const rects = entries.map(entry => entry.element.getBoundingClientRect()).filter(r => r.width > 0 || r.height > 0);
+    if (!rects.length) return result(false, command === 'fit' ? 'empty' : 'unsupported');
+    const toX = v => x + (v - frame.left) / scale, toY = v => y + (v - frame.top) / scale;
+    const left = toX(Math.min(...rects.map(r => r.left))), right = toX(Math.max(...rects.map(r => r.right)));
+    const top = toY(Math.min(...rects.map(r => r.top))), bottom = toY(Math.max(...rects.map(r => r.bottom)));
+    const room = 32, width = Math.max(1, root.clientWidth - 2 * room), height = Math.max(1, root.clientHeight - 2 * room);
+    const next = Math.max(.05, Math.min(command === 'fit' ? Math.min(1, limits.maxScale) : limits.maxScale, width / Math.max(1, right - left), height / Math.max(1, bottom - top)));
+    const sx = frame.hostLeft + root.clientWidth / 2, sy = frame.hostTop + root.clientHeight / 2;
+    return setCamera({ x: (left + right) / 2 - (sx - frame.left) / next, y: (top + bottom) / 2 - (sy - frame.top) / next, scale: next }, true);
   }
   function emit() {
     scheduleLabels();
@@ -303,7 +374,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     }};
   }
   // Snapping (docs/prd/EDITING-PRECISION.md). Pointer drags only: keyboard nudges stay exact. Geometry is read once,
-  // at the drag's first movement, so nothing is measured while moving. `scale` lets a future camera reuse it.
+  // at the drag's first movement, so nothing is measured while moving. `scale` is the camera's: the snap distance stays
+  // in screen pixels and the grid in world units.
   const snapDistance = 6, gridSize = 24, gridOffset = 12, snapPeers = 80;
   function snapContext(active, scale = 1) {
     const entries = (active.items ?? [active]).map(item => item.entry);
@@ -312,8 +384,10 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const right = Math.max(...rects.map(r => r.right)), bottom = Math.max(...rects.map(r => r.bottom));
     const peers = [...owners.values()].filter(entry => usable(entry) && !entries.includes(entry)).slice(0, snapPeers)
       .map(entry => entry.element.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
-    const area = root.getBoundingClientRect();
+    const area = root.getBoundingClientRect(), grid = world ? world.getBoundingClientRect() : null;
     return { left, top, width: right - left, height: bottom - top, scale, peers,
+      // Grid dots sit on the world's 24px lattice: its origin is the world element's drawn top-left.
+      gridX: grid ? grid.left : area.left + root.clientLeft, gridY: grid ? grid.top : area.top + root.clientTop,
       xs: peers.flatMap(r => [r.left, r.left + r.width / 2, r.right]), ys: peers.flatMap(r => [r.top, r.top + r.height / 2, r.bottom]),
       originX: area.left + root.clientLeft, originY: area.top + root.clientTop };
   }
@@ -332,9 +406,9 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     return [movement + correction, target];
   }
   function snapMove(active, dx, dy) {
-    const context = active.snap ??= snapContext(active), limits = active.session.limits;
-    const [x, targetX] = snapAxis(context.left, context.width, dx, context.xs, context.originX, context.scale, limits.left, limits.right);
-    const [y, targetY] = snapAxis(context.top, context.height, dy, context.ys, context.originY, context.scale, limits.top, limits.bottom);
+    const context = active.snap ??= snapContext(active, cameraView.scale), limits = active.session.limits;
+    const [x, targetX] = snapAxis(context.left, context.width, dx, context.xs, context.gridX, context.scale, limits.left, limits.right);
+    const [y, targetY] = snapAxis(context.top, context.height, dy, context.ys, context.gridY, context.scale, limits.top, limits.bottom);
     return { x, y, targetX, targetY };
   }
   // Guides: two alignment lines and two gap guides per host, reused across drags, pointer-inert and hidden from
@@ -447,7 +521,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       toggle(entry);(selection.has(entry)?entry.element:root).focus({preventScroll:true});event.preventDefault();return;
     }
     if(!entry){
-      if(event.target!==root)return;
+      if(event.target!==root&&event.target!==world)return;
       const rect=root.getBoundingClientRect(),left=rect.left+root.clientLeft,top=rect.top+root.clientTop;
       const bounds={left,top,right:left+root.clientWidth,bottom:top+root.clientHeight};
       gesture={marquee:true,pointerId:event.pointerId,x:Math.max(bounds.left,Math.min(bounds.right,event.clientX)),y:Math.max(bounds.top,Math.min(bounds.bottom,event.clientY)),started:false,bounds,previous:[...selection],primary:selected,additive:event.shiftKey,candidates:[...owners.values()].filter(usable).map(entry=>({entry,rect:entry.element.getBoundingClientRect().toJSON()}))};
@@ -616,6 +690,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if (!alive) return result(false,'destroyed');
     if (command === 'cancel') { cancelCreation();finishEdit();finish(true);return result(true); }
     if (command === 'finish-edit') { finishEdit(true);return result(true); }
+    // Viewing, not editing: camera commands work read-only and while editing, but not during a gesture.
+    if (['camera','zoom','fit','zoom-to-selection'].includes(command)) return cameraCommand(command, value);
     if(settings.readOnly&&!['cancel','finish-edit','contain','select-all','copy'].includes(command))return result(false,'read-only');
     const feature=command==='erase'?'delete':['copy','paste'].includes(command)?'clipboard':['group','ungroup'].includes(command)?'group':command.startsWith('align-')||command.startsWith('distribute-')?'arrange':['bring-forward','bring-front','send-backward','send-back'].includes(command)?'layers':['undo','redo'].includes(command)?'history':command==='image-description'?'image':command==='paper-color'?'paperColor':command==='shape-style'?'shapes':command==='edit'?'text':['lock','delete','duplicate'].includes(command)?command:null;
     if(feature&&!settings.tools[feature])return result(false,'disabled');
@@ -784,11 +860,12 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   function applyPresence(items) {
     const rollback=items.map(({entry})=>({entry,present:entry.present}));
     // Cache all positions before detaching any member; preserve stacking/Tab order.
-    for(const {entry,present}of items)if(!present&&entry.present&&entry.element.parentElement===root)entry.presenceIndex=[...root.children].indexOf(entry.element);
+    const place=container();
+    for(const {entry,present}of items)if(!present&&entry.present&&entry.element.parentElement===place)entry.presenceIndex=[...place.children].indexOf(entry.element);
     const restoreOrder=rows=>{
-      const shown=rows.filter(({entry,present})=>present&&entry.element.parentElement===root&&Number.isInteger(entry.presenceIndex)).sort((a,b)=>a.entry.presenceIndex-b.entry.presenceIndex);
+      const shown=rows.filter(({entry,present})=>present&&entry.element.parentElement===place&&Number.isInteger(entry.presenceIndex)).sort((a,b)=>a.entry.presenceIndex-b.entry.presenceIndex);
       for(const {entry}of shown)entry.element.remove();
-      for(const {entry}of shown)root.insertBefore(entry.element,root.children[entry.presenceIndex]??null);
+      for(const {entry}of shown)place.insertBefore(entry.element,place.children[entry.presenceIndex]??null);
     };
     try{for(const {entry,present}of items){entry.adapter.setPresent(present);entry.present=present;}restoreOrder(items);}
     catch(error){for(const {entry,present}of rollback){entry.adapter.setPresent(present);entry.present=present;}restoreOrder(rollback);throw error;}
@@ -813,15 +890,16 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const records=objects.map(item=>documents.validate(item.data)),counts=new Map();
     for(const record of records){if(record.locked)throw new TypeError('Locked objects cannot be pasted.');if(record.group!==undefined)counts.set(record.group,(counts.get(record.group)??0)+1);}
     if([...counts.values()].some(count=>count<2))throw new TypeError('Clipboard groups need two members.');
-    const left=Math.max(...objects.map(({bounds:b})=>8-b.left)),right=Math.min(...objects.map(({bounds:b})=>root.clientWidth-8-b.left-b.width));
-    const top=Math.max(...objects.map(({bounds:b})=>8-b.top)),bottom=Math.min(...objects.map(({bounds:b})=>root.clientHeight-32-b.top-b.height));
+    // Bounded hosts keep the copy inside; a camera world is unbounded, so copies land 24 world units away.
+    const left=world?-Infinity:Math.max(...objects.map(({bounds:b})=>8-b.left)),right=world?Infinity:Math.min(...objects.map(({bounds:b})=>root.clientWidth-8-b.left-b.width));
+    const top=world?-Infinity:Math.max(...objects.map(({bounds:b})=>8-b.top)),bottom=world?Infinity:Math.min(...objects.map(({bounds:b})=>root.clientHeight-32-b.top-b.height));
     if(left>right||top>bottom)return result(false,'bounds');
     const dx=Math.max(left,Math.min(24,right)),dy=Math.max(top,Math.min(24,bottom));
     const beforeSelection=[...selection],allocated=[],entries=[];
     try{
-      for(const record of records)allocated.push(documents.create(root,{...record,layout:{...record.layout,left:record.layout.left+dx,top:record.layout.top+dy}}));
+      for(const record of records)allocated.push(documents.create(container(),{...record,layout:{...record.layout,left:record.layout.left+dx,top:record.layout.top+dy}}));
       const area=root.getBoundingClientRect();
-      if(allocated.some((item,index)=>{const r=item.element.getBoundingClientRect(),b=objects[index].bounds;return Math.abs(r.left-area.left-root.clientLeft-b.left-dx)>.75||Math.abs(r.top-area.top-root.clientTop-b.top-dy)>.75||Math.abs(r.width-b.width)>.75||Math.abs(r.height-b.height)>.75;})){
+      if(!world&&allocated.some((item,index)=>{const r=item.element.getBoundingClientRect(),b=objects[index].bounds;return Math.abs(r.left-area.left-root.clientLeft-b.left-dx)>.75||Math.abs(r.top-area.top-root.clientTop-b.top-dy)>.75||Math.abs(r.width-b.width)>.75||Math.abs(r.height-b.height)>.75;})){
         for(const item of allocated)item.owner.dispose();return result(false,'bounds');
       }
       batchRegistration=true;
@@ -839,12 +917,13 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     try{
       const records=beforeSelection.map(entry=>documents.validate(clone(entry.adapter.serialize())));
       if(new TextEncoder().encode(JSON.stringify(records)).byteLength>131072)return result(false,'resource-limit');
-      for(const record of records)allocated.push(documents.create(root,record));
+      for(const record of records)allocated.push(documents.create(container(),record));
       const moves=allocated.map(item=>item.owner.beginMove());
       if(moves.some(item=>!item))throw new TypeError('Copy needs movement.');
       const left=Math.max(...moves.map(item=>item.limits.left)),right=Math.min(...moves.map(item=>item.limits.right)),top=Math.max(...moves.map(item=>item.limits.top)),bottom=Math.min(...moves.map(item=>item.limits.bottom));
       if(left>right||top>bottom)throw new RangeError('Copies have no shared movement bounds.');
-      const dx=Math.max(left,Math.min(offset,right)),dy=Math.max(top,Math.min(offset,bottom));
+      // Owner movement is in screen pixels; the offset is world units, so it scales with the camera.
+      const shift=offset*cameraView.scale,dx=Math.max(left,Math.min(shift,right)),dy=Math.max(top,Math.min(shift,bottom));
       for(const move of moves){move.move(dx,dy);move.finish?.();}
       batchRegistration=true;
       for(const item of allocated){instance.register(item.element,item.owner,{created:true});entries.push(owners.get(item.element));}
@@ -911,7 +990,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const hasLayers=layerValues.some(layer=>layer!==undefined);
     if(hasLayers&&(layerValues.some(layer=>layer===undefined)||new Set(layerValues).size!==layerValues.length||layerValues.some(layer=>layer>=layerValues.length)))throw new TypeError('Invalid board layer order.');
     try{
-      for(const record of records)allocated.push(documents.create(root,record));
+      for(const record of records)allocated.push(documents.create(container(),record));
       for(const plan of plans)plan.entry.adapter.restore(clone(plan.data.state));
     }catch(error){for(const item of allocated)item.owner.dispose();for(const plan of plans)plan.entry.adapter.restore(plan.before);throw error;}
     for(const plan of plans)applyLock(plan.entry,plan.data.locked??false);
@@ -930,6 +1009,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   const listeners = { focusin: onFocus, focusout: onBlur, pointerdown: onPointer, pointermove: onMove,
     pointerup: onPointerEnd, pointercancel: onPointerEnd, lostpointercapture: onPointerEnd, keydown: onKey, keyup: onKeyUp, contextmenu: onContext, dblclick: onDoubleClick, click: onClick };
   for (const [type,listener] of Object.entries(listeners)) root.addEventListener(type,listener);
+  applyCamera();
   emit();
   const instance = Object.freeze({
     getState: state,
@@ -954,10 +1034,14 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     },
     configure(patch) {
       if(!alive)return result(false,'destroyed');
+      // Camera limits can change later; the world itself, or turning the camera on or off, is fixed at creation.
+      if(plain(patch)&&Object.hasOwn(patch,'camera')&&!(patch.camera===false&&!world)&&(!world||!plain(patch.camera)||Object.hasOwn(patch.camera,'world')))throw new TypeError('The camera world is set when the canvas is created.');
       const next=resolveSettings(patch,settings);
       if(JSON.stringify(next)===JSON.stringify(settings))return result(true);
       cancelCreation();finish(true);finishEdit();settings=next;
-      root.toggleAttribute('data-canvas-instance-readonly',settings.readOnly);emit();return result(true);
+      root.toggleAttribute('data-canvas-instance-readonly',settings.readOnly);
+      if(world)setCamera(cameraView);
+      emit();return result(true);
     },
     saveDocument,
     savePortableDocument,
@@ -1058,6 +1142,11 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       alive = focused = false;
       undo.length = redo.length = 0;selected = null;selection.clear();multiple=false;
       for (const [type,listener] of Object.entries(listeners)) root.removeEventListener(type,listener);
+      if(world){
+        const original=cameraOriginal;world.style.transform=original.transform;world.style.transformOrigin=original.origin;world.toggleAttribute('data-canvas-instance-world',original.marked);
+        if(original.inverse)world.style.setProperty('--canvas-instance-camera-inverse',original.inverse);else world.style.removeProperty('--canvas-instance-camera-inverse');
+        root.style.backgroundSize=original.size;root.style.backgroundPosition=original.position;if(!world.getAttribute('style'))world.removeAttribute('style');world=null;
+      }
       mounted.delete(root);status.remove();done.remove();if(guides)for(const node of Object.values(guides))node.remove();guides=null;if(labelFrame!==null)view.cancelAnimationFrame(labelFrame);labelFrame=null;if(labelNodes){labelNodes.name.remove();labelNodes.size.remove();}labelNodes=null;
       if (addedTabIndex && root.getAttribute('tabindex') === '0') root.removeAttribute('tabindex');
       if(originalMultiple===null)root.removeAttribute('data-canvas-instance-multiple');else root.setAttribute('data-canvas-instance-multiple',originalMultiple);

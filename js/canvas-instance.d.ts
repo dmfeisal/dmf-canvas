@@ -48,8 +48,14 @@ export type CanvasShapeStylePatch=Partial<CanvasShapeStyle>;
 export interface CanvasShapeStyleView {readonly ink:CanvasShapeStyle['ink']|null;readonly strokeWidth:CanvasShapeStyle['strokeWidth']|null;readonly fill:CanvasShapeStyle['fill']|null;readonly corners:'sharp'|'round'|null;readonly canFill:boolean;readonly canRound:boolean;}
 /** Pointer-drag snapping: `align` to other objects' edges and centres (default true), `grid` to the 24px background dots (default false). Never saved in boards. */
 export interface CanvasSnapping { readonly align:boolean; readonly grid:boolean; }
-export interface CanvasEmbedSettings { readonly readOnly:boolean; readonly tools:Readonly<Record<CanvasTool,boolean>>; readonly snapping:CanvasSnapping; /** Name and size labels around the selection (default true). */ readonly labels:boolean; }
-export interface CanvasSettingsPatch { readOnly?:boolean; tools?:Partial<Record<CanvasTool,boolean>>; snapping?:Partial<CanvasSnapping>; labels?:boolean; }
+/** Explicit zoom limits on a camera host (defaults 0.2 and 4). They always include 100%: minScale 0.05–1, maxScale 1–8. */
+export interface CanvasCameraLimits { readonly minScale:number; readonly maxScale:number; }
+/** Camera options for `createCanvas`: `world` is a direct child of the host that covers it and holds the objects. The package never moves authored nodes into it. */
+export interface CanvasCameraOptions extends Partial<CanvasCameraLimits> { world:HTMLElement; }
+/** The camera: `x`/`y` is the world point at the world element's top-left, `scale` the zoom. Never saved, never in history or change events. */
+export interface CanvasCamera { readonly x:number; readonly y:number; readonly scale:number; }
+export interface CanvasEmbedSettings { readonly readOnly:boolean; readonly tools:Readonly<Record<CanvasTool,boolean>>; readonly snapping:CanvasSnapping; /** Name and size labels around the selection (default true). */ readonly labels:boolean; /** Zoom limits, or false on hosts without a camera (the default). */ readonly camera:CanvasCameraLimits|false; }
+export interface CanvasSettingsPatch { readOnly?:boolean; tools?:Partial<Record<CanvasTool,boolean>>; snapping?:Partial<CanvasSnapping>; labels?:boolean; /** Camera hosts only: change the zoom limits. The world, and whether there is a camera, are fixed at creation (false is accepted only where there is none). */ camera?:Partial<CanvasCameraLimits>|false; }
 export type CanvasChangeSource = 'text' | 'text-style' | 'move' | 'transform' | 'create' | 'duplicate' | 'delete' | 'erase' | 'paste' | 'lock' | 'paper-color' | 'shape-style' | 'image-description' | 'group' | 'ungroup' | 'bring-forward' | 'bring-front' | 'send-backward' | 'send-back' | 'align-left' | 'align-center' | 'align-right' | 'align-top' | 'align-middle' | 'align-bottom' | 'distribute-horizontal' | 'distribute-vertical' | 'undo' | 'redo' | 'open';
 export interface CanvasChange { readonly revision:number; readonly dirty:boolean; readonly source:CanvasChangeSource; }
 export interface CanvasState {
@@ -59,6 +65,8 @@ export interface CanvasState {
   readonly revision:number;
   readonly dirty:boolean;
   readonly settings:CanvasEmbedSettings;
+  /** The current camera, or null on hosts without one. */
+  readonly camera:CanvasCamera|null;
   readonly mounted: boolean;
   readonly focused: boolean;
   readonly objects: number;
@@ -92,7 +100,7 @@ export interface CanvasState {
 }
 export interface CommandResult {
   readonly ok: boolean;
-  readonly reason: 'stale-revision' | 'read-only' | 'disabled' | 'destroyed' | 'busy' | 'invalid-delta' | 'invalid-color' | 'invalid-description' | 'invalid-style' | 'unsupported' | 'empty-history' | 'resource-limit' | 'bounds' | 'overlap' | null;
+  readonly reason: 'stale-revision' | 'read-only' | 'disabled' | 'destroyed' | 'busy' | 'invalid-delta' | 'invalid-color' | 'invalid-description' | 'invalid-style' | 'unsupported' | 'empty-history' | 'resource-limit' | 'bounds' | 'overlap' | 'invalid-camera' | 'empty' | null;
 }
 /** Portable version 2 adds Highlighter strokes and version 3 adds shapes; documents use the lowest version their content needs. */
 export interface CanvasPortableDocument {format: "dmf-canvas-portable";version:1|2|3;nodes:{id:string;data:CanvasObjectDocument;source?:{format:"excalidraw";id:string}}[];}
@@ -101,6 +109,12 @@ export interface CanvasInstance {
   loadPortableDocument(input:unknown):CommandResult;
   getTextStyle():Readonly<CanvasTextStyleView>|null;
   execute(command:'text-style',value:CanvasTextStyleCommand):CommandResult;
+  /** Camera hosts: set any of x, y and scale (clamped to the limits). Works read-only and while editing; busy during a gesture. */
+  execute(command:'camera',value:Partial<CanvasCamera>):CommandResult;
+  /** Camera hosts: multiply the zoom (`by`) or set it (`to`), keeping the host-local screen point `around` (default: the centre) in place. */
+  execute(command:'zoom',value:{by:number;to?:never;around?:{x:number;y:number}}|{to:number;by?:never;around?:{x:number;y:number}}):CommandResult;
+  /** Camera hosts: Fit all (never past 100%) or Zoom to selection (never past maxScale); either may go below minScale so everything fits. */
+  execute(command:'fit'|'zoom-to-selection'):CommandResult;
   /** Restyle every selected shape as one history step; needs the `shapes` tool. Fill skips lines and arrows, corners apply to rectangles. */
   execute(command:'shape-style',value:CanvasShapeStylePatch):CommandResult;
   getInspector():Readonly<{x:number;y:number;width:number;height:number;rotation:number;relativeRotation:boolean;editable:boolean}>|null;
@@ -168,7 +182,7 @@ export interface CanvasDocumentAdapter {
   validate(value:unknown):CanvasObjectDocument;
   create(host:HTMLElement,value:CanvasObjectDocument):{element:HTMLElement;owner:CanvasOwner};
 }
-export function createCanvas(host: HTMLElement, options?:CanvasSettingsPatch & {documents?:CanvasDocumentAdapter;clipboard?:CanvasObjectClipboard}): CanvasInstance;
+export function createCanvas(host: HTMLElement, options?:Omit<CanvasSettingsPatch,'camera'> & {documents?:CanvasDocumentAdapter;clipboard?:CanvasObjectClipboard;camera?:CanvasCameraOptions|false}): CanvasInstance;
 
 export interface CanvasObjectTransfer {
   format:'dmf-canvas-clipboard';version:1|2|3|4;
