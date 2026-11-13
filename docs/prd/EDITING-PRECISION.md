@@ -13,7 +13,7 @@ related:
 
 # Editing precision
 
-Phase 1 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.4.0: snapping and guides, Alt-drag duplicate, `[`/`]` object navigation and selection labels. The reference design is feisal.id's own Canvas (dmf-web `docs/CANVAS.md`, `docs/CANVAS-RULES.md` and `beginSnap` in `public/js/canvas-tools.js`), adapted to the package's host, owner and settings model. Nothing here is implemented yet; the decisions below need sign-off before code.
+Phase 1 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.4.0: snapping and guides, Alt-drag duplicate, `[`/`]` object navigation and selection labels. The reference design is feisal.id's own Canvas (dmf-web `docs/CANVAS.md`, `docs/CANVAS-RULES.md` and `beginSnap` in `public/js/canvas-tools.js`), adapted to the package's host, owner and settings model. Nothing here is implemented yet. The five decisions below were accepted on 13 November 2026 with the recommended answers.
 
 None of this changes board, clipboard, draft or portable formats. Snapping and label preferences are host settings, like tool permissions, and never enter saved data.
 
@@ -43,13 +43,13 @@ With the canvas, an object or a handle focused, `]` selects and focuses the next
 
 While something is selected, a small label above its top-left shows its name (the owner's `name`: Text, Sticky Note, Rectangle, Highlight…) and one below its centre shows width × height in pixels, rounded, excluding any future camera zoom. A multi-selection shows its object count and combined size. Labels follow moves, resizes and rotation live, hide during text editing and drawing, are theme-aware, pointer-inert and `aria-hidden` (status and the inspector already announce the same information), and stay inside the host.
 
-## Decisions to sign off
+## Decisions (accepted 13 November 2026)
 
-1. **Settings API:** a new `snapping` setting, `{align: boolean, grid: boolean}` (default `{align: true, grid: false}`), on `createCanvas` and `configure()`, reported in `getState().settings`. Hosts show it as two checked More rows, "Align to objects" (`magnet`) and "Snap to grid" (`grid-2x2`). `align-center-horizontal` already means Align middle in the toolbar standard, so dmf-web's icon cannot be reused.
-2. **Gap guides:** include dmf-web's distance labels in 0.4.0 (recommended), or ship edge alignment first.
-3. **Labels:** rendered by core with a `labels` setting (default on) so hosts can turn them off (recommended), or always on as in dmf-web.
-4. **Alt-drag eligibility:** exactly what Duplicate allows (recommended), including authored originals where Duplicate supports them.
-5. **Navigation order:** reading order like Tab (recommended, matches dmf-web), or visual layer order.
+1. **Settings API — accepted:** a new `snapping` setting, `{align: boolean, grid: boolean}` (default `{align: true, grid: false}`), on `createCanvas` and `configure()`, reported in `getState().settings`. Hosts show it as two checked More rows, "Align to objects" (`magnet`) and "Snap to grid" (`grid-2x2`). `align-center-horizontal` already means Align middle in the toolbar standard, so dmf-web's icon cannot be reused.
+2. **Gap guides — accepted:** dmf-web's distance labels ship in 0.4.0 with edge alignment.
+3. **Labels — accepted:** rendered by core with a `labels` setting (default on) so hosts can turn them off.
+4. **Alt-drag eligibility — accepted:** exactly what Duplicate allows, including authored originals where Duplicate supports them.
+5. **Navigation order — accepted:** reading order like Tab, matching dmf-web.
 
 ## Delivery
 
