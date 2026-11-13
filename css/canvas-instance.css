@@ -89,6 +89,9 @@
 .canvas-instance-label[hidden] { display:none; }
 .canvas-instance-label--name { transform:translateY(calc(-100% - 14px)); }
 .canvas-instance-label--size { transform:translate(-50%,14px); }
+/* Flipped inside the selection when the outside position would leave the host. */
+.canvas-instance-label--name[data-canvas-instance-inside] { transform:translateY(4px); }
+.canvas-instance-label--size[data-canvas-instance-inside] { transform:translate(-50%,calc(-100% - 4px)); }
 /* Snapping guides (docs/prd/EDITING-PRECISION.md): pointer-inert overlays inside the host, above objects (z-index 1-50)
    and the marquee. Alignment lines use the selection colour; gap guides use a fixed pink with a white label (4.8:1). */
 .canvas-instance-guide, .canvas-instance-gap { position:absolute; z-index:104; box-sizing:border-box; margin:0; pointer-events:none; }

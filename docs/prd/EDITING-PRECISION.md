@@ -59,9 +59,9 @@ While something is selected, a small label above its top-left shows its name (th
 4. Alt-drag duplicate. **Done in 0.4.0-alpha.1.**
 5. `[`/`]` navigation. **Done in 0.4.0-alpha.1.**
 6. Selection labels. **Done in 0.4.0-alpha.1.** Labels use the theme's toolbar surface, ink and line rather than dmf-web's selection-blue labels, because white 11px text on the default `#1677ff` falls short of WCAG AA. They are measured once per animation frame rather than from cached deltas.
-7. Docs (API, toolbar standard, glossary, changelog) and browser scenarios in a new suite: align and grid snaps, guides appear and clear, Alt bypass, Shift axis lock, Alt-drag copy with one Undo, `[`/`]` order and wrap, labels during resize and rotation, mobile RTL.
+7. Docs (API, toolbar standard, glossary, changelog) and browser scenarios in a new suite: align and grid snaps, guides appear and clear, Alt bypass, Shift axis lock, Alt-drag copy with one Undo, `[`/`]` order and wrap, labels during resize and rotation, mobile RTL. **Done in 0.4.0-alpha.1:** `npm run test:editing:browser` runs 17 checks in CI, including multi-selection snapping and teardown, and every acceptance item below has a check.
 
-Land as `0.4.0-alpha.n` and promote to `0.4.0` when the browser suites pass in CI and dmf-web can move one surface (for example the playground specimens) onto the package's snapping.
+Land as `0.4.0-alpha.n` and promote to `0.4.0` when the browser suites pass in CI and dmf-web can move one surface (for example the playground specimens) onto the package's snapping. As of 13 November 2026 every step is built in `0.4.0-alpha.1`; both promotion conditions are still open.
 
 ## Acceptance
 

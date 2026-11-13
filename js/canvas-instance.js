@@ -123,6 +123,16 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     Object.assign(labelNodes.name.style, { left: left - originX + 'px', top: top - originY + 'px' });
     Object.assign(labelNodes.size.style, { left: (left + right) / 2 - originX + 'px', top: bottom - originY + 'px' });
     labelNodes.name.hidden = labelNodes.size.hidden = false;
+    // Keep both labels inside the host: flip one inside the selection when it would overflow vertically, and
+    // shift it back horizontally. Measured in the same frame, after the writes above.
+    const hostRect = { left: originX, top: originY, right: originX + root.clientWidth, bottom: originY + root.clientHeight };
+    for (const node of [labelNodes.name, labelNodes.size]) {
+      node.toggleAttribute('data-canvas-instance-inside', false);
+      let r = node.getBoundingClientRect();
+      if (r.top < hostRect.top || r.bottom > hostRect.bottom) { node.toggleAttribute('data-canvas-instance-inside', true); r = node.getBoundingClientRect(); }
+      const shift = Math.max(0, hostRect.left - r.left) - Math.max(0, r.right - hostRect.right);
+      if (shift) node.style.left = parseFloat(node.style.left) + shift + 'px';
+    }
   }
   function emit() {
     scheduleLabels();

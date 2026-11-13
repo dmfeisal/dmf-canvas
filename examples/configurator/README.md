@@ -2,7 +2,7 @@
 
 Run `npm ci` and `npm start` from the repository root, then open `/examples/configurator/`.
 
-Select Preview A or B to configure it independently. The selected preview supplies the generated code. Read-only mode, all 14 supported tool permissions, System/Light/Dark/Inherit themes, maximum width (280–1600px) and board height (200–800px) are supported. Invalid dimensions retain the last valid setting; other valid controls continue to apply. Reset settings preserves preview objects.
+Select Preview A or B to configure it independently. The selected preview supplies the generated code. Read-only mode, all 15 supported tool permissions, System/Light/Dark/Inherit themes, maximum width (280–1600px) and board height (200–800px) are supported. Invalid dimensions retain the last valid setting; other valid controls continue to apply. Reset settings preserves preview objects. Snapping (More › Snapping in each preview) and selection labels use the canvas defaults (`snapping: {align: true, grid: false}`, `labels: true`); the configurator does not expose them as settings yet, so generated code does not set them.
 
 Previews are temporary and have no autosave or upload service. Save a local board file to retain edits. Generated code contains configuration only: it never includes preview text, imported images or board data.
 
