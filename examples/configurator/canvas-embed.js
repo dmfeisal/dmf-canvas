@@ -40,6 +40,7 @@ export function mountEmbed(parent,initial={}){
   // Shapes reuse the Pencil inks and widths; their kinds are armed with R, O, D, L and A.
   const shapeOptions=[['rectangle','Rectangle','square','R'],['ellipse','Ellipse','ellipse','O'],['diamond','Diamond','diamond','D'],['line','Line','slash','L'],['arrow','Arrow','move-up-right','A']];
   const paletteFor=tool=>tool==='shape'?drawingPalettes.pencil:drawingPalettes[tool];
+  const toggleSnap=key=>{const current=canvas.getState().settings.snapping;canvas.configure({snapping:{[key]:!current[key]}});};
   const restyle=value=>{pencil.setActive(false);const result=canvas.execute('shape-style',value);if(!result.ok)message.textContent='Select shapes to change their style.';};
   const actions={
    tools:[{id:'select',label:'Select',icon:'mouse-pointer-2',shortcut:'V',run:()=>{pencil.setActive(false);canvas.focus();}},{id:'text',label:'Add text',icon:'type',run:addText},{id:'sticky',label:'Add note',icon:'sticky-note',run:addNote},{id:'image',label:'Add image',icon:'image',run:()=>{pencil.setActive(false);root.querySelector('[data-image-file]').click();}},{id:'pencil',label:'Pencil',icon:'pencil',shortcut:'P',run:()=>drawWith('pencil')},{id:'highlighter',label:'Highlighter',icon:'highlighter',shortcut:'Shift P',run:()=>drawWith('highlighter')},{id:'eraser',label:'Stroke eraser',icon:'eraser',shortcut:'E',run:()=>drawWith('eraser')},{id:'shapes',label:'Shapes',icon:'shapes',run:()=>drawWith('shape')}],
@@ -61,6 +62,9 @@ export function mountEmbed(parent,initial={}){
     ...[['thin',2],['medium',4],['bold',8]].map(([size,strokeWidth])=>({id:'style-width-'+size,label:`${size[0].toUpperCase()+size.slice(1)} · ${strokeWidth}px`,icon:'minus',menu:true,group:'Shape style',pressed:false,run:()=>restyle({strokeWidth})})),
     {id:'style-fill',label:'Fill',icon:'paint-bucket',menu:true,group:'Shape style',pressed:false,run:()=>restyle({fill:canvas.getState().shapeStyle?.fill==='tint'?'none':'tint'})},
     {id:'style-corners',label:'Round corners',icon:'square-round-corner',menu:true,group:'Shape style',pressed:false,run:()=>restyle({corners:canvas.getState().shapeStyle?.corners==='round'?'sharp':'round'})},
+    // Snapping: checked rows that toggle the canvas's own settings; Alt/Option bypasses snapping during a drag.
+    {id:'snap-align',label:'Align to objects',icon:'magnet',menu:true,group:'Snapping',pressed:true,run:()=>toggleSnap('align')},
+    {id:'snap-grid',label:'Snap to grid',icon:'grid-2x2',menu:true,group:'Snapping',pressed:false,run:()=>toggleSnap('grid')},
     {id:'save',label:'Save board',icon:'download',menu:true,group:'Board',run:()=>save()},{id:'open',label:'Open board',icon:'folder-open',menu:true,group:'Board',run:()=>root.querySelector('[data-board-file]').click()}],
    help:[{id:'help',label:'Keyboard help',icon:'circle-question-mark',pressed:false,run:()=>toggleHelp()}],
   };
@@ -82,7 +86,7 @@ export function mountEmbed(parent,initial={}){
    for(const [kind]of shapeOptions)bars.options.update('shape-'+kind,{hidden:!shaping,pressed:shaping&&ink.shape===kind});
    bars.options.update('shape-fill',{hidden:!shaping||ink.shape==='line'||ink.shape==='arrow',pressed:shaping&&ink.fill==='tint'});bars.options.update('shape-corners',{hidden:!shaping||ink.shape!=='rectangle',pressed:shaping&&ink.corners==='round'});
    for(const tool of ['pencil','highlighter','shape'])for(const key of Object.keys(paletteFor(tool).inks))bars.options.update(`ink-${tool}-${key}`,{hidden:ink?.tool!==tool,pressed:ink?.tool===tool&&ink.color===key});
-   ['thin','medium','bold'].forEach((size,index)=>{const width=palette?.widths[index];bars.options.update('width-'+size,{pressed:!!palette&&ink.width===width,label:`${size[0].toUpperCase()+size.slice(1)}${width?` · ${width}px`:''}`});});bars.tools.update('select',{pressed:!drawing});bars.selection.update('lock',{label:s.selectionLocked?'Unlock':'Lock',pressed:s.selectionLocked===true});images?.render();
+   ['thin','medium','bold'].forEach((size,index)=>{const width=palette?.widths[index];bars.options.update('width-'+size,{pressed:!!palette&&ink.width===width,label:`${size[0].toUpperCase()+size.slice(1)}${width?` · ${width}px`:''}`});});bars.tools.update('select',{pressed:!drawing});bars.selection.update('lock',{label:s.selectionLocked?'Unlock':'Lock',pressed:s.selectionLocked===true});bars.selection.update('snap-align',{pressed:s.settings.snapping.align,disabled:ro});bars.selection.update('snap-grid',{pressed:s.settings.snapping.grid,disabled:ro});images?.render();
   }
   pencil=createPencil(canvas,host,render);cleanup.push(()=>pencil.dispose());
   bars.tools=createCanvasToolbar(slot('tools'),{actions:actions.tools,label:'Tools',orientation:'vertical'});bars.history=createCanvasToolbar(slot('history'),{actions:actions.history,label:'History'});bars.selection=createCanvasToolbar(slot('selection'),{actions:actions.selection,label:'Selection actions',moreLabel:'More actions'});bars.help=createCanvasToolbar(slot('help'),{actions:actions.help,label:'Help'});bars.options=createCanvasToolbar(slot('options'),{actions:actions.options,label:'Tool options'});

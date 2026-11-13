@@ -36,6 +36,9 @@ canvas.execute('move');
 canvas.execute('undo','blue');
 // @ts-expect-error unsupported tool
 canvas.configure({tools:{highlighter:true}});
+canvas.configure({snapping:{grid:true}});{const snap:boolean=canvas.getState().settings.snapping.align;void snap;}
+// @ts-expect-error snapping keys are align and grid
+canvas.configure({snapping:{magnet:true}});
 // @ts-expect-error unsupported drawing width (neither Pencil nor Highlighter)
 pencil.setWidth(6);
 // @ts-expect-error owner capture must be finite JSON-compatible data

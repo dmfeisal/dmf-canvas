@@ -46,8 +46,10 @@ export interface CanvasShapeStyle {ink:'primary'|'blue'|'red';strokeWidth:2|4|8;
 export type CanvasShapeStylePatch=Partial<CanvasShapeStyle>;
 /** Shared style of a selection made only of unlocked shapes. A null key is mixed or does not apply; `canFill`/`canRound` say whether any closed shape or rectangle is selected. */
 export interface CanvasShapeStyleView {readonly ink:CanvasShapeStyle['ink']|null;readonly strokeWidth:CanvasShapeStyle['strokeWidth']|null;readonly fill:CanvasShapeStyle['fill']|null;readonly corners:'sharp'|'round'|null;readonly canFill:boolean;readonly canRound:boolean;}
-export interface CanvasEmbedSettings { readonly readOnly:boolean; readonly tools:Readonly<Record<CanvasTool,boolean>>; }
-export interface CanvasSettingsPatch { readOnly?:boolean; tools?:Partial<Record<CanvasTool,boolean>>; }
+/** Pointer-drag snapping: `align` to other objects' edges and centres (default true), `grid` to the 24px background dots (default false). Never saved in boards. */
+export interface CanvasSnapping { readonly align:boolean; readonly grid:boolean; }
+export interface CanvasEmbedSettings { readonly readOnly:boolean; readonly tools:Readonly<Record<CanvasTool,boolean>>; readonly snapping:CanvasSnapping; }
+export interface CanvasSettingsPatch { readOnly?:boolean; tools?:Partial<Record<CanvasTool,boolean>>; snapping?:Partial<CanvasSnapping>; }
 export type CanvasChangeSource = 'text' | 'text-style' | 'move' | 'transform' | 'create' | 'duplicate' | 'delete' | 'erase' | 'paste' | 'lock' | 'paper-color' | 'shape-style' | 'image-description' | 'group' | 'ungroup' | 'bring-forward' | 'bring-front' | 'send-backward' | 'send-back' | 'align-left' | 'align-center' | 'align-right' | 'align-top' | 'align-middle' | 'align-bottom' | 'distribute-horizontal' | 'distribute-vertical' | 'undo' | 'redo' | 'open';
 export interface CanvasChange { readonly revision:number; readonly dirty:boolean; readonly source:CanvasChangeSource; }
 export interface CanvasState {

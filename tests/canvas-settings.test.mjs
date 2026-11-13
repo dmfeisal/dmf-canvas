@@ -12,3 +12,11 @@ test('embed settings reject invalid patches atomically',()=>{
  for(const patch of [null,[],true,{unknown:true},{readOnly:'yes'},{tools:null},{tools:[]},{tools:{unknown:false}},{tools:{pencil:0}},{readOnly:true,tools:{files:'false'}}])assert.throws(()=>resolveSettings(patch,before),TypeError);
  assert.equal(JSON.stringify(before),snapshot);
 });
+
+test('snapping defaults to Align on and Grid off, merges partially and rejects unknown keys',()=>{
+ const defaults=resolveSettings();assert.deepEqual({...defaults.snapping},{align:true,grid:false});assert.ok(Object.isFrozen(defaults.snapping));
+ const grid=resolveSettings({snapping:{grid:true}},defaults);assert.deepEqual({...grid.snapping},{align:true,grid:true});
+ const off=resolveSettings({snapping:{align:false}},grid);assert.deepEqual({...off.snapping},{align:false,grid:true},'Patches keep the other key');
+ assert.deepEqual({...resolveSettings({tools:{files:false}},off).snapping},{align:false,grid:true},'Tool patches keep snapping');
+ for(const snapping of [null,[],true,{magnet:true},{align:'yes'},{grid:1}])assert.throws(()=>resolveSettings({snapping}),TypeError,JSON.stringify(snapping));
+});

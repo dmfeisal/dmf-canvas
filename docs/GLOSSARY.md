@@ -168,6 +168,8 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 | Term | Code name | Meaning |
 |---|---|---|
 | Tool permissions | `settings.tools` | Switches for `text`, `sticky`, `image`, `pencil`, `shapes`, `clipboard`, `group`, `arrange`, `layers`, `lock`, `delete`, `duplicate`, `files`, `history` and `paperColor`. Hidden in the UI and refused by commands when off. |
+| Snapping | `settings.snapping` | Pointer drags snap to other objects' edges and centres (`align`, on by default) or to the 24px grid (`grid`). Alt bypasses it, Shift after a drag starts locks one axis, and arrow keys never snap. Not saved in boards. |
+| Guides | `.canvas-instance-guide`, `.canvas-instance-gap` | While snapping, a line on the snapped edge or grid line, and pink labels with the distance to the nearest neighbour. Pointer-inert; gone on drop. |
 | Read-only | `readOnly` | Selection, Copy and Save still work; nothing can change. |
 | Theme roles | surface, grid, selection, toolbar, ink, line | The six colours a host sets, with dmf-ui and system fallbacks. |
 | Theme mode | `system`, `light`, `dark`, `inherit` | How `createCanvasTheme()` picks its palette. |
@@ -185,10 +187,10 @@ These terms come up in other editors and on feisal.id, but this library does not
 
 | Term | Status |
 |---|---|
-| Guide lines, snapping | Proposed for 0.4.0. |
-| Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.4.0. |
-| Touch controls | Proposed for 0.4.0. Pencil, Highlighter and Eraser ignore touch today. |
+| Alt-drag duplicate, `[`/`]` navigation, selection labels | The remaining steps of [editing precision](prd/EDITING-PRECISION.md) (0.4.0); snapping and its guides exist since 0.4.0-alpha.1. dmf-web already has them. |
+| Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.5.0 (parity phase 2). |
+| Touch controls | Proposed for 0.5.0 with the camera. Pencil, Highlighter and Eraser ignore touch today. |
 | Connectors | Arrows that stay attached to objects, and multi-point lines, are not scheduled. Excalidraw imports report them as unsupported. |
-| Layers panel, Reset canvas edits | On feisal.id only. |
-| PNG export | Proposed for 0.5.0. |
+| Layers panel, Reset canvas edits | On feisal.id only; proposed for 0.6.0 (parity phase 3). |
+| PNG export | Proposed for 0.7.0 (parity phase 4). |
 | Visitor viewer | A proposed embed mode; see the [viewer spec](architecture/VIEWER-EMBED-SPEC.md). |

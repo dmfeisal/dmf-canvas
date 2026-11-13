@@ -10,7 +10,7 @@ const mounted = new WeakMap(), registrations = new WeakMap();
 const nativeControl = 'input,textarea,select,button,a,[contenteditable]:not([contenteditable="false"]),dialog,[popover]';
 const result = (ok, reason = null) => Object.freeze({ ok, reason });
 
-export function createCanvas(host, { documents = null, clipboard = null, readOnly = false, tools = {} } = {}) {
+export function createCanvas(host, { documents = null, clipboard = null, readOnly = false, tools = {}, snapping = {} } = {}) {
   const view = host?.ownerDocument?.defaultView;
   if (!view || !(host instanceof view.HTMLElement) || ['HTML', 'BODY'].includes(host.tagName)) {
     throw new TypeError('Canvas needs a dedicated HTML host.');
@@ -23,7 +23,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   }
 
   if(clipboard&&(!['read','write','subscribe'].every(key=>typeof clipboard[key]==='function')||!Number.isInteger(clipboard.count)||clipboard.count<0||clipboard.count>50))throw new TypeError('Canvas needs an explicit object clipboard.');
-  let settings=resolveSettings({readOnly,tools});
+  let settings=resolveSettings({readOnly,tools,snapping});
   const changes=createChangeTracker(error=>view.reportError(error));
   let unsubscribeClipboard=null;
   let root = host;
@@ -153,7 +153,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   }
   function finish(cancel = false) {
     if (!gesture) return;
-    const active = gesture; gesture = null;
+    const active = gesture; gesture = null;hideGuides();
     try {
       if(active.marquee){
         active.overlay?.remove();
@@ -238,6 +238,105 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       finish(){for(const item of items)item.session.finish?.();},
     }};
   }
+  // Snapping (docs/prd/EDITING-PRECISION.md). Pointer drags only: keyboard nudges stay exact. Geometry is read once,
+  // at the drag's first movement, so nothing is measured while moving. `scale` lets a future camera reuse it.
+  const snapDistance = 6, gridSize = 24, gridOffset = 12, snapPeers = 80;
+  function snapContext(active, scale = 1) {
+    const entries = (active.items ?? [active]).map(item => item.entry);
+    const rects = entries.map(entry => entry.element.getBoundingClientRect());
+    const left = Math.min(...rects.map(r => r.left)), top = Math.min(...rects.map(r => r.top));
+    const right = Math.max(...rects.map(r => r.right)), bottom = Math.max(...rects.map(r => r.bottom));
+    const peers = [...owners.values()].filter(entry => usable(entry) && !entries.includes(entry)).slice(0, snapPeers)
+      .map(entry => entry.element.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
+    const area = root.getBoundingClientRect();
+    return { left, top, width: right - left, height: bottom - top, scale, peers,
+      xs: peers.flatMap(r => [r.left, r.left + r.width / 2, r.right]), ys: peers.flatMap(r => [r.top, r.top + r.height / 2, r.bottom]),
+      originX: area.left + root.clientLeft, originY: area.top + root.clientTop };
+  }
+  function snapAxis(start, size, movement, lines, origin, scale, minimum, maximum) {
+    const fits = correction => movement + correction >= minimum - .001 && movement + correction <= maximum + .001;
+    let best = snapDistance + .01, correction = 0, target = null;
+    // Align: the selection's start, centre or end meets a peer's start, centre or end.
+    if (settings.snapping.align) for (const anchor of [start + movement, start + movement + size / 2, start + movement + size]) {
+      for (const line of lines) { const delta = line - anchor; if (Math.abs(delta) < best && fits(delta)) { best = Math.abs(delta); correction = delta; target = line; } }
+    }
+    // Grid: otherwise the selection's start meets the nearest background dot (12px into each 24px tile).
+    if (target === null && settings.snapping.grid) {
+      const point = (start + movement - origin) / scale, delta = (Math.round((point - gridOffset) / gridSize) * gridSize + gridOffset - point) * scale;
+      if (fits(delta)) { correction = delta; target = start + movement + delta; }
+    }
+    return [movement + correction, target];
+  }
+  function snapMove(active, dx, dy) {
+    const context = active.snap ??= snapContext(active), limits = active.session.limits;
+    const [x, targetX] = snapAxis(context.left, context.width, dx, context.xs, context.originX, context.scale, limits.left, limits.right);
+    const [y, targetY] = snapAxis(context.top, context.height, dy, context.ys, context.originY, context.scale, limits.top, limits.bottom);
+    return { x, y, targetX, targetY };
+  }
+  // Guides: two alignment lines and two gap guides per host, reused across drags, pointer-inert and hidden from
+  // assistive technology (status and the inspector carry the same information). Never part of saved data.
+  let guides = null;
+  function guideNodes() {
+    if (guides) return guides;
+    const make = (className, label) => {
+      const node = root.ownerDocument.createElement('div');node.className = className;node.setAttribute('aria-hidden', 'true');node.hidden = true;
+      if (label) node.append(root.ownerDocument.createElement('span'));root.append(node);return node;
+    };
+    guides = { x: make('canvas-instance-guide canvas-instance-guide--x'), y: make('canvas-instance-guide canvas-instance-guide--y'),
+      gapX: make('canvas-instance-gap canvas-instance-gap--x', true), gapY: make('canvas-instance-gap canvas-instance-gap--y', true) };
+    return guides;
+  }
+  function hideGuides() { if (guides) for (const node of Object.values(guides)) node.hidden = true; }
+  // The nearest non-overlapping gap to a peer that shares the other axis, in screen pixels (to a tenth, up to 1000).
+  function nearestGap(moving, peers, axis) {
+    const [start, end, crossStart, crossEnd] = axis === 'x' ? ['left', 'right', 'top', 'bottom'] : ['top', 'bottom', 'left', 'right'];
+    let best = null;
+    for (const peer of peers) {
+      if (peer[crossEnd] <= moving[crossStart] || peer[crossStart] >= moving[crossEnd]) continue;
+      for (const [from, to] of [[moving[end], peer[start]], [peer[end], moving[start]]]) {
+        const gap = to - from;
+        if (gap > .05 && gap <= 1000 && (!best || gap < best.gap)) best = { gap, from, cross: (Math.max(peer[crossStart], moving[crossStart]) + Math.min(peer[crossEnd], moving[crossEnd])) / 2 };
+      }
+    }
+    return best;
+  }
+  function showGuides(active, snapped) {
+    const context = active.snap, limits = active.session.limits, nodes = guideNodes();
+    const dx = Math.max(limits.left, Math.min(limits.right, snapped.x)), dy = Math.max(limits.top, Math.min(limits.bottom, snapped.y));
+    const place = (node, styles) => { node.hidden = false; Object.assign(node.style, styles); };
+    if (snapped.targetX === null) nodes.x.hidden = true; else place(nodes.x, { left: snapped.targetX - context.originX + 'px' });
+    if (snapped.targetY === null) nodes.y.hidden = true; else place(nodes.y, { top: snapped.targetY - context.originY + 'px' });
+    const moving = { left: context.left + dx, top: context.top + dy, right: context.left + context.width + dx, bottom: context.top + context.height + dy };
+    const label = value => String(Math.round(value * 10) / 10);
+    const gapX = nearestGap(moving, context.peers, 'x'), gapY = nearestGap(moving, context.peers, 'y');
+    if (!gapX) nodes.gapX.hidden = true;
+    else { place(nodes.gapX, { left: gapX.from - context.originX + 'px', top: gapX.cross - context.originY + 'px', width: gapX.gap + 'px' }); nodes.gapX.firstChild.textContent = label(gapX.gap); }
+    if (!gapY) nodes.gapY.hidden = true;
+    else { place(nodes.gapY, { top: gapY.from - context.originY + 'px', left: gapY.cross - context.originX + 'px', height: gapY.gap + 'px' }); nodes.gapY.firstChild.textContent = label(gapY.gap); }
+  }
+  // One pointer-drag step: Shift after the drag starts locks the dominant axis (chosen after 4px from where Shift
+  // took effect, anchored at the last applied position); snapping then works only along that axis, and Alt bypasses it.
+  function dragTo(active, event, dx, dy) {
+    let x = dx, y = dy, snapX = true, snapY = true;
+    if (event.shiftKey) {
+      const lock = active.constraint ??= { x: active.lastX ?? 0, y: active.lastY ?? 0, rawX: dx, rawY: dy, axis: null };
+      const ddx = dx - lock.rawX, ddy = dy - lock.rawY;
+      if (!lock.axis && Math.hypot(ddx, ddy) > 4) {
+        lock.axis = Math.abs(ddx) >= Math.abs(ddy) ? 'x' : 'y';
+        status.textContent = `${lock.axis === 'x' ? 'Horizontal' : 'Vertical'} movement constrained. Release Shift for free movement.`;
+      }
+      x = lock.axis === 'x' ? lock.x + ddx : lock.x; y = lock.axis === 'y' ? lock.y + ddy : lock.y;
+      snapX = lock.axis === 'x'; snapY = lock.axis === 'y';
+    } else if (active.constraint) { active.constraint = null; status.textContent = 'Free movement.'; }
+    if (!event.altKey && (settings.snapping.align || settings.snapping.grid)) {
+      // Never let Align or Grid pull a locked coordinate away; the perpendicular guide hides.
+      const snapped = snapMove(active, x, y);
+      if (snapX) x = snapped.x; if (snapY) y = snapped.y;
+      move(active, x, y); showGuides(active, { x, y, targetX: snapX ? snapped.targetX : null, targetY: snapY ? snapped.targetY : null });
+    } else { hideGuides(); move(active, x, y); }
+    const limits = active.session.limits;
+    active.lastX = Math.max(limits.left, Math.min(limits.right, x)); active.lastY = Math.max(limits.top, Math.min(limits.bottom, y));
+  }
   function move(active, dx, dy) {
     const limits = active.session.limits;
     active.session.move(Math.max(limits.left, Math.min(limits.right, dx)), Math.max(limits.top, Math.min(limits.bottom, dy)));
@@ -320,7 +419,11 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const dx = event.clientX - gesture.x, dy = event.clientY - gesture.y;
     if (!gesture.kind && !gesture.started && Math.hypot(dx,dy) < 4) return;
     gesture.started = true;
-    try{if (gesture.kind) gesture.session.pointer(dx,dy,event.shiftKey);else move(gesture, dx, dy);}
+    try{
+      if (gesture.kind) gesture.session.pointer(dx,dy,event.shiftKey);
+      // Alt/Option bypasses snapping for as long as it is held.
+      else dragTo(gesture, event, dx, dy);
+    }
     catch(error){finish(true);view.reportError(error);}
   }
   function onPointerEnd(event) {
@@ -870,7 +973,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       alive = focused = false;
       undo.length = redo.length = 0;selected = null;selection.clear();multiple=false;
       for (const [type,listener] of Object.entries(listeners)) root.removeEventListener(type,listener);
-      mounted.delete(root);status.remove();done.remove();
+      mounted.delete(root);status.remove();done.remove();if(guides)for(const node of Object.values(guides))node.remove();guides=null;
       if (addedTabIndex && root.getAttribute('tabindex') === '0') root.removeAttribute('tabindex');
       if(originalMultiple===null)root.removeAttribute('data-canvas-instance-multiple');else root.setAttribute('data-canvas-instance-multiple',originalMultiple);
       if(originalReadOnly===null)root.removeAttribute('data-canvas-instance-readonly');else root.setAttribute('data-canvas-instance-readonly',originalReadOnly);
