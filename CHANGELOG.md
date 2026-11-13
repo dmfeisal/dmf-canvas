@@ -3,7 +3,8 @@
 ## 0.3.0-alpha.3 (prepared 13 November 2026, private, experimental)
 
 - Add Shapes delivery step 1 ([proposal](docs/prd/SHAPES.md)): `createShape` and `shapeKinds` from `dmf-canvas/owners` create geometry-only `rectangle`, `ellipse`, `diamond`, `line` and `arrow` owners drawn as local SVG from semantic keys: Pencil `ink` and `strokeWidth`, `fill` `none`/`tint`, rectangle `corners` `sharp`/`round`, and two points for lines and arrows. Shapes share geometry, locks, layers, grouping, Duplicate, Copy/Paste, Save/Open and history; the stroke Eraser never removes them.
-- The Shapes tool, free-resize handles, `shapes` permission, Shape style menu and Excalidraw mapping are not in this release.
+- Add free resize for shapes (step 2): eight handles plus rotate; sides change one dimension and corners both (Shift keeps the ratio), keeping the opposite edge or corner fixed even when rotated. The artwork is redrawn, so strokes keep their width and line points stretch. `TransformHandle` adds `n`/`s`, `createTextOwner` takes `freeResize` and `onBox`, and shape records keep `state.height`. Side handles hide on boxes under 48px in that direction. Text handles are unchanged.
+- The Shapes tool, `shapes` permission, Shape style menu and Excalidraw mapping are not in this release.
 
 Migration: boards and transfers containing shapes use schema 4 and portable documents use version 3; readers accept 1–4 and 1–3. 0.3.0-alpha.2 and earlier readers reject them instead of dropping shapes. Shape-free files are written exactly as before. See [compatibility](docs/COMPATIBILITY.md#shapes-schema-4).
 

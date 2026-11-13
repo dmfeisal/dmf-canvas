@@ -58,7 +58,8 @@ function draw(doc,style,width,height){
 
 /**
  * Creates a shape owner on `host`. `layout` places the box in host pixels; line and arrow points are box-local.
- * Shapes expose geometry only: no editing, text or paper colour.
+ * Shapes expose geometry only: no editing, text or paper colour. All eight handles resize the box freely and the
+ * artwork is redrawn at the new size, so strokes keep their width and line points stretch with the box.
  */
 export function createShape(host,style,layout){
   if(!host?.isConnected||host.clientWidth<80||host.clientHeight<100)throw new TypeError('Shapes need a connected host.');
@@ -68,14 +69,23 @@ export function createShape(host,style,layout){
   node.className='canvas-instance-shape';node.dataset.canvasInstanceShape=data.shape;node.setAttribute('aria-label',name);
   if(host.getAttribute('aria-describedby'))node.setAttribute('aria-describedby',host.getAttribute('aria-describedby'));
   Object.assign(node.style,{width:layout.width+'px',height:layout.height+'px',left:layout.left+'px',top:layout.top+'px'});root.append(node);
-  let base;try{base=createTextOwner(node,root,{name,widthHandles:false,editable:false});}catch(error){node.remove();throw error;}
-  node.prepend(draw(host.ownerDocument,data,layout.width,layout.height));
+  let artwork=null,size={width:layout.width,height:layout.height};
+  // Points stretch with the box; rounding is clamped so saved points always stay inside it.
+  const fit=(value,ratio,limit)=>Math.min(limit,Math.round(value*ratio*100)/100);
+  const scaled=()=>data.points?.map(p=>({x:fit(p.x,size.width/layout.width,size.width),y:fit(p.y,size.height/layout.height,size.height)}));
+  const redraw=(width,height)=>{
+    if(!node||!(width>0&&height>0))return;size={width,height};
+    const next=draw(host.ownerDocument,{...data,...(data.points?{points:scaled()}:{})},width,height);
+    if(artwork)artwork.replaceWith(next);else node.prepend(next);artwork=next;
+  };
+  let base;try{base=createTextOwner(node,root,{name,widthHandles:false,editable:false,freeResize:true,onBox:redraw});}catch(error){node.remove();throw error;}
+  redraw(layout.width,layout.height);
   const {beginEdit,...geometry}=base;
   base.restore(base.capture());
   const owner=Object.freeze({...geometry,
-    serialize:()=>({type:'shape',layout:{left:node.offsetLeft,top:node.offsetTop,width:layout.width,height:layout.height,fontSize:18},...data,...(data.points?{points:data.points.map(p=>({...p}))}:{}),state:base.capture()}),
+    serialize:()=>({type:'shape',layout:{left:node.offsetLeft,top:node.offsetTop,width:size.width,height:size.height,fontSize:18},...data,...(data.points?{points:scaled()}:{}),state:base.capture()}),
     setPresent(present){if(!node)return;if(present){root.append(node);base.restore(base.capture());}else node.remove();},
-    dispose(){if(!node)return;base.dispose();node.remove();node=root=null;},
+    dispose(){if(!node)return;base.dispose();node.remove();node=root=artwork=null;},
   });
   return Object.freeze({element:node,owner});
 }

@@ -24,6 +24,7 @@ export function validateObject(input) {
   if(lineHeight!=='normal'&&!finite(lineHeight,1,1000)||!finite(fontWeight,1,1000))throw new TypeError('Invalid text typography.');
   const layout={left:l.left,top:l.top,width:l.width,height:l.height,fontSize:l.fontSize,lineHeight,fontWeight};
   const state={x:s.x,y:s.y,scale:s.scale,angle:s.angle,width:s.width,content:null};
+  if(s.height!==undefined){if(type!=='shape'||typeof s.height!=='string'||!/^\d{1,6}(?:\.\d{1,6})?px$/.test(s.height))throw new TypeError('Only shapes keep a box height.');state.height=s.height;}
   if(s.typography!==undefined){if(type!=='text')throw new TypeError('Only Text supports formatting.');state.typography={...validateTextStyle(s.typography)};}
   if(type==='image'){
     const image=validateImage(input.image);if(s.alt!==undefined&&s.alt!==image.alt)throw new TypeError('Image description mismatch.');state.alt=image.alt;

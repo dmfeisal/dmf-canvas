@@ -17,6 +17,7 @@ createDrawing(host,[{x:10,y:20}],{width:4,color:'blue'});validateObject(canvas.s
  createShape(host,{shape:'line',ink:'red',strokeWidth:2},box);
  // @ts-expect-error only rectangles have corners
  createShape(host,{shape:'ellipse',ink:'red',strokeWidth:2,corners:'round'},box);
+ const handle:import('dmf-canvas').TransformHandle='n';void handle;createTextOwner(host.firstElementChild as HTMLElement,host,{freeResize:true,onBox:(width,height)=>void (width+height)});
  const kind:ShapeKind=shapeKinds[0];const version:1|2|3|4=canvas.saveDocument().version;const portable:1|2|3=canvas.savePortableDocument().version;void kind;void version;void portable;}
 canvas.execute('move',{dx:1,dy:2});canvas.execute('image-description','Diagram');canvas.execute('lock',true);canvas.execute('undo');
 canvas.subscribe(s=>{const count:number=s.selectionCount;void count;});

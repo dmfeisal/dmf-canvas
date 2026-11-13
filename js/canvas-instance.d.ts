@@ -6,7 +6,8 @@ export interface MoveSession {
   move(dx: number, dy: number): void;
   finish?(): void;
 }
-export type TransformHandle = 'nw' | 'ne' | 'sw' | 'se' | 'w' | 'e' | 'rotate';
+/** `n` and `s` exist only on free-resize owners (shapes). */
+export type TransformHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'rotate';
 /** Single-handle prototype session, not yet the production group-transform API. */
 export interface TransformSession {
   pointer(dx: number, dy: number, shift: boolean): void;
@@ -131,7 +132,7 @@ export interface CanvasObjectDocument {
   layer?:number;
   group?:number;
   layout: {left:number;top:number;width:number;height:number;fontSize:number;lineHeight?:number|'normal';fontWeight?:number};
-  state: {x:number;y:number;scale:number;angle:number;width:string;content:string|null;alt?:string;paperColor?:string;typography?:CanvasTextStyleSnapshot};
+  state: {x:number;y:number;scale:number;angle:number;width:string;/** Shapes only: the box height, for example `'120px'`. */height?:string;content:string|null;alt?:string;paperColor?:string;typography?:CanvasTextStyleSnapshot};
   text?:string;
   image?:{src:string;alt:string;width:number;height:number};
   points?:{x:number;y:number}[];

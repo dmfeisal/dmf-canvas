@@ -134,8 +134,8 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 | Multi-selection | `data-canvas-instance-multiple` | Several selected objects. Moves and transforms apply to all of them as one Undo step. |
 | Marquee | `.canvas-instance-marquee` | The rectangle dragged on empty space to select several objects. |
 | Transform handle | `.canvas-instance-handle` | A 24px hit area around the selection. Hidden while an object is locked or being edited. |
-| Corner handle | `nw` `ne` `sw` `se` | Scales the object proportionally. |
-| Side handle | `w` `e` | Changes a Text object's width; the text rewraps instead of stretching. Drawings have corner and rotate handles only. |
+| Corner handle | `nw` `ne` `sw` `se` | Scales the object proportionally. On shapes, resizes width and height freely; Shift keeps the ratio. |
+| Side handle | `w` `e`, and `n` `s` on shapes | On Text, `w`/`e` change the width and the text rewraps. On shapes, all four sides resize one dimension and sit on the edge midpoints; they hide while the box is under 48px that way. Drawings have corner and rotate handles only. |
 | Rotate handle | `rotate` | Turns the object around its centre. Shift snaps to 15°; with the handle focused, arrow keys turn 5° (15° with Shift). |
 | Halo | `--dmf-color-canvas-halo` | The paper-coloured ring around each handle that keeps it visible on any background. |
 | Group, ungroup | `group`, `ungroup` | A group is selected, moved and transformed as one unit. |

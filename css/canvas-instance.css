@@ -23,6 +23,13 @@
 .canvas-instance-handle--e::before { right: 16px; }
 .canvas-instance-handle--rotate { top: calc(-12px - 28px * var(--canvas-instance-inverse, 1)); left: calc(50% - 12px); cursor: crosshair; }
 .canvas-instance-handle--rotate::after { border-radius: 50%; }
+/* Free-resize boxes (shapes): top/bottom handles, and side handles on the edge midpoints instead of 16px outside. */
+.canvas-instance-handle--n { top: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); left: calc(50% - 12px); cursor: ns-resize; }
+.canvas-instance-handle--s { bottom: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); left: calc(50% - 12px); cursor: ns-resize; }
+.canvas-instance-shape > .canvas-instance-handle--w { left: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); }
+.canvas-instance-shape > .canvas-instance-handle--e { right: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); }
+.canvas-instance-shape > :is(.canvas-instance-handle--w,.canvas-instance-handle--e)::before { content: none; }
+[data-canvas-instance-narrow] > :is(.canvas-instance-handle--n,.canvas-instance-handle--s), [data-canvas-instance-short] > :is(.canvas-instance-handle--w,.canvas-instance-handle--e) { display: none; }
 .canvas-instance-handle--rotate::before { content: ''; position: absolute; left: 12px; top: 17px; height: 23px; border-left: 1px solid currentColor; }
 .canvas-instance-handle:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 .canvas-instance-editor { display: block; outline: none; }
