@@ -16,7 +16,7 @@ Record this as the working release plan, not permission to publish. The proposal
 | `0.4.0-alpha.1` | Recorded private experimental prerelease: snapping, guides, the Shift axis lock, Alt-drag duplicate, `[`/`]` navigation and selection labels (all of editing precision); vendored by dmf-web |
 | `0.3.0` | Recorded private release: Shapes, Highlighter and stroke Eraser, plus portable documents, Excalidraw import and the toolbar standard from the alphas; browser suites in CI |
 | `0.4.0` | Current private release. dmf-web parity, editing precision: snapping and guides, Alt-drag duplicate, `[`/`]` navigation, selection labels |
-| `0.5.0` | dmf-web parity, navigation: camera (Hand, zoom, Fit all, Zoom to selection), two-finger touch, full screen |
+| `0.5.0` | dmf-web parity, navigation: camera (Hand, zoom, Fit all, Zoom to selection), two-finger touch, full screen ([proposal](prd/NAVIGATION.md)) |
 | `0.6.0` | dmf-web parity, organisation: Layers panel, Reset canvas edits, context menu |
 | `0.7.0` | dmf-web parity, styling and export: text ink and spacing, sticky swatches and presets, PNG export; expanded release validation |
 | `1.0.0-beta.1` | API freeze and integration testing |
