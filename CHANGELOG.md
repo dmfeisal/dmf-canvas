@@ -2,7 +2,7 @@
 
 ## 0.4.0-alpha.1 (prepared 13 November 2026, private, experimental)
 
-Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 1, [editing precision](docs/prd/EDITING-PRECISION.md), with step 1: snapping.
+Delivers [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 1, [editing precision](docs/prd/EDITING-PRECISION.md): snapping and guides, the Shift axis lock, Alt-drag duplicate, `[`/`]` navigation and selection labels. It becomes 0.4.0 once dmf-web moves one surface onto the package's snapping.
 
 - Add pointer-drag snapping, modelled on feisal.id: a selection's left, centre and right (and top, middle and bottom) edges snap within 6px to other objects' edges and centres (up to 80 peers), and, when nothing aligns, its top-left can snap to the 24px background dots. Alt/Option held during a drag bypasses it. Keyboard nudges, resize and rotate never snap, and snaps never leave the containment area.
 - New `snapping: {align, grid}` setting on `createCanvas` and `configure()`, default `{align: true, grid: false}`, reported in `getState().settings`. It is a host preference and never enters board, clipboard, draft or portable data.
