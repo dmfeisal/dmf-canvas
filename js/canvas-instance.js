@@ -135,6 +135,11 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const common=(list,key)=>list.length&&list.every(style=>style[key]===list[0][key])?list[0][key]:null;
     return Object.freeze({ink:common(styles,'ink'),strokeWidth:common(styles,'strokeWidth'),fill:common(closed,'fill'),corners:common(rects,'corners'),canFill:closed.length>0,canRound:rects.length>0});
   }
+  // Removes Alt-drag copies without leaving history: undo their presence action, then forget it.
+  function discardCopies(action){
+    if(!action||undo.at(-1)!==action)return;
+    instance.execute('undo');if(redo.at(-1)===action)redo.pop();pruneAbsent();
+  }
   function record(entry, before, source='move') {
     const after = capture(entry);
     if (JSON.stringify(before) === JSON.stringify(after)) return;
@@ -155,6 +160,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if (!gesture) return;
     const active = gesture; gesture = null;hideGuides();
     try {
+      if(active.pending)return;
       if(active.marquee){
         active.overlay?.remove();
         if(cancel)selectEntries(active.previous.filter(usable),active.primary);
@@ -163,6 +169,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       }
       if(!cancel&&active.pointerId!==undefined&&!active.started)return;
       const parts=active.items??[active];
+      if(cancel&&active.altCopy){discardCopies(active.copyAction);return;}
       if(cancel){for(const part of parts)if(part.entry.alive)part.entry.adapter.restore(clone(part.before));}
       else if(parts.every(part=>usable(part.entry))){
         try{
@@ -172,6 +179,9 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
             if(new TextEncoder().encode(JSON.stringify(items.map(({before,after})=>({before,after})))).byteLength>131072)throw new RangeError('Selection history exceeds 128 KiB.');
             if(items.some(item=>JSON.stringify(item.before)!==JSON.stringify(item.after)))pushAction({entry:active.entry,items},active.kind?'transform':'move');
           }else record(active.entry,active.before,active.kind?'transform':'move');
+          // Alt-drag: creation and final placement are one Undo step. Presence Undo removes the copies and Redo
+          // returns them where they were dropped, so the separate move action is dropped.
+          if(active.altCopy&&undo.at(-1)!==active.copyAction&&undo.at(-2)===active.copyAction)undo.pop();
         }catch(error){for(const part of parts)if(part.entry.alive)part.entry.adapter.restore(clone(part.before));throw error;}
       }else for(const part of parts)if(part.entry.alive)part.entry.adapter.restore(clone(part.before));
     } finally {
@@ -328,7 +338,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       x = lock.axis === 'x' ? lock.x + ddx : lock.x; y = lock.axis === 'y' ? lock.y + ddy : lock.y;
       snapX = lock.axis === 'x'; snapY = lock.axis === 'y';
     } else if (active.constraint) { active.constraint = null; status.textContent = 'Free movement.'; }
-    if (!event.altKey && (settings.snapping.align || settings.snapping.grid)) {
+    // Alt held to start a copy keeps snapping; Alt during an ordinary drag bypasses it.
+    if (!(event.altKey && !active.altCopy) && (settings.snapping.align || settings.snapping.grid)) {
       // Never let Align or Grid pull a locked coordinate away; the perpendicular guide hides.
       const snapped = snapMove(active, x, y);
       if (snapX) x = snapped.x; if (snapY) y = snapped.y;
@@ -393,6 +404,12 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if(!selection.has(entry))select(entry);
     const handle = handleAt(event.target);
     (handle || entry.element).focus({ preventScroll: true });
+    // Alt/Option held before a mouse or pen drag arms a copy; it is made once the pointer moves 4px.
+    if(!handle&&event.altKey&&event.pointerType!=='touch'&&state().canDuplicate){
+      gesture={pending:true,pointerId:event.pointerId,x:event.clientX,y:event.clientY,started:false};
+      try{root.setPointerCapture(event.pointerId);}catch{gesture=null;return;}
+      event.preventDefault();return;
+    }
     const active = begin(entry,handle?.dataset.canvasInstanceHandle || null,{ clientX:event.clientX,clientY:event.clientY });
     if (!active) return;
     Object.assign(active, { pointerId: event.pointerId, x: event.clientX, y: event.clientY, started: false });
@@ -414,6 +431,14 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       const entries=expandEntries([...new Set([...(active.additive?active.previous.filter(usable):[]),...hits])]);
       if(entries.length!==selection.size||entries.some(entry=>!selection.has(entry)))selectEntries(entries);
       event.preventDefault();return;
+    }
+    if(gesture.pending){
+      if(Math.hypot(event.clientX-gesture.x,event.clientY-gesture.y)<4)return;
+      const armed=gesture;gesture=null;
+      let copied;try{copied=duplicate(0);}catch(error){if(root?.hasPointerCapture(armed.pointerId))root.releasePointerCapture(armed.pointerId);view.reportError(error);return;}
+      const copy=copied.ok?begin(selected):null;
+      if(!copy){if(copied.ok)discardCopies(undo.at(-1));if(root?.hasPointerCapture(armed.pointerId))root.releasePointerCapture(armed.pointerId);emit();return;}
+      Object.assign(copy,{pointerId:armed.pointerId,x:armed.x,y:armed.y,started:true,altCopy:true,copyAction:undo.at(-1)});gesture=copy;
     }
     if (!(gesture.items??[gesture]).every(item=>usable(item.entry))) { finish(true); return; }
     const dx = event.clientX - gesture.x, dy = event.clientY - gesture.y;
@@ -748,7 +773,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     }catch(error){const registered=new Set(entries.map(entry=>entry.element));for(const entry of entries)entry.release();for(const item of allocated)if(!registered.has(item.element))item.owner.dispose();throw error;}
     finally{batchRegistration=false;}
   }
-  function duplicate() {
+  // Duplicate copies the selection 24px away; Alt-drag duplicate (docs/prd/EDITING-PRECISION.md) copies it in place.
+  function duplicate(offset = 24) {
     if(!state().canDuplicate)return result(false,'unsupported');
     const beforeSelection=[...selection], allocated=[],entries=[];
     try{
@@ -759,7 +785,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if(moves.some(item=>!item))throw new TypeError('Copy needs movement.');
       const left=Math.max(...moves.map(item=>item.limits.left)),right=Math.min(...moves.map(item=>item.limits.right)),top=Math.max(...moves.map(item=>item.limits.top)),bottom=Math.min(...moves.map(item=>item.limits.bottom));
       if(left>right||top>bottom)throw new RangeError('Copies have no shared movement bounds.');
-      const dx=Math.max(left,Math.min(24,right)),dy=Math.max(top,Math.min(24,bottom));
+      const dx=Math.max(left,Math.min(offset,right)),dy=Math.max(top,Math.min(offset,bottom));
       for(const move of moves){move.move(dx,dy);move.finish?.();}
       batchRegistration=true;
       for(const item of allocated){instance.register(item.element,item.owner,{created:true});entries.push(owners.get(item.element));}
