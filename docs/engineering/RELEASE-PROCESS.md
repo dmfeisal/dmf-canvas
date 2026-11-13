@@ -10,7 +10,7 @@ related:
 
 # Release process
 
-Current [package](../../package.json) is private 0.3.0 (the 0.3.0 milestone after the recorded 0.3.0-alpha.1 archive); [changelog](../../CHANGELOG.md) calls it prepared, while v0.1.0 is the recorded private baseline. A prepared working tree is not a new release. Existing [release checklist](../RELEASE-CHECKLIST.md) remains canonical for detailed archive/tag checks.
+Current [package](../../package.json) is private 0.4.0-alpha.1 (snapping, after the recorded 0.3.0 archive); [changelog](../../CHANGELOG.md) calls it prepared, while v0.1.0 is the recorded private baseline. A prepared working tree is not a new release. Existing [release checklist](../RELEASE-CHECKLIST.md) remains canonical for detailed archive/tag checks.
 
 The [version policy](../ROADMAP-AND-REFERENCES.md) uses one package version across runtime/CSS/declarations. Before 1.0: patch for compatible fixes, minor for features/incompatible changes with migration notes. Stable 1.0 uses SemVer. File/clipboard/draft schemas evolve independently. Never replace released tags or archives.
 

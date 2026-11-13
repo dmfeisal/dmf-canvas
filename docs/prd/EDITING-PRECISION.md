@@ -53,7 +53,7 @@ While something is selected, a small label above its top-left shows its name (th
 
 ## Delivery
 
-1. Snapping core (align and grid), settings and More toggles in the configurator, playground and custom host.
+1. Snapping core (align and grid), settings and More toggles in the configurator, playground and custom host. **Done in 0.4.0-alpha.1.**
 2. Guides and gap labels.
 3. Shift axis lock and Alt bypass.
 4. Alt-drag duplicate.

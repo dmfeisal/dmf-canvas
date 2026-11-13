@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0-alpha.1 (prepared 13 November 2026, private, experimental)
+
+Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 1, [editing precision](docs/prd/EDITING-PRECISION.md), with step 1: snapping.
+
+- Add pointer-drag snapping, modelled on feisal.id: a selection's left, centre and right (and top, middle and bottom) edges snap within 6px to other objects' edges and centres (up to 80 peers), and, when nothing aligns, its top-left can snap to the 24px background dots. Alt/Option held during a drag bypasses it. Keyboard nudges, resize and rotate never snap, and snaps never leave the containment area.
+- New `snapping: {align, grid}` setting on `createCanvas` and `configure()`, default `{align: true, grid: false}`, reported in `getState().settings`. It is a host preference and never enters board, clipboard, draft or portable data.
+- More gains a Snapping section with checked "Align to objects" (`magnet`) and "Snap to grid" (`grid-2x2`) rows in the configurator embed (so the playground and generated integrations) and the shared custom host. Adds Lucide 1.60.0 `magnet` and `grid-2x2`.
+- Add the editing precision browser suite, `npm run test:editing:browser`, in CI.
+- Snapping shows no guide lines yet; guides and gap labels are the next step.
+
+Migration: no format change. Snapping is on by default, so pointer drags near another object's edge now land on it; pass `snapping: {align: false}` to keep free movement.
+
 ## 0.3.0 (prepared 13 November 2026, private)
 
 Completes the 0.3.0 milestone (Shapes, Highlighter, stroke Eraser). Promotes 0.3.0-alpha.3 with no runtime change; the alpha entries below hold the details.

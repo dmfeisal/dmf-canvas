@@ -10,7 +10,7 @@ const mounted = new WeakMap(), registrations = new WeakMap();
 const nativeControl = 'input,textarea,select,button,a,[contenteditable]:not([contenteditable="false"]),dialog,[popover]';
 const result = (ok, reason = null) => Object.freeze({ ok, reason });
 
-export function createCanvas(host, { documents = null, clipboard = null, readOnly = false, tools = {} } = {}) {
+export function createCanvas(host, { documents = null, clipboard = null, readOnly = false, tools = {}, snapping = {} } = {}) {
   const view = host?.ownerDocument?.defaultView;
   if (!view || !(host instanceof view.HTMLElement) || ['HTML', 'BODY'].includes(host.tagName)) {
     throw new TypeError('Canvas needs a dedicated HTML host.');
@@ -23,7 +23,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   }
 
   if(clipboard&&(!['read','write','subscribe'].every(key=>typeof clipboard[key]==='function')||!Number.isInteger(clipboard.count)||clipboard.count<0||clipboard.count>50))throw new TypeError('Canvas needs an explicit object clipboard.');
-  let settings=resolveSettings({readOnly,tools});
+  let settings=resolveSettings({readOnly,tools,snapping});
   const changes=createChangeTracker(error=>view.reportError(error));
   let unsubscribeClipboard=null;
   let root = host;
@@ -238,6 +238,40 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       finish(){for(const item of items)item.session.finish?.();},
     }};
   }
+  // Snapping (docs/prd/EDITING-PRECISION.md). Pointer drags only: keyboard nudges stay exact. Geometry is read once,
+  // at the drag's first movement, so nothing is measured while moving. `scale` lets a future camera reuse it.
+  const snapDistance = 6, gridSize = 24, gridOffset = 12, snapPeers = 80;
+  function snapContext(active, scale = 1) {
+    const entries = (active.items ?? [active]).map(item => item.entry);
+    const rects = entries.map(entry => entry.element.getBoundingClientRect());
+    const left = Math.min(...rects.map(r => r.left)), top = Math.min(...rects.map(r => r.top));
+    const right = Math.max(...rects.map(r => r.right)), bottom = Math.max(...rects.map(r => r.bottom));
+    const peers = [...owners.values()].filter(entry => usable(entry) && !entries.includes(entry)).slice(0, snapPeers)
+      .map(entry => entry.element.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
+    const area = root.getBoundingClientRect();
+    return { left, top, width: right - left, height: bottom - top, scale,
+      xs: peers.flatMap(r => [r.left, r.left + r.width / 2, r.right]), ys: peers.flatMap(r => [r.top, r.top + r.height / 2, r.bottom]),
+      originX: area.left + root.clientLeft, originY: area.top + root.clientTop };
+  }
+  function snapAxis(start, size, movement, lines, origin, scale, minimum, maximum) {
+    const fits = correction => movement + correction >= minimum - .001 && movement + correction <= maximum + .001;
+    let best = snapDistance + .01, correction = 0, aligned = false;
+    // Align: the selection's start, centre or end meets a peer's start, centre or end.
+    if (settings.snapping.align) for (const anchor of [start + movement, start + movement + size / 2, start + movement + size]) {
+      for (const line of lines) { const delta = line - anchor; if (Math.abs(delta) < best && fits(delta)) { best = Math.abs(delta); correction = delta; aligned = true; } }
+    }
+    // Grid: otherwise the selection's start meets the nearest background dot (12px into each 24px tile).
+    if (!aligned && settings.snapping.grid) {
+      const point = (start + movement - origin) / scale, delta = (Math.round((point - gridOffset) / gridSize) * gridSize + gridOffset - point) * scale;
+      if (fits(delta)) correction = delta;
+    }
+    return movement + correction;
+  }
+  function snapMove(active, dx, dy) {
+    const context = active.snap ??= snapContext(active), limits = active.session.limits;
+    return [snapAxis(context.left, context.width, dx, context.xs, context.originX, context.scale, limits.left, limits.right),
+      snapAxis(context.top, context.height, dy, context.ys, context.originY, context.scale, limits.top, limits.bottom)];
+  }
   function move(active, dx, dy) {
     const limits = active.session.limits;
     active.session.move(Math.max(limits.left, Math.min(limits.right, dx)), Math.max(limits.top, Math.min(limits.bottom, dy)));
@@ -320,7 +354,12 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const dx = event.clientX - gesture.x, dy = event.clientY - gesture.y;
     if (!gesture.kind && !gesture.started && Math.hypot(dx,dy) < 4) return;
     gesture.started = true;
-    try{if (gesture.kind) gesture.session.pointer(dx,dy,event.shiftKey);else move(gesture, dx, dy);}
+    try{
+      if (gesture.kind) gesture.session.pointer(dx,dy,event.shiftKey);
+      // Alt/Option bypasses snapping for as long as it is held.
+      else if (!event.altKey && (settings.snapping.align || settings.snapping.grid)) move(gesture, ...snapMove(gesture, dx, dy));
+      else move(gesture, dx, dy);
+    }
     catch(error){finish(true);view.reportError(error);}
   }
   function onPointerEnd(event) {

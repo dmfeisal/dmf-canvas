@@ -168,6 +168,7 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 | Term | Code name | Meaning |
 |---|---|---|
 | Tool permissions | `settings.tools` | Switches for `text`, `sticky`, `image`, `pencil`, `shapes`, `clipboard`, `group`, `arrange`, `layers`, `lock`, `delete`, `duplicate`, `files`, `history` and `paperColor`. Hidden in the UI and refused by commands when off. |
+| Snapping | `settings.snapping` | Pointer drags snap to other objects' edges and centres (`align`, on by default) or to the 24px grid (`grid`). Alt bypasses it; arrow keys never snap. Not saved in boards. |
 | Read-only | `readOnly` | Selection, Copy and Save still work; nothing can change. |
 | Theme roles | surface, grid, selection, toolbar, ink, line | The six colours a host sets, with dmf-ui and system fallbacks. |
 | Theme mode | `system`, `light`, `dark`, `inherit` | How `createCanvasTheme()` picks its palette. |
@@ -185,7 +186,7 @@ These terms come up in other editors and on feisal.id, but this library does not
 
 | Term | Status |
 |---|---|
-| Guide lines, snapping | Proposed for 0.4.0 ([dmf-web parity](prd/DMF-WEB-PARITY.md), phase 1). dmf-web already has them. |
+| Guide lines | Snapping exists since 0.4.0-alpha.1; the guide lines and gap labels that show it are the next step of [editing precision](prd/EDITING-PRECISION.md). dmf-web already has them. |
 | Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.5.0 (parity phase 2). |
 | Touch controls | Proposed for 0.5.0 with the camera. Pencil, Highlighter and Eraser ignore touch today. |
 | Connectors | Arrows that stay attached to objects, and multi-point lines, are not scheduled. Excalidraw imports report them as unsupported. |
