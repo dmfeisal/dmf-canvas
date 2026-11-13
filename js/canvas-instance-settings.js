@@ -1,5 +1,5 @@
 // Embed configuration is host-owned, immutable, and never saved in board files.
-export const canvasToolNames=Object.freeze(['text','sticky','image','pencil','clipboard','group','arrange','layers','lock','delete','duplicate','files','history','paperColor']);
+export const canvasToolNames=Object.freeze(['text','sticky','image','pencil','shapes','clipboard','group','arrange','layers','lock','delete','duplicate','files','history','paperColor']);
 const defaults=Object.freeze({readOnly:false,tools:Object.freeze(Object.fromEntries(canvasToolNames.map(name=>[name,true])))});
 export function resolveSettings(patch={},previous=defaults) {
   if(!patch||Object.getPrototypeOf(patch)!==Object.prototype||Object.keys(patch).some(key=>!['readOnly','tools'].includes(key)))throw new TypeError('Invalid canvas settings.');

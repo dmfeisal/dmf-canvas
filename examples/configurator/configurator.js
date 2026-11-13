@@ -2,7 +2,7 @@ import {canvasToolNames} from 'dmf-canvas';
 import {mountEmbed,normalizeConfig} from './canvas-embed.js';
 import {generateFiles} from './generate.js';
 const form=document.getElementById('settings'),error=document.getElementById('settings-error'),format=document.getElementById('format'),file=document.getElementById('file'),code=document.getElementById('code'),status=document.getElementById('code-status');
-const labels={text:'Text editing',sticky:'Sticky notes',image:'Images',pencil:'Pencil',clipboard:'Copy / paste',group:'Grouping',arrange:'Arrangement',layers:'Layer order',lock:'Locking',delete:'Delete',duplicate:'Duplicate',files:'Board files',history:'Undo / redo',paperColor:'Note colors'};
+const labels={text:'Text editing',sticky:'Sticky notes',image:'Images',pencil:'Pencil',shapes:'Shapes',clipboard:'Copy / paste',group:'Grouping',arrange:'Arrangement',layers:'Layer order',lock:'Locking',delete:'Delete',duplicate:'Duplicate',files:'Board files',history:'Undo / redo',paperColor:'Note colors'};
 for(const tool of canvasToolNames){const label=document.createElement('label');label.className='check';const input=document.createElement('input');input.type='checkbox';input.dataset.tool=tool;label.append(input,document.createTextNode(labels[tool]));document.getElementById('tools').append(label);}
 const initial={A:normalizeConfig(),B:normalizeConfig({readOnly:true,theme:'dark',height:240})},previews={A:mountEmbed(document.querySelector('[data-preview-host=A]'),initial.A),B:mountEmbed(document.querySelector('[data-preview-host=B]'),initial.B)};
 let active='A',sources=null,files={},url=null,timer=null,alive=true,copyGeneration=0;

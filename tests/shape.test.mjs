@@ -61,3 +61,11 @@ test('only shapes keep a box height in their saved state',()=>{
   const text={type:'text',...base,text:'Hi',state:{...base.state,content:'Hi',height:'40px'}};
   assert.throws(()=>validateObject(text),TypeError,'Text never stores a height');
 });
+
+test('the shapes tool permission exists, defaults on and is independent of pencil',async()=>{
+  const {resolveSettings,canvasToolNames}=await import('../js/canvas-instance-settings.js');
+  assert(canvasToolNames.includes('shapes'));
+  const defaults=resolveSettings();assert.equal(defaults.tools.shapes,true);
+  const next=resolveSettings({tools:{pencil:false}},defaults);assert.equal(next.tools.shapes,true,'Turning Pencil off keeps Shapes');
+  assert.equal(resolveSettings({tools:{shapes:false}},defaults).tools.pencil,true,'Turning Shapes off keeps Pencil');
+});

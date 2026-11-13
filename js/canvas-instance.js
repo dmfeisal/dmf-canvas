@@ -773,7 +773,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     },
     execute,
     beginCreation(cancel,kind='sticky') {
-      if(!['sticky','pencil','text'].includes(kind)||!settings.tools[kind]||!state().canCreate||typeof cancel!=='function')return null;
+      if(!['sticky','pencil','text','shapes'].includes(kind)||!settings.tools[kind]||!state().canCreate||typeof cancel!=='function')return null;
       const pending={cancel};creation=pending;emit();
       return Object.freeze({
         cancel(){if(creation===pending)cancelCreation();},

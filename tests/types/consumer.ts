@@ -80,7 +80,10 @@ migrateLegacyDocument(canvas.saveDocument());
 portable.version=4;
 
 // Highlighter: one controller, per-tool settings and typed drawing options.
-{const pen=createPencil(canvas,host);pen.setTool('highlighter');pen.setColor('yellow');pen.setWidth(32);const tool:'pencil'|'highlighter'|'eraser'=pen.getState().tool;void tool;pen.setTool('eraser');const width:number|null=pen.getState().width;void width;canvas.execute('erase',[host]);
+{const pen=createPencil(canvas,host);pen.setTool('highlighter');pen.setColor('yellow');pen.setWidth(32);const tool:'pencil'|'highlighter'|'eraser'|'shape'=pen.getState().tool;void tool;pen.setTool('shape');pen.setShape('diamond');pen.setFill('tint');pen.setCorners('round');const kind:import('dmf-canvas/owners').ShapeKind|null=pen.getState().shape;void kind;
+ // @ts-expect-error unknown shape kinds are rejected
+ pen.setShape('star');
+ canvas.configure({tools:{shapes:false}});pen.setTool('eraser');const width:number|null=pen.getState().width;void width;canvas.execute('erase',[host]);
 // @ts-expect-error unsupported drawing tool
 pen.setTool('marker');}
 // @ts-expect-error erase needs drawing elements

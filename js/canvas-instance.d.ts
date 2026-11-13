@@ -38,7 +38,7 @@ export interface CanvasOwner<T extends JsonValue = JsonValue> {
   serialize?(): CanvasObjectDocument;
   dispose(): void;
 }
-export type CanvasTool = 'text' | 'sticky' | 'image' | 'pencil' | 'clipboard' | 'group' | 'arrange' | 'layers' | 'lock' | 'delete' | 'duplicate' | 'files' | 'history' | 'paperColor';
+export type CanvasTool = 'text' | 'sticky' | 'image' | 'pencil' | 'shapes' | 'clipboard' | 'group' | 'arrange' | 'layers' | 'lock' | 'delete' | 'duplicate' | 'files' | 'history' | 'paperColor';
 export interface CanvasEmbedSettings { readonly readOnly:boolean; readonly tools:Readonly<Record<CanvasTool,boolean>>; }
 export interface CanvasSettingsPatch { readOnly?:boolean; tools?:Partial<Record<CanvasTool,boolean>>; }
 export type CanvasChangeSource = 'text' | 'text-style' | 'move' | 'transform' | 'create' | 'duplicate' | 'delete' | 'erase' | 'paste' | 'lock' | 'paper-color' | 'image-description' | 'group' | 'ungroup' | 'bring-forward' | 'bring-front' | 'send-backward' | 'send-back' | 'align-left' | 'align-center' | 'align-right' | 'align-top' | 'align-middle' | 'align-bottom' | 'distribute-horizontal' | 'distribute-vertical' | 'undo' | 'redo' | 'open';
@@ -93,7 +93,7 @@ export interface CanvasInstance {
   getInspector():Readonly<{x:number;y:number;width:number;height:number;rotation:number;relativeRotation:boolean;editable:boolean}>|null;
   execute(command:'inspect',value:{field:'x'|'y'|'width'|'height'|'rotation';value:number}):CommandResult;
   /** One provisional creation at a time; cancellation owns preview cleanup. */
-  beginCreation(cancel: () => void, kind?: 'text' | 'sticky' | 'image' | 'pencil'): Readonly<{ cancel(): void; commit<T extends JsonValue>(element: HTMLElement, owner: CanvasOwner<T>): Readonly<{ dispose(): void }> | null }> | null;
+  beginCreation(cancel: () => void, kind?: 'text' | 'sticky' | 'image' | 'pencil' | 'shapes'): Readonly<{ cancel(): void; commit<T extends JsonValue>(element: HTMLElement, owner: CanvasOwner<T>): Readonly<{ dispose(): void }> | null }> | null;
   /** Observational events delivered in order after the current JavaScript stack. No initial event. */
   subscribeChanges(listener:(change:Readonly<CanvasChange>)=>void):()=>boolean;
   /** Acknowledge only the revision actually persisted by the host. */

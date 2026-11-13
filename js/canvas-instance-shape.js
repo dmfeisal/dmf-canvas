@@ -30,7 +30,8 @@ export function validShape(input,layout){
   return {shape,ink,strokeWidth,fill,...(corners?{corners}:{}),...(points?{points}:{})};
 }
 
-function draw(doc,style,width,height){
+/** Draws validated shape artwork as a detached SVG sized to the box; used by owners and the Shapes tool preview. */
+export function drawShape(doc,style,width,height){
   const svg=svgNode(doc,'svg');svg.setAttribute('viewBox',`0 0 ${width} ${height}`);svg.setAttribute('preserveAspectRatio','none');svg.setAttribute('aria-hidden','true');
   const color=inks[style.ink],inset=style.strokeWidth/2,paint=node=>{
     node.setAttribute('stroke',color);node.setAttribute('stroke-width',style.strokeWidth);node.setAttribute('stroke-linecap','round');node.setAttribute('stroke-linejoin','round');
@@ -75,7 +76,7 @@ export function createShape(host,style,layout){
   const scaled=()=>data.points?.map(p=>({x:fit(p.x,size.width/layout.width,size.width),y:fit(p.y,size.height/layout.height,size.height)}));
   const redraw=(width,height)=>{
     if(!node||!(width>0&&height>0))return;size={width,height};
-    const next=draw(host.ownerDocument,{...data,...(data.points?{points:scaled()}:{})},width,height);
+    const next=drawShape(host.ownerDocument,{...data,...(data.points?{points:scaled()}:{})},width,height);
     if(artwork)artwork.replaceWith(next);else node.prepend(next);artwork=next;
   };
   let base;try{base=createTextOwner(node,root,{name,widthHandles:false,editable:false,freeResize:true,onBox:redraw});}catch(error){node.remove();throw error;}

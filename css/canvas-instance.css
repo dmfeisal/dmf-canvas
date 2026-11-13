@@ -66,6 +66,7 @@
 [data-instance-pencil-active] .canvas-instance-handle { visibility:hidden; }
 /* Stroke eraser: strokes, not their boxes, are hit targets; touched strokes preview as faded until release. */
 [data-instance-pencil-tool=eraser], [data-instance-pencil-tool=eraser] :is(.canvas-instance-editor,.canvas-instance-note,.canvas-instance-drawing,.canvas-instance-shape) { cursor:cell; }
+[data-instance-pencil-tool=shape], [data-instance-pencil-tool=shape] :is(.canvas-instance-editor,.canvas-instance-note,.canvas-instance-drawing,.canvas-instance-shape) { cursor:crosshair; }
 [data-instance-pencil-tool=eraser] .canvas-instance-drawing > svg path { pointer-events:visibleStroke; }
 .canvas-instance-drawing[data-canvas-instance-erasing] { opacity:.25; }
 /* Shapes: geometry-only SVG boxes. Strokes are inset, so arrow tips and round caps may touch the box edge. */
