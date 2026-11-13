@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 (prepared 14 November 2026, private)
+
+Completes [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 1, [editing precision](docs/prd/EDITING-PRECISION.md). Promotes 0.4.0-alpha.1 with no runtime change; the alpha entry below holds the details.
+
+- **Snapping and guides:** pointer drags snap a selection's edges and centres to other objects within 6px, and optionally to the 24px grid, with alignment lines and pink gap labels. Alt bypasses snapping; Shift after a drag starts locks one axis. Keyboard nudges, resize and rotate never snap.
+- **Alt-drag duplicate:** Alt/Option before a mouse or pen drag drops a copy where the drag ends, as one Undo step.
+- **`[`/`]` navigation:** select the previous or next object in reading order, wrapping at the ends.
+- **Selection labels:** the selection's name above it and width × height below it, live during moves, resizes and rotation.
+- **Settings:** `snapping: {align, grid}` (default `{align: true, grid: false}`) and `labels` (default `true`) on `createCanvas` and `configure()`. Both are host preferences and never enter saved data.
+- **Verification:** `npm run test:editing:browser` (17 checks) runs in CI with the other browser suites. dmf-web vendors the alpha and uses the package's snapping on its `/ui/` Canvas specimens.
+
+Migration from 0.3.0: no board, clipboard, draft or portable format change. Snapping and labels are on by default, so pointer drags near another object's edge now land on it and selections show labels; pass `snapping: {align: false}` or `labels: false` to keep 0.3.0 behaviour. `[` and `]` are now handled on a focused canvas.
+
 ## 0.4.0-alpha.1 (prepared 13 November 2026, private, experimental)
 
 Delivers [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 1, [editing precision](docs/prd/EDITING-PRECISION.md): snapping and guides, the Shift axis lock, Alt-drag duplicate, `[`/`]` navigation and selection labels. It becomes 0.4.0 once dmf-web moves one surface onto the package's snapping.
