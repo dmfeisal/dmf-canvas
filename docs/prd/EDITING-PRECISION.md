@@ -58,7 +58,7 @@ While something is selected, a small label above its top-left shows its name (th
 3. Shift axis lock and Alt bypass. **Done in 0.4.0-alpha.1** (Alt bypass already landed with step 1).
 4. Alt-drag duplicate. **Done in 0.4.0-alpha.1.**
 5. `[`/`]` navigation. **Done in 0.4.0-alpha.1.**
-6. Selection labels.
+6. Selection labels. **Done in 0.4.0-alpha.1.** Labels use the theme's toolbar surface, ink and line rather than dmf-web's selection-blue labels, because white 11px text on the default `#1677ff` falls short of WCAG AA. They are measured once per animation frame rather than from cached deltas.
 7. Docs (API, toolbar standard, glossary, changelog) and browser scenarios in a new suite: align and grid snaps, guides appear and clear, Alt bypass, Shift axis lock, Alt-drag copy with one Undo, `[`/`]` order and wrap, labels during resize and rotation, mobile RTL.
 
 Land as `0.4.0-alpha.n` and promote to `0.4.0` when the browser suites pass in CI and dmf-web can move one surface (for example the playground specimens) onto the package's snapping.
@@ -69,4 +69,4 @@ Land as `0.4.0-alpha.n` and promote to `0.4.0` when the browser suites pass in C
 - Guides and labels never block pointer input, never appear in saved data, and leave no nodes behind after teardown.
 - Alt-drag creates exactly one copy per selected object as one Undo step, and cancelling creates nothing.
 - `[`/`]` reach every object in reading order and wrap, including RTL.
-- No runtime dependency, no layout reads during pointer moves, 24px handles unchanged, and existing browser suites still pass.
+- No runtime dependency, no layout reads inside pointer-move handlers (labels measure at most once per animation frame), 24px handles unchanged, and existing browser suites still pass.

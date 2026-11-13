@@ -144,6 +144,29 @@ await check('[ and ] step through objects in reading order, wrap, and leave text
  await page.click(action('undo'));
 });
 
+await check('selection labels show the name and size, follow a drag, and hide while editing or when turned off',async()=>{
+ const frame=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+ const labels=()=>page.evaluate(sel=>{const pick=kind=>{const n=document.querySelector(sel+' .canvas-instance-label--'+kind);if(!n||n.hidden)return null;const b=n.getBoundingClientRect();return {text:n.textContent,left:b.left,top:b.top,right:b.right,bottom:b.bottom,centre:b.left+b.width/2,pointer:getComputedStyle(n).pointerEvents,ariaHidden:n.getAttribute('aria-hidden')};};return {name:pick('name'),size:pick('size')};},A);
+ await page.evaluate(sel=>{const p=document.querySelector('main').configurator.previews.A;p.canvas.select(p.root.querySelector(sel.slice(sel.indexOf('[data-canvas'))));},RECT);await frame();
+ const r=await box(RECT),one=await labels();
+ assert(one.name?.text==='Rectangle'&&one.size?.text===`${Math.round(r.width)} × ${Math.round(r.height)}`,'Wrong label text: '+JSON.stringify(one));
+ assert(one.name.bottom<=r.top-12&&Math.abs(one.name.left-r.left)<1&&one.size.top>=r.bottom+12&&Math.abs(one.size.centre-(r.left+r.width/2))<1,'Labels misplaced: '+JSON.stringify({one,r}));
+ assert(one.name.pointer==='none'&&one.name.ariaHidden==='true'&&one.size.pointer==='none','Labels must be pointer-inert and aria-hidden');
+ // Mid-drag the name label stays on the rectangle's top-left.
+ const x=r.left+r.width/2,y=r.top+r.height/2;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+40,y+20,{steps:5});await frame();
+ const dragged=await box(RECT),moving=await labels();await page.mouse.up();
+ assert(moving.name&&Math.abs(moving.name.left-dragged.left)<1,'Labels did not follow the drag: '+JSON.stringify({moving:moving.name,dragged}));
+ await page.click(action('undo'));
+ await page.focus(A+' [data-host]');await page.keyboard.press('ControlOrMeta+a');await frame();
+ const many=await labels();assert(many.name?.text==='2 objects'&&/^\d+ × \d+$/.test(many.size?.text??''),'Multi-selection labels wrong: '+JSON.stringify(many));
+ await page.focus(A+' [data-original]');await page.keyboard.press('Enter');await frame();
+ const edit=await labels();await page.keyboard.press('Escape');
+ assert(!edit.name&&!edit.size,'Labels showed while editing Text');
+ await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.configure({labels:false}));await page.focus(A+RECT);await frame();
+ const off=await labels();assert(!off.name&&!off.size,'labels:false still showed labels');
+ await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.configure({labels:true}));
+});
+
 await check('snapping never enters saved boards',async()=>{
  const json=await page.evaluate(()=>JSON.stringify(document.querySelector('main').configurator.previews.A.canvas.saveDocument()));
  assert(!/snapping|"align"|"grid"/.test(json),'Snapping leaked into the board file');

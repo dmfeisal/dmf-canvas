@@ -131,6 +131,7 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 | Term | Code name | Meaning |
 |---|---|---|
 | Selection | `data-canvas-instance-selected` | The selected object, outlined in the selection colour. |
+| Selection labels | `.canvas-instance-label`, `settings.labels` | The selection's name above its top-left and its width × height below; several objects show their count and combined size. On by default. |
 | Multi-selection | `data-canvas-instance-multiple` | Several selected objects. Moves and transforms apply to all of them as one Undo step. |
 | Marquee | `.canvas-instance-marquee` | The rectangle dragged on empty space to select several objects. |
 | Transform handle | `.canvas-instance-handle` | A 24px hit area around the selection. Hidden while an object is locked or being edited. |
@@ -189,7 +190,6 @@ These terms come up in other editors and on feisal.id, but this library does not
 
 | Term | Status |
 |---|---|
-| Selection labels | The last feature step of [editing precision](prd/EDITING-PRECISION.md) (0.4.0); snapping, guides, the Shift axis lock, Alt-drag duplicate and `[`/`]` navigation exist since 0.4.0-alpha.1. dmf-web already has them. |
 | Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.5.0 (parity phase 2). |
 | Touch controls | Proposed for 0.5.0 with the camera. Pencil, Highlighter and Eraser ignore touch today. |
 | Connectors | Arrows that stay attached to objects, and multi-point lines, are not scheduled. Excalidraw imports report them as unsupported. |
