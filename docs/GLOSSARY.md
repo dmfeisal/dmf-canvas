@@ -185,10 +185,10 @@ These terms come up in other editors and on feisal.id, but this library does not
 
 | Term | Status |
 |---|---|
-| Guide lines, snapping | Proposed for 0.4.0. |
-| Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.4.0. |
-| Touch controls | Proposed for 0.4.0. Pencil, Highlighter and Eraser ignore touch today. |
+| Guide lines, snapping | Proposed for 0.4.0 ([dmf-web parity](prd/DMF-WEB-PARITY.md), phase 1). dmf-web already has them. |
+| Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.5.0 (parity phase 2). |
+| Touch controls | Proposed for 0.5.0 with the camera. Pencil, Highlighter and Eraser ignore touch today. |
 | Connectors | Arrows that stay attached to objects, and multi-point lines, are not scheduled. Excalidraw imports report them as unsupported. |
-| Layers panel, Reset canvas edits | On feisal.id only. |
-| PNG export | Proposed for 0.5.0. |
+| Layers panel, Reset canvas edits | On feisal.id only; proposed for 0.6.0 (parity phase 3). |
+| PNG export | Proposed for 0.7.0 (parity phase 4). |
 | Visitor viewer | A proposed embed mode; see the [viewer spec](architecture/VIEWER-EMBED-SPEC.md). |
