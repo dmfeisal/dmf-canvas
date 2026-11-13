@@ -1,19 +1,51 @@
+/* Starlight palette mapped onto the dmf-ui Neutral scale (src/styles/tokens.css), so docs, the home page and the
+   import lab share one light and one dark appearance. Unlayered, so it wins over Starlight's layered defaults. */
 :root {
- --sl-color-accent-low: #102d53;
- --sl-color-accent: #3179cc;
- --sl-color-accent-high: #b9d9ff;
- --sl-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+ --sl-color-white: oklch(.985 0 0);
+ --sl-color-gray-1: oklch(.97 0 0);
+ --sl-color-gray-2: oklch(.87 0 0);
+ --sl-color-gray-3: oklch(.708 0 0);
+ --sl-color-gray-4: oklch(.556 0 0);
+ --sl-color-gray-5: oklch(.371 0 0);
+ --sl-color-gray-6: oklch(.269 0 0);
+ --sl-color-black: oklch(.145 0 0);
+ --sl-color-accent-low: oklch(.269 0 0);
+ --sl-color-accent: oklch(.708 0 0);
+ --sl-color-accent-high: oklch(.985 0 0);
+ --sl-color-backdrop-overlay: oklch(.145 0 0 / .7);
+ --sl-font: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif;
  --sl-content-width: 52rem;
  --sl-text-h1: clamp(1.9rem, 4vw, 2.7rem);
+ --sl-nav-height: 3.5rem;
 }
 :root[data-theme='light'] {
- --sl-color-accent-low: #e5efff;
- --sl-color-accent: #185cab;
- --sl-color-accent-high: #0b366c;
+ --sl-color-white: oklch(.145 0 0);
+ --sl-color-gray-1: oklch(.205 0 0);
+ --sl-color-gray-2: oklch(.269 0 0);
+ --sl-color-gray-3: oklch(.439 0 0);
+ --sl-color-gray-4: oklch(.556 0 0);
+ --sl-color-gray-5: oklch(.87 0 0);
+ --sl-color-gray-6: oklch(.922 0 0);
+ --sl-color-gray-7: oklch(.97 0 0);
+ --sl-color-black: oklch(1 0 0);
+ --sl-color-accent-low: oklch(.97 0 0);
+ --sl-color-accent: oklch(.205 0 0);
+ --sl-color-accent-high: oklch(.205 0 0);
+ --sl-color-backdrop-overlay: oklch(.145 0 0 / .4);
+}
+/* One surface for header, sidebar and content, separated by dmf-ui borders. */
+:root, :root[data-theme='light'] {
+ --sl-color-bg: var(--background);
+ --sl-color-bg-nav: var(--background);
+ --sl-color-bg-sidebar: var(--background);
+ --sl-color-hairline: var(--border);
+ --sl-color-hairline-light: var(--border);
+ --sl-color-hairline-shade: var(--border);
 }
 .site-title { font-weight: 650; letter-spacing: -.035em; }
 .sl-markdown-content { line-height: 1.75; }
-.sl-markdown-content blockquote { font-size: .95rem; border-inline-start-color: var(--sl-color-accent); }
+.sl-markdown-content a { text-underline-offset: 3px; }
+.sl-markdown-content blockquote { font-size: .95rem; border-inline-start-color: var(--border); }
 .sl-markdown-content table { font-size: .88rem; }
 .sl-markdown-content :is(th,td) { min-width: 8rem; }
 .sl-markdown-content code { overflow-wrap: anywhere; }
@@ -21,3 +53,7 @@
 @media (prefers-reduced-motion: reduce) {
  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }
+
+/* Shared site navigation (src/components/SiteHeader.astro): a 32px search control like ui.feisal.id. */
+site-search button[data-open-modal] { height: 32px; border-radius: 8px; border-color: var(--border); background: var(--muted); color: var(--muted-foreground); font-size: 13px; }
+@media (max-width: 50rem) { site-search button[data-open-modal] { width: 32px; justify-content: center; padding: 0; border: 1px solid var(--border); } }

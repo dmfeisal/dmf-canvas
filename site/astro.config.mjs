@@ -15,7 +15,8 @@ export default defineConfig({
   description:'Documentation for the embeddable Canvas editor and its interactive publishing roadmap.',
   favicon:'/favicon.svg',
   social:[{icon:'github',label:'GitHub',href:'https://github.com/dmfeisal/dmf-canvas'}],
-  customCss:['./src/styles/docs.css'],
+  customCss:['./src/styles/tokens.css','./src/styles/docs.css'],
+  components:{Header:'./src/components/StarlightHeader.astro',MobileMenuFooter:'./src/components/StarlightMobileMenuFooter.astro'},
   sidebar:[
    {label:'Overview',link:'/docs/'},
    {label:'Try the live Canvas',link:'/'},
