@@ -102,7 +102,7 @@ Fixtures stay synthetic until representative creator boards are available, as th
 5. Excalidraw mapping and import-lab report rows. **Done in 0.3.0-alpha.3** (adapter version 2).
 6. Docs: API, compatibility, toolbar standard, glossary and changelog; browser suite scenarios for drawing, resizing, styling, Save/Open and mobile RTL.
 
-Release: land as `0.3.0-alpha.3`. Promote to `0.3.0` only after the browser suites pass in an agent-owned space and the archive checks in the [release checklist](../RELEASE-CHECKLIST.md) run.
+Release: land as `0.3.0-alpha.3`. Promote to `0.3.0` only after the browser suites pass and the archive checks in the [release checklist](../RELEASE-CHECKLIST.md) run.
 
 ## Acceptance
 

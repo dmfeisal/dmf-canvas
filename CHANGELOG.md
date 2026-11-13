@@ -9,6 +9,7 @@
 - Fix `canCreate` ignoring the `shapes` permission, so a host that allows only Shapes can create them.
 - Fix `loadPortableDocument` rejecting portable documents that contain shapes: its internal board now uses schema 4.
 - Add Excalidraw shape import (step 5, adapter version 2): rectangles, ellipses, diamonds and unbound two-point lines and arrows convert to editable shapes with the nearest ink and width; backgrounds become a tint and rounded rectangles keep round corners. Each row reports roughness, fill style, dash, opacity, arrowhead style and bound text. A start-only arrowhead swaps the endpoints. Bound and multi-point arrows stay Unsupported. Imports containing shapes are portable version 3. The import lab converts them too.
+- Development: the browser suites (`test:browser`, `test:*:browser`) now run in headless Chromium through Playwright 1.64.1, a development dependency only, and a new CI job runs all six on every push and pull request. `CANVAS_TEST_SPACE_ID` still selects Ego Browser. Runtime code and shipped behaviour are unchanged.
 
 Migration: boards and transfers containing shapes use schema 4 and portable documents use version 3; readers accept 1–4 and 1–3. 0.3.0-alpha.2 and earlier readers reject them instead of dropping shapes. Shape-free files are written exactly as before. See [compatibility](docs/COMPATIBILITY.md#shapes-schema-4).
 
