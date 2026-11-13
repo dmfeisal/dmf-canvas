@@ -12,6 +12,12 @@ The package stays private. Source licensing and public distribution decisions re
 
 Unreleased inspector work uses native Popover and the existing owners' untransformed-host coordinates. It does not establish camera, CSS-transformed-ancestor, iframe or additional browser-engine support. The configurator's generated files must be paired with the corresponding unreleased package source until a new version is released.
 
+## Shapes (schema 4)
+
+Board files and clipboard transfers that contain a shape use **schema 4**; portable documents use **version 3**. Content without shapes is written exactly as before (schema 1–3, portable 1–2). Readers accept schemas 1–4 and portable versions 1–3, and reject a lower version that claims a shape. Draft envelopes stay version 1 and carry the board's own schema.
+
+Older readers (0.3.0-alpha.2 and earlier) reject schema 4 and portable version 3 instead of dropping shapes. Shape records persist only semantic `shape`, `ink`, `strokeWidth`, `fill`, `corners` (rectangles) and two box-local `points` (lines and arrows).
+
 ## Highlighter (schema 3)
 
 Board files and clipboard transfers that contain a Highlighter stroke use **schema 3**; otherwise saving keeps schema 1 or 2 exactly as before. Portable documents use **version 2** only when they contain a highlight. Readers accept schemas 1–3 and portable versions 1–2. A schema 1 or 2 board or transfer, or a version 1 portable document, that claims a highlight is rejected. Draft envelopes stay version 1 and carry the board's own schema.

@@ -4,13 +4,14 @@ Recorded 23 October 2026. The full 20-item product backlog is maintained in the 
 
 ## Proposed version milestones — 23 October 2026
 
-Record this as the working release plan, not permission to publish. The proposal began at private `0.0.0`; private `0.1.0` established the first supported API and release checks, private `0.2.0` is prepared locally with the inspector and text formatting, private `0.3.0-alpha.1` is an experimental prerelease for portable documents, and private `0.3.0-alpha.2` corrects its shipped documentation. Later milestones remain proposed.
+Record this as the working release plan, not permission to publish. The proposal began at private `0.0.0`; private `0.1.0` established the first supported API and release checks, private `0.2.0` is prepared locally with the inspector and text formatting, private `0.3.0-alpha.1` is an experimental prerelease for portable documents, private `0.3.0-alpha.2` corrects its shipped documentation, and private `0.3.0-alpha.3` adds the Shape owner and data format. Later milestones remain proposed.
 
 | Target | Scope |
 | --- | --- |
 | `0.1.0` | Immutable initial baseline with documented API boundaries and reproducible release archive |
 | `0.2.0` | Prepared private archive: Selection inspector and text formatting |
-| `0.3.0-alpha.2` | Current private experimental prerelease: alpha.1 runtime unchanged, with corrected shipped documentation |
+| `0.3.0-alpha.3` | Current private experimental prerelease: Shape owner and schema 4 / portable version 3 (Shapes delivery step 1) |
+| `0.3.0-alpha.2` | Documentation-only prerelease: alpha.1 runtime with corrected shipped documentation |
 | `0.3.0-alpha.1` | Recorded private experimental prerelease: portable documents, Excalidraw Text/freehand import, dmf-ui token fallbacks; toolbar/icon/More menu standard; Highlighter (schema 3) and stroke Eraser (early 0.3.0 items) |
 | `0.3.0` | Shapes, Highlighter and stroke Eraser |
 | `0.4.0` | Touch controls, optional camera and snapping |

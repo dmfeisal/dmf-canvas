@@ -6,7 +6,7 @@ const data=()=>({type:'text',layout:{left:40,top:40,width:180,height:30,fontSize
 const portable=()=>({format:'dmf-canvas-portable',version:1,nodes:[{id:'node:1',data:data()}]});
 test('portable validation isolates bounded records and rejects ambiguous identities graphs and future versions',()=>{
  const input=portable(),out=validatePortableDocument(input);input.nodes[0].data.text='changed';assert.equal(out.nodes[0].data.text,'Hello');
- for(const mutate of [d=>d.version=3,d=>d.nodes.push(d.nodes[0]),d=>d.nodes[0].id='<script>',d=>d.nodes[0].data.group=1,d=>d.nodes[0].data.layer=1,d=>d.nodes[0].source={format:'html',id:'x'},d=>d.nodes=Array(51).fill(d.nodes[0])]){const d=portable();mutate(d);assert.throws(()=>validatePortableDocument(d));}
+ for(const mutate of [d=>d.version=4,d=>d.nodes.push(d.nodes[0]),d=>d.nodes[0].id='<script>',d=>d.nodes[0].data.group=1,d=>d.nodes[0].data.layer=1,d=>d.nodes[0].source={format:'html',id:'x'},d=>d.nodes=Array(51).fill(d.nodes[0])]){const d=portable();mutate(d);assert.throws(()=>validatePortableDocument(d));}
  assert.throws(()=>validatePortableDocument({...portable(),unknown:'x'.repeat(1048576)}),RangeError);
 });
 test('schema 1 and 2 migrations preserve originals independently and deterministically',()=>{

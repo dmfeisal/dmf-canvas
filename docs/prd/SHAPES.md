@@ -95,7 +95,7 @@ Fixtures stay synthetic until representative creator boards are available, as th
 
 ## Delivery
 
-1. Shape owner, renderer and validation, with unit tests and schema 1–4 fixtures.
+1. Shape owner, renderer and validation, with unit tests and schema 1–4 fixtures. **Done in 0.3.0-alpha.3.**
 2. Free-resize handles and the `TransformHandle` addition, with geometry and inspector tests.
 3. Rail button, options bar, shortcuts, keyboard placement and the `shapes` permission in the configurator.
 4. More › Shape style and clipboard/duplicate/group coverage.

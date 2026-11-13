@@ -21,14 +21,15 @@ test('highlight records keep semantic tool, ink and width and reject pencil-only
 test('only schema 3 boards, transfers, drafts and migrations carry highlights',()=>{
   const transfer=version=>({format:'dmf-canvas-clipboard',version,objects:[{data:highlight(),bounds:{left:10,top:10,width:60,height:40}}]});
   assert.equal(validateTransfer(transfer(3)).version,3);
-  for(const version of [1,2,4])assert.throws(()=>validateTransfer(transfer(version)),TypeError);
+  for(const version of [1,2,5])assert.throws(()=>validateTransfer(transfer(version)),TypeError);
+  assert.equal(validateTransfer(transfer(4)).version,4,'Newer readers accept any version that can carry the content');
   const board=version=>({format:'dmf-canvas',version,originals:[],objects:[highlight()]});
   assert.equal(migrateLegacyDocument(board(3)).nodes[0].data.tool,'highlighter');
   for(const version of [1,2])assert.throws(()=>migrateLegacyDocument(board(version)),TypeError);
   const draft=JSON.stringify({format:'dmf-canvas-draft',version:1,savedAt:100,document:board(3)});
   assert.equal(parseLocalDraft(draft).document.version,3);
   const portable=version=>({format:'dmf-canvas-portable',version,nodes:[{id:'h1',data:highlight()}]});
-  assert.equal(validatePortableDocument(portable(2)).version,2);assert.throws(()=>validatePortableDocument(portable(1)),TypeError);assert.throws(()=>validatePortableDocument(portable(3)),TypeError);
+  assert.equal(validatePortableDocument(portable(2)).version,2);assert.throws(()=>validatePortableDocument(portable(1)),TypeError);assert.equal(validatePortableDocument(portable(3)).version,2,'Portable documents normalize to the lowest version their content needs');assert.throws(()=>validatePortableDocument(portable(4)),TypeError);
   assert.equal(validatePortableDocument({format:'dmf-canvas-portable',version:2,nodes:[{id:'d1',data:drawing()}]}).version,1,'Highlight-free documents normalize to version 1');
 });
 

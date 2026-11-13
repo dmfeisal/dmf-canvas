@@ -82,8 +82,8 @@ export interface CommandResult {
   readonly ok: boolean;
   readonly reason: 'stale-revision' | 'read-only' | 'disabled' | 'destroyed' | 'busy' | 'invalid-delta' | 'invalid-color' | 'invalid-description' | 'invalid-style' | 'unsupported' | 'empty-history' | 'resource-limit' | 'bounds' | 'overlap' | null;
 }
-/** Portable version 2 adds Highlighter strokes; highlight-free documents stay version 1. */
-export interface CanvasPortableDocument {format: "dmf-canvas-portable";version:1|2;nodes:{id:string;data:CanvasObjectDocument;source?:{format:"excalidraw";id:string}}[];}
+/** Portable version 2 adds Highlighter strokes and version 3 adds shapes; documents use the lowest version their content needs. */
+export interface CanvasPortableDocument {format: "dmf-canvas-portable";version:1|2|3;nodes:{id:string;data:CanvasObjectDocument;source?:{format:"excalidraw";id:string}}[];}
 export interface CanvasInstance {
   savePortableDocument():CanvasPortableDocument;
   loadPortableDocument(input:unknown):CommandResult;
@@ -126,7 +126,7 @@ export type CanvasTextStyleCommand={field:'font';value:CanvasTextFont}|{field:'s
 export interface CanvasTextStyleSnapshot {font:CanvasTextFont;size:number|null;weight:400|500|600|700|null;align:'original'|'left'|'center'|'right';wrap:'original'|'auto'|'fixed';}
 export interface CanvasTextStyleView {font:CanvasTextFont|null;size:number|null;weight:number|null;align:CanvasTextStyleSnapshot['align']|null;wrap:'auto'|'fixed'|null;weights:readonly number[];editable:boolean;}
 export interface CanvasObjectDocument {
-  type: 'text' | 'sticky' | 'drawing' | 'image';
+  type: 'text' | 'sticky' | 'drawing' | 'image' | 'shape';
   locked?:boolean;
   layer?:number;
   group?:number;
@@ -139,10 +139,14 @@ export interface CanvasObjectDocument {
   ink?:string;
   /** Drawing records only: omitted for Pencil; `highlighter` requires schema 3. */
   tool?:'highlighter';
+  /** Shape records only (schema 4): kind, fill (`none` for lines and arrows) and rectangle corners. Shapes also use `ink`, `strokeWidth` and, for lines and arrows, two `points`. */
+  shape?:'rectangle'|'ellipse'|'diamond'|'line'|'arrow';
+  fill?:'none'|'tint';
+  corners?:'sharp'|'round';
 }
 export interface CanvasDocument {
-  /** 1 plain records, 2 adds Text formatting, 3 adds Highlighter strokes. */
-  format:'dmf-canvas';version:1|2|3;
+  /** 1 plain records, 2 adds Text formatting, 3 adds Highlighter strokes, 4 adds shapes. */
+  format:'dmf-canvas';version:1|2|3|4;
   originals:{id:number;data:CanvasObjectDocument}[];
   objects:CanvasObjectDocument[];
 }
@@ -153,7 +157,7 @@ export interface CanvasDocumentAdapter {
 export function createCanvas(host: HTMLElement, options?:CanvasSettingsPatch & {documents?:CanvasDocumentAdapter;clipboard?:CanvasObjectClipboard}): CanvasInstance;
 
 export interface CanvasObjectTransfer {
-  format:'dmf-canvas-clipboard';version:1|2|3;
+  format:'dmf-canvas-clipboard';version:1|2|3|4;
   objects:{data:CanvasObjectDocument;bounds:{left:number;top:number;width:number;height:number}}[];
 }
 export interface CanvasObjectClipboard {

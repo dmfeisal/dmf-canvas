@@ -1,5 +1,6 @@
 import {createCanvas,resolveSettings,type CanvasOwner} from 'dmf-canvas';
-import {createTextOwner,createStickyNote,createImageObject,createDrawing,canvasDocuments,validateObject} from 'dmf-canvas/owners';
+import {createTextOwner,createStickyNote,createImageObject,createDrawing,createShape,shapeKinds,canvasDocuments,validateObject} from 'dmf-canvas/owners';
+import type {ShapeKind} from 'dmf-canvas/owners';
 import {createPencil} from 'dmf-canvas/pencil';
 import {createCanvasToolbar} from 'dmf-canvas/toolbar';
 import {createCanvasTheme,resolveTheme} from 'dmf-canvas/theme';
@@ -11,6 +12,12 @@ const owner:CanvasOwner=createTextOwner(element,host);const registration=canvas.
 canvas.register(createStickyNote(host).element,owner,{created:true});
 createImageObject(host,{src:'data:image/png;base64,...',alt:'Image',width:40,height:40});
 createDrawing(host,[{x:10,y:20}],{width:4,color:'blue'});validateObject(canvas.saveDocument().objects[0]);
+{const box={left:10,top:10,width:120,height:80};createShape(host,{shape:'rectangle',ink:'blue',strokeWidth:4,fill:'tint',corners:'round'},box);createShape(host,{shape:'arrow',ink:'red',strokeWidth:2,points:[{x:0,y:0},{x:120,y:80}]},box);
+ // @ts-expect-error lines and arrows need two points
+ createShape(host,{shape:'line',ink:'red',strokeWidth:2},box);
+ // @ts-expect-error only rectangles have corners
+ createShape(host,{shape:'ellipse',ink:'red',strokeWidth:2,corners:'round'},box);
+ const kind:ShapeKind=shapeKinds[0];const version:1|2|3|4=canvas.saveDocument().version;const portable:1|2|3=canvas.savePortableDocument().version;void kind;void version;void portable;}
 canvas.execute('move',{dx:1,dy:2});canvas.execute('image-description','Diagram');canvas.execute('lock',true);canvas.execute('undo');
 canvas.subscribe(s=>{const count:number=s.selectionCount;void count;});
 canvas.subscribeChanges(change=>canvas.markSaved(change.revision));canvas.configure(resolveSettings({readOnly:true}));
@@ -68,8 +75,8 @@ import {validatePortableDocument,migrateLegacyDocument,importExcalidraw} from 'd
 const portable=canvas.savePortableDocument();canvas.loadPortableDocument(validatePortableDocument(portable));
 const imported=importExcalidraw('{}');const reason:string=imported.report[0].reasons[0];void reason;
 migrateLegacyDocument(canvas.saveDocument());
-// @ts-expect-error portable version is explicit (1, or 2 with Highlighter strokes)
-portable.version=3;
+// @ts-expect-error portable version is explicit (1, 2 with Highlighter strokes, 3 with shapes)
+portable.version=4;
 
 // Highlighter: one controller, per-tool settings and typed drawing options.
 {const pen=createPencil(canvas,host);pen.setTool('highlighter');pen.setColor('yellow');pen.setWidth(32);const tool:'pencil'|'highlighter'|'eraser'=pen.getState().tool;void tool;pen.setTool('eraser');const width:number|null=pen.getState().width;void width;canvas.execute('erase',[host]);
