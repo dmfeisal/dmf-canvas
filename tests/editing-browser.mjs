@@ -125,9 +125,94 @@ await check('Alt-drag drops a snapped copy as one Undo step; an Alt-click or Esc
  assert(escaped.objects===before.objects&&escaped.rects.length===1,'Escape left a copy behind: '+JSON.stringify(escaped));
 });
 
+await check('[ and ] step through objects in reading order, wrap, and leave text editing alone',async()=>{
+ const state=()=>page.evaluate(sel=>{const c=document.querySelector('main').configurator.previews.A.canvas;const active=document.activeElement;return {name:c.getState().selectionName,count:c.getState().selectionCount,focus:active?.matches('[data-original]')?'Text':active?.getAttribute('aria-label')??active?.localName,status:document.querySelector(sel+' [data-canvas-instance-status]').textContent};},A);
+ await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.select(null));await page.focus(A+' [data-host]');
+ await page.keyboard.press(']');const first=await state();
+ await page.keyboard.press(']');const second=await state();
+ await page.keyboard.press(']');const wrapped=await state();
+ await page.keyboard.press('[');const back=await state();
+ assert(first.name==='Text'&&first.count===1&&first.focus==='Text','] did not start at the first object: '+JSON.stringify(first));
+ assert(second.name==='Rectangle'&&second.focus==='Rectangle'&&/Rectangle 2 of 2 selected/.test(second.status),'] did not move to the next object: '+JSON.stringify(second));
+ assert(wrapped.name==='Text'&&/back to the first/.test(wrapped.status),'] did not wrap to the first object: '+JSON.stringify(wrapped));
+ assert(back.name==='Rectangle'&&/back to the last/.test(back.status),'[ did not wrap to the last object: '+JSON.stringify(back));
+ // While editing Text, [ is typed, not navigation.
+ await page.keyboard.press('['); await page.keyboard.press('Enter');
+ await page.keyboard.press('End');await page.keyboard.type('[');await page.keyboard.press('Escape');
+ const text=await page.evaluate(sel=>document.querySelector(sel+' [data-original]').textContent,A);
+ assert(text.endsWith('['),'Typing [ while editing did not insert it: '+text);
+ await page.click(action('undo'));
+});
+
+await check('selection labels show the name and size, follow a drag, and hide while editing or when turned off',async()=>{
+ const frame=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+ const labels=()=>page.evaluate(sel=>{const pick=kind=>{const n=document.querySelector(sel+' .canvas-instance-label--'+kind);if(!n||n.hidden)return null;const b=n.getBoundingClientRect();return {text:n.textContent,left:b.left,top:b.top,right:b.right,bottom:b.bottom,centre:b.left+b.width/2,pointer:getComputedStyle(n).pointerEvents,ariaHidden:n.getAttribute('aria-hidden')};};return {name:pick('name'),size:pick('size')};},A);
+ await page.evaluate(sel=>{const p=document.querySelector('main').configurator.previews.A;p.canvas.select(p.root.querySelector(sel.slice(sel.indexOf('[data-canvas'))));},RECT);await frame();
+ const r=await box(RECT),one=await labels();
+ assert(one.name?.text==='Rectangle'&&one.size?.text===`${Math.round(r.width)} × ${Math.round(r.height)}`,'Wrong label text: '+JSON.stringify(one));
+ assert(one.name.bottom<=r.top-12&&Math.abs(one.name.left-r.left)<1&&one.size.top>=r.bottom+12&&Math.abs(one.size.centre-(r.left+r.width/2))<1,'Labels misplaced: '+JSON.stringify({one,r}));
+ assert(one.name.pointer==='none'&&one.name.ariaHidden==='true'&&one.size.pointer==='none','Labels must be pointer-inert and aria-hidden');
+ // Mid-drag the name label stays on the rectangle's top-left.
+ const x=r.left+r.width/2,y=r.top+r.height/2;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+40,y+20,{steps:5});await frame();
+ const dragged=await box(RECT),moving=await labels();await page.mouse.up();
+ assert(moving.name&&Math.abs(moving.name.left-dragged.left)<1,'Labels did not follow the drag: '+JSON.stringify({moving:moving.name,dragged}));
+ await page.click(action('undo'));
+ await page.focus(A+' [data-host]');await page.keyboard.press('ControlOrMeta+a');await frame();
+ const many=await labels();assert(many.name?.text==='2 objects'&&/^\d+ × \d+$/.test(many.size?.text??''),'Multi-selection labels wrong: '+JSON.stringify(many));
+ await page.focus(A+' [data-original]');await page.keyboard.press('Enter');await frame();
+ const edit=await labels();await page.keyboard.press('Escape');
+ assert(!edit.name&&!edit.size,'Labels showed while editing Text');
+ await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.configure({labels:false}));await page.focus(A+RECT);await frame();
+ const off=await labels();assert(!off.name&&!off.size,'labels:false still showed labels');
+ await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.configure({labels:true}));
+});
+
+const frame=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+const labelText=kind=>page.evaluate(([sel,kind])=>{const n=document.querySelector(sel+' .canvas-instance-label--'+kind);return n&&!n.hidden?n.textContent:null;},[A,kind]);
+
+await check('a multi-selection snaps by its combined bounds',async()=>{
+ await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.configure({snapping:{align:true,grid:false}}));
+ // A small ellipse below the rectangle; select both, then drag so their combined left lands 3px off the Text's left.
+ await page.click(action('shapes'));await page.click(action('shape-ellipse'));const h=await host(),r=await box(RECT);
+ await page.mouse.move(r.left+30,r.bottom+40);await page.mouse.down();await page.mouse.move(r.left+60,r.bottom+60,{steps:4});await page.mouse.move(r.left+90,r.bottom+80,{steps:4});await page.mouse.up();
+ const selected=await page.evaluate(()=>{const p=document.querySelector('main').configurator.previews.A,shapes=['rectangle','ellipse'].map(kind=>p.root.querySelector(`[data-canvas-instance-shape=${kind}]`));if(shapes.some(e=>!e))return 'missing '+shapes.map(e=>!!e);p.canvas.selectMany(shapes);return p.canvas.getState().selectionCount;});
+ assert(selected===2,'Two shapes were not selected: '+selected);
+ const text=await box(' [data-original]'),rect=await box(RECT),ell=await box(' [data-canvas-instance-shape=ellipse]'),left=Math.min(rect.left,ell.left);
+ const target=text.left+3-left,x=rect.left+rect.width/2,y=rect.top+rect.height/2;
+ await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+target/2,y+6,{steps:4});await page.mouse.move(x+target,y+12,{steps:4});await page.mouse.up();
+ const after=Math.min((await box(RECT)).left,(await box(' [data-canvas-instance-shape=ellipse]')).left);
+ assert(Math.abs(after-text.left)<0.5,`Combined bounds did not snap: ${after} vs ${text.left}`);
+ assert(await labelText('name')==='2 objects','Multi-selection label missing after the drag');
+});
+
+await check('the size label follows a live resize and keeps the local size when rotated',async()=>{
+ await page.evaluate(sel=>{const p=document.querySelector('main').configurator.previews.A;p.canvas.select(p.root.querySelector('[data-canvas-instance-shape=rectangle]'));},A);await frame();
+ const before=await box(RECT),handle=await page.evaluate(sel=>{const b=document.querySelector(sel+' [data-canvas-instance-shape=rectangle] .canvas-instance-handle--e').getBoundingClientRect();return [b.left+b.width/2,b.top+b.height/2];},A);
+ await page.mouse.move(...handle);await page.mouse.down();await page.mouse.move(handle[0]+40,handle[1],{steps:5});await frame();
+ const live=await labelText('size');await page.mouse.up();
+ assert(live===`${Math.round(before.width+40)} × ${Math.round(before.height)}`,'Size label did not follow the resize: '+live);
+ await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.execute('inspect',{field:'rotation',value:30}));await frame();
+ const rotated=await labelText('size');assert(rotated===live,'Rotation changed the local size label: '+rotated+' vs '+live);
+ await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.execute('inspect',{field:'rotation',value:0}));
+});
+
+await check('mobile RTL keeps reading-order navigation and labels inside the surface',async()=>{
+ await page.cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
+ await page.evaluate(sel=>{document.documentElement.dir='rtl';document.querySelector('main').configurator.previews.A.canvas.select(null);document.querySelector(sel+' [data-host]').scrollIntoView({block:'center'});},A);
+ await page.focus(A+' [data-host]');await page.keyboard.press(']');await frame();
+ const result=await page.evaluate(sel=>{const p=document.querySelector('main').configurator.previews.A,h=p.root.querySelector('[data-host]').getBoundingClientRect(),inside=[...p.root.querySelectorAll('.canvas-instance-label')].filter(n=>!n.hidden).every(n=>{const b=n.getBoundingClientRect();return b.left>=h.left-1&&b.right<=h.right+1&&b.top>=h.top-1&&b.bottom<=h.bottom+1;});return {name:p.canvas.getState().selectionName,inside,overflow:document.documentElement.scrollWidth>innerWidth};},A);
+ assert(result.name==='Text'&&result.inside&&!result.overflow,'Mobile RTL failed: '+JSON.stringify(result));
+ await page.evaluate(()=>{document.documentElement.dir='';});await page.cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+});
+
 await check('snapping never enters saved boards',async()=>{
  const json=await page.evaluate(()=>JSON.stringify(document.querySelector('main').configurator.previews.A.canvas.saveDocument()));
  assert(!/snapping|"align"|"grid"/.test(json),'Snapping leaked into the board file');
+});
+
+await check('destroy removes every guide and label node',async()=>{
+ const left=await page.evaluate(sel=>{const p=document.querySelector('main').configurator.previews.A;p.canvas.select(p.root.querySelector('[data-canvas-instance-shape=rectangle]'));return new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>{const before=p.root.querySelectorAll('.canvas-instance-label,.canvas-instance-guide,.canvas-instance-gap').length;p.canvas.destroy();r({before,after:p.root.querySelectorAll('.canvas-instance-label,.canvas-instance-guide,.canvas-instance-gap').length});})));},A);
+ assert(left.before>0&&left.after===0,'Teardown left overlay nodes: '+JSON.stringify(left));
 });
 
 assert(await page.evaluate(()=>window.editErrors.length===0&&!localStorage.length),'Editing raised page errors or wrote storage');

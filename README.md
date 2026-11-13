@@ -14,7 +14,7 @@ npm start
 
 Open `http://127.0.0.1:8000/` for two independent custom hosts, or `/examples/canvas/` for the more complete controls specimen. There is no build step and no runtime dependency. TypeScript is a development checker only.
 
-The examples include Text, Sticky Notes, Pencil and Highlighter Drawings, the stroke Eraser and local raster Images; selection/marquee, editing, transforms, groups, arrangement, layer ordering, locks, Undo/Redo, duplication/deletion, page-local clipboard and local board files. Settings, theme and optional draft persistence belong to each host. No service, upload, publication or portfolio script is required.
+The examples include Text, Sticky Notes, Pencil and Highlighter Drawings, the stroke Eraser and local raster Images; Shapes; selection/marquee, editing, transforms, groups, arrangement, layer ordering, locks, Undo/Redo, duplication/deletion (including Alt-drag), page-local clipboard and local board files; snapping with guides, a Shift axis lock, `[`/`]` object navigation and selection name and size labels. Settings, theme and optional draft persistence belong to each host. No service, upload, publication or portfolio script is required.
 
 ## Embed configurator
 

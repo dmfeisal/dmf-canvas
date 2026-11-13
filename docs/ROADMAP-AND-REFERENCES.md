@@ -13,7 +13,7 @@ Record this as the working release plan, not permission to publish. The proposal
 | `0.3.0-alpha.3` | Experimental prerelease: Shape owner, schema 4 / portable version 3, free resize, the Shapes tool, Shape style and Excalidraw shape import (Shapes delivery steps 1–5) |
 | `0.3.0-alpha.2` | Documentation-only prerelease: alpha.1 runtime with corrected shipped documentation |
 | `0.3.0-alpha.1` | Recorded private experimental prerelease: portable documents, Excalidraw Text/freehand import, dmf-ui token fallbacks; toolbar/icon/More menu standard; Highlighter (schema 3) and stroke Eraser (early 0.3.0 items) |
-| `0.4.0-alpha.1` | Current private experimental prerelease: snapping, guides, the Shift axis lock and Alt-drag duplicate (editing precision steps 1–4) |
+| `0.4.0-alpha.1` | Current private experimental prerelease: snapping, guides, the Shift axis lock, Alt-drag duplicate, `[`/`]` navigation and selection labels (editing precision steps 1–6) |
 | `0.3.0` | Recorded private release: Shapes, Highlighter and stroke Eraser, plus portable documents, Excalidraw import and the toolbar standard from the alphas; browser suites in CI |
 | `0.4.0` | dmf-web parity, editing precision: snapping and guides, Alt-drag duplicate, `[`/`]` navigation, selection labels |
 | `0.5.0` | dmf-web parity, navigation: camera (Hand, zoom, Fit all, Zoom to selection), two-finger touch, full screen |

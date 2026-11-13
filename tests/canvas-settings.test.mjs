@@ -20,3 +20,10 @@ test('snapping defaults to Align on and Grid off, merges partially and rejects u
  assert.deepEqual({...resolveSettings({tools:{files:false}},off).snapping},{align:false,grid:true},'Tool patches keep snapping');
  for(const snapping of [null,[],true,{magnet:true},{align:'yes'},{grid:1}])assert.throws(()=>resolveSettings({snapping}),TypeError,JSON.stringify(snapping));
 });
+
+test('selection labels default on, persist across other patches and must be boolean',()=>{
+ const defaults=resolveSettings();assert.equal(defaults.labels,true);
+ const off=resolveSettings({labels:false},defaults);assert.equal(off.labels,false);
+ assert.equal(resolveSettings({snapping:{grid:true}},off).labels,false,'Other patches keep labels');
+ for(const labels of ['no',0,null])assert.throws(()=>resolveSettings({labels}),TypeError,String(labels));
+});

@@ -10,7 +10,7 @@ const mounted = new WeakMap(), registrations = new WeakMap();
 const nativeControl = 'input,textarea,select,button,a,[contenteditable]:not([contenteditable="false"]),dialog,[popover]';
 const result = (ok, reason = null) => Object.freeze({ ok, reason });
 
-export function createCanvas(host, { documents = null, clipboard = null, readOnly = false, tools = {}, snapping = {} } = {}) {
+export function createCanvas(host, { documents = null, clipboard = null, readOnly = false, tools = {}, snapping = {}, labels = true } = {}) {
   const view = host?.ownerDocument?.defaultView;
   if (!view || !(host instanceof view.HTMLElement) || ['HTML', 'BODY'].includes(host.tagName)) {
     throw new TypeError('Canvas needs a dedicated HTML host.');
@@ -23,7 +23,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   }
 
   if(clipboard&&(!['read','write','subscribe'].every(key=>typeof clipboard[key]==='function')||!Number.isInteger(clipboard.count)||clipboard.count<0||clipboard.count>50))throw new TypeError('Canvas needs an explicit object clipboard.');
-  let settings=resolveSettings({readOnly,tools,snapping});
+  let settings=resolveSettings({readOnly,tools,snapping,labels});
   const changes=createChangeTracker(error=>view.reportError(error));
   let unsubscribeClipboard=null;
   let root = host;
@@ -97,13 +97,67 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     canAlign:arrangeEligible(2), canDistribute:arrangeEligible(3),
     canSave:alive&&settings.tools.files&&!editing&&!creation&&!gesture&&!!documents,
     canUndo: !settings.readOnly&&settings.tools.history&&!editing && !creation && !!undo.length, canRedo: !settings.readOnly&&settings.tools.history&&!editing && !creation && !!redo.length });
+  // Selection labels (docs/prd/EDITING-PRECISION.md): the name above the selection's top-left and width x height
+  // below its centre. Two reused, pointer-inert, aria-hidden nodes; status and the inspector carry the same facts.
+  // They are measured at most once per animation frame, never inside a pointer-move handler.
+  let labelNodes = null, labelFrame = null;
+  function scheduleLabels() {
+    if (labelFrame !== null || !alive) return;
+    labelFrame = view.requestAnimationFrame(() => { labelFrame = null; renderLabels(); });
+  }
+  function renderLabels() {
+    const entries = [...selection].filter(usable);
+    if (!alive || !settings.labels || !entries.length || editing || creation) { if (labelNodes) labelNodes.name.hidden = labelNodes.size.hidden = true; return; }
+    labelNodes ??= (() => {
+      const make = kind => { const node = root.ownerDocument.createElement('div'); node.className = 'canvas-instance-label canvas-instance-label--' + kind; node.setAttribute('aria-hidden', 'true'); node.hidden = true; root.append(node); return node; };
+      return { name: make('name'), size: make('size') };
+    })();
+    const rects = entries.map(entry => entry.element.getBoundingClientRect()), area = root.getBoundingClientRect();
+    const left = Math.min(...rects.map(r => r.left)), top = Math.min(...rects.map(r => r.top)), right = Math.max(...rects.map(r => r.right)), bottom = Math.max(...rects.map(r => r.bottom));
+    let width = right - left, height = bottom - top;
+    // One object reports its own (unrotated, scaled) size; several report their combined visible bounds.
+    if (entries.length === 1) { const geometry = entries[0].adapter.geometry?.read?.(); if (geometry) { width = geometry.localWidth * geometry.scale; height = geometry.localHeight * geometry.scale; } }
+    const originX = area.left + root.clientLeft, originY = area.top + root.clientTop;
+    labelNodes.name.textContent = entries.length === 1 ? entries[0].adapter.name || 'Object' : `${entries.length} objects`;
+    labelNodes.size.textContent = `${Math.round(width)} × ${Math.round(height)}`;
+    Object.assign(labelNodes.name.style, { left: left - originX + 'px', top: top - originY + 'px' });
+    Object.assign(labelNodes.size.style, { left: (left + right) / 2 - originX + 'px', top: bottom - originY + 'px' });
+    labelNodes.name.hidden = labelNodes.size.hidden = false;
+    // Keep both labels inside the host: flip one inside the selection when it would overflow vertically, and
+    // shift it back horizontally. Measured in the same frame, after the writes above.
+    const hostRect = { left: originX, top: originY, right: originX + root.clientWidth, bottom: originY + root.clientHeight };
+    for (const node of [labelNodes.name, labelNodes.size]) {
+      node.toggleAttribute('data-canvas-instance-inside', false);
+      let r = node.getBoundingClientRect();
+      if (r.top < hostRect.top || r.bottom > hostRect.bottom) { node.toggleAttribute('data-canvas-instance-inside', true); r = node.getBoundingClientRect(); }
+      const shift = Math.max(0, hostRect.left - r.left) - Math.max(0, r.right - hostRect.right);
+      if (shift) node.style.left = parseFloat(node.style.left) + shift + 'px';
+    }
+  }
   function emit() {
+    scheduleLabels();
     if (status) status.textContent = (settings.readOnly?'Read-only. ':'')+(editing ? `Editing ${editing.entry.name}. Done or Escape finishes.` : selection.size>1?`${selection.size} objects selected${[...selection].some(entry=>entry.group)?' (grouped)':''}${[...selection].some(entry=>entry.locked)?' ('+[...selection].filter(entry=>entry.locked).length+' locked)':''}` : selected ? `${selected.name}${selected.locked?' (locked)':''} selected` : focused ? 'Canvas focused' : 'Canvas ready');
     status?.classList.toggle('canvas-instance-status--editing',!!editing);
     const snapshot = state();
     for (const listener of [...subscribers]) {
       try { listener(snapshot); } catch (error) { view.reportError(error); }
     }
+  }
+  // Reading (DOM) order, like Tab. A group is one stop: stepping skips the rest of the current object's group.
+  // Starting with nothing selected, ] picks the first object and [ the last; both wrap at the ends.
+  function stepSelection(direction) {
+    const order=[...owners.values()].filter(usable).sort((a,b)=>a.element.compareDocumentPosition(b.element)&view.Node.DOCUMENT_POSITION_FOLLOWING?-1:1);
+    if(!order.length){status.textContent='No objects to select.';return;}
+    const current=usable(selected)&&order.includes(selected)?selected:null,count=order.length,start=current?order.indexOf(current):-1;
+    let next=null,wrapped=false;
+    for(let step=1;step<=count&&!next;step++){
+      const raw=current?start+direction*step:(direction>0?step-1:count-step),candidate=order[((raw%count)+count)%count];
+      if(current&&(raw<0||raw>=count))wrapped=true;
+      if(!current||candidate!==current&&!(current.group&&candidate.group===current.group))next=candidate;
+    }
+    if(!next)return;
+    select(next);next.element.focus({preventScroll:true});
+    status.textContent=`${next.adapter.name||'Object'} ${order.indexOf(next)+1} of ${count} selected${wrapped?direction>0?', back to the first':', back to the last':''}.`;
   }
   function select(entry) {
     selectEntries(entry?[entry]:[]);
@@ -448,6 +502,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if (gesture.kind) gesture.session.pointer(dx,dy,event.shiftKey);
       // Alt/Option bypasses snapping for as long as it is held.
       else dragTo(gesture, event, dx, dy);
+      scheduleLabels();
     }
     catch(error){finish(true);view.reportError(error);}
   }
@@ -478,6 +533,10 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     }
     if((event.ctrlKey||event.metaKey)&&!event.altKey&&!event.shiftKey&&event.key.toLowerCase()==='a'){
       event.preventDefault();if(!event.repeat)execute('select-all');return;
+    }
+    // [ and ] select the previous or next object in reading order (docs/prd/EDITING-PRECISION.md).
+    if(!event.ctrlKey&&!event.metaKey&&!event.altKey&&['[',']'].includes(event.key)){
+      event.preventDefault();if(!event.repeat&&!gesture)stepSelection(event.key===']'?1:-1);return;
     }
     if(!event.shiftKey&&!event.altKey&&((!event.ctrlKey&&!event.metaKey&&['Delete','Backspace'].includes(event.key))||((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='d'))){
       const command=['Delete','Backspace'].includes(event.key)?'delete':'duplicate';event.preventDefault();if(!event.repeat)execute(command);return;
@@ -999,7 +1058,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       alive = focused = false;
       undo.length = redo.length = 0;selected = null;selection.clear();multiple=false;
       for (const [type,listener] of Object.entries(listeners)) root.removeEventListener(type,listener);
-      mounted.delete(root);status.remove();done.remove();if(guides)for(const node of Object.values(guides))node.remove();guides=null;
+      mounted.delete(root);status.remove();done.remove();if(guides)for(const node of Object.values(guides))node.remove();guides=null;if(labelFrame!==null)view.cancelAnimationFrame(labelFrame);labelFrame=null;if(labelNodes){labelNodes.name.remove();labelNodes.size.remove();}labelNodes=null;
       if (addedTabIndex && root.getAttribute('tabindex') === '0') root.removeAttribute('tabindex');
       if(originalMultiple===null)root.removeAttribute('data-canvas-instance-multiple');else root.setAttribute('data-canvas-instance-multiple',originalMultiple);
       if(originalReadOnly===null)root.removeAttribute('data-canvas-instance-readonly');else root.setAttribute('data-canvas-instance-readonly',originalReadOnly);

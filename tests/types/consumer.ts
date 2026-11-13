@@ -36,7 +36,7 @@ canvas.execute('move');
 canvas.execute('undo','blue');
 // @ts-expect-error unsupported tool
 canvas.configure({tools:{highlighter:true}});
-canvas.configure({snapping:{grid:true}});{const snap:boolean=canvas.getState().settings.snapping.align;void snap;}
+canvas.configure({snapping:{grid:true}});canvas.configure({labels:false});{const shown:boolean=canvas.getState().settings.labels;void shown;}{const snap:boolean=canvas.getState().settings.snapping.align;void snap;}
 // @ts-expect-error snapping keys are align and grid
 canvas.configure({snapping:{magnet:true}});
 // @ts-expect-error unsupported drawing width (neither Pencil nor Highlighter)
