@@ -13,7 +13,7 @@ npm test
 npm start
 ```
 
-No dependency installation or build is required. Open `/` for the independent host and `/examples/canvas/` for the unchanged reference. Optional browser checks use the installed Ego Browser CLI and an existing agent-owned space: `CANVAS_TEST_SPACE_ID=<space-id> npm run test:browser`. The caller closes that space afterward.
+No dependency installation or build is required. Open `/` for the independent host and `/examples/canvas/` for the unchanged reference. Optional browser checks run in headless Chromium: `npm run test:browser`. Set `CANVAS_TEST_SPACE_ID=<space-id>` to use an existing agent-owned Ego Browser space instead; the caller closes that space afterward.
 
 The verified local artifact is `/private/tmp/dmf-canvas-rehearsal-20261023-v3`; temporary artifacts may disappear, so use the exporter to reproduce it. Its 37 files total 234,626 bytes and include 18 runtime modules, two stylesheets, available declarations, the required Pencil cursor and Lucide attribution. Runtime sources are copied byte-for-byte. `EXPORT-MANIFEST.json` records provenance and SHA-256 hashes. The exporter follows the bounded static import closure; it is not a general JavaScript bundler.
 

@@ -46,3 +46,37 @@ jobs:
         run: npm run build --prefix site
       - name: Verify checks leave tracked files unchanged
         run: git diff --exit-code
+  browser:
+    name: Canvas / browser suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            examples/astro/package-lock.json
+            examples/react/package-lock.json
+            examples/vue/package-lock.json
+      - name: Install locked development dependencies
+        run: npm ci --ignore-scripts
+      - name: Install headless Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      # Suites run one at a time; each serves fixtures read-only and fails on any server write.
+      - name: Independent consumers
+        run: npm run test:browser
+      - name: Selection inspector
+        run: npm run test:inspector:browser
+      - name: Text formatting
+        run: npm run test:text:browser
+      - name: Installed package in Astro
+        run: npm run test:astro:browser
+      - name: Installed package in React and Vue
+        run: npm run test:frameworks:browser
+      - name: Configurator and generated examples
+        run: npm run test:configurator:browser
+      - name: Verify checks leave tracked files unchanged
+        run: git diff --exit-code

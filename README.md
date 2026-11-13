@@ -65,17 +65,17 @@ The six theme roles are surface, grid, selection, toolbar, ink and line. Existin
 - `npm test`: bounded data, revisions, storage adapter, isolation boundaries and import-graph checks.
 - `npm run test:types`: public consumer examples and expected type failures.
 - `npm run test:package`: pack, offline install into a clean temporary consumer, import every entrypoint, compile consumer types and resolve CSS assets.
-- `CANVAS_TEST_SPACE_ID=<agent-owned-space-id> npm run test:browser`: eight browser scenarios using the installed Ego Browser CLI. The caller owns that space and closes it afterward.
+- `npm run test:browser`: eight browser scenarios in headless Chromium through Playwright. Run `npx playwright install chromium` once first. Every `test:*:browser` suite works the same way; set `CANVAS_TEST_SPACE_ID=<agent-owned-space-id>` to run one in Ego Browser instead, where the caller owns that space and closes it afterward.
 
 The local server binds loopback, accepts GET/HEAD only and does not save files. Drafts in the custom host are opt-in memory-only; the controls specimen separately offers opt-in localStorage drafts. Native editors retain text Undo and their system clipboard.
 
-GitHub Actions runs `npm run check` on Node 22 and 24 for main pushes, pull requests and manual dispatch. It uses locked dependencies and read-only permissions. The workflow checks contracts, public types and clean archive installation; interactive browser checks still require the local Ego Browser app. It does not publish or deploy.
+GitHub Actions runs `npm run check` on Node 22 and 24 for main pushes, pull requests and manual dispatch. It uses locked dependencies and read-only permissions. The workflow checks contracts, public types and clean archive installation, then a separate job runs every browser suite in headless Chromium on Node 24. It does not publish or deploy.
 
 ## Astro integration
 
 `npm run test:astro` packs the library, installs it into a fresh temporary Astro 7.4.2 project, builds two routes and checks bundled CSS/cursor assets. Only the example depends on Astro; core remains framework-free. `node scripts/test-astro.mjs --keep` retains the generated project for local preview. It has actual ClientRouter navigation and a custom element that disposes its instances when disconnected. See [the Astro recipe](examples/astro/README.md).
 
-`CANVAS_TEST_SPACE_ID=<agent-owned-space-id> npm run test:astro:browser` additionally checks editing, files, Pencil, mobile RTL, real navigation cleanup and ten repeated leave/return cycles. CI builds this installed-package fixture on Node 22/24; interactive tests still require the local browser.
+`npm run test:astro:browser` additionally checks editing, files, Pencil, mobile RTL, real navigation cleanup and ten repeated leave/return cycles. CI builds this installed-package fixture on Node 22/24 and runs the browser checks in headless Chromium.
 
 ## React and Vue integrations
 
@@ -84,7 +84,7 @@ GitHub Actions runs `npm run check` on Node 22 and 24 for main pushes, pull requ
 - [React recipe](examples/react/README.md): JSX component with `useEffect` cleanup, an unmanaged DOM container and root Strict Mode enabled.
 - [Vue recipe](examples/vue/README.md): Single-File Component with `onMounted` setup and `onBeforeUnmount` cleanup.
 
-`CANVAS_TEST_SPACE_ID=<agent-owned-id> npm run test:frameworks:browser` tests both development servers and production bundles. Development checks verify React's actual Strict Mode setup/cleanup replay, parent updates, isolated unmounts, local files, mobile RTL, interrupted drawing and repeated hide/show cycles. Production checks verify mounted styles, edits and real component removal. The workflow builds both recipes on Node 22/24; interactive checks remain local.
+`npm run test:frameworks:browser` tests both development servers and production bundles. Development checks verify React's actual Strict Mode setup/cleanup replay, parent updates, isolated unmounts, local files, mobile RTL, interrupted drawing and repeated hide/show cycles. Production checks verify mounted styles, edits and real component removal. The workflow builds both recipes on Node 22/24 and runs these browser checks in headless Chromium.
 
 ## Limits and provenance
 

@@ -77,6 +77,10 @@ All artwork is local [Lucide](https://lucide.dev) from `js/canvas-instance-toolb
 | `align-left` … `align-bottom` | Align left/center/right/top/middle/bottom | `align-start-vertical`, `align-center-vertical`, `align-end-vertical`, `align-start-horizontal`, `align-center-horizontal`, `align-end-horizontal` |  | More › Arrange |
 | `distribute-horizontal` / `distribute-vertical` | Equal horizontal/vertical gaps | `align-horizontal-space-between` / `align-vertical-space-between` |  | More › Arrange |
 | `paper-yellow` / `-blue` / `-pink` | Yellow/Blue/Pink paper | `palette` (checked when current) |  | More › Paper color |
+| `style-ink-primary` / `-blue` / `-red` | Primary/Blue/Red ink (checked when shared) | `circle` |  | More › Shape style |
+| `style-width-thin` / `-medium` / `-bold` | Thin/Medium/Bold · *n*px | `minus` |  | More › Shape style |
+| `style-fill` | Fill (checked = tint; hidden without closed shapes) | `paint-bucket` |  | More › Shape style |
+| `style-corners` | Round corners (hidden without rectangles) | `square-round-corner` |  | More › Shape style |
 | `save` | Save board | `download` |  | More › Board |
 | `open` | Open board | `folder-open` |  | More › Board |
 | `help` | Keyboard help | `circle-question-mark` |  | Help |
@@ -95,7 +99,7 @@ The sprite also carries `image-plus` and `layers` for hosts that need them. To a
 ## More menu
 
 - One manual native popover (`role="menu"`) owned by the selection toolbar. The More button has `aria-haspopup="menu"`, `aria-expanded` and `aria-controls`.
-- Sections, in order: Clipboard, Group and lock, Layer order, Arrange, Paper color, Board. **Contextual sections** (Group and lock, Layer order, Arrange, Paper color) show only when they apply to the current selection; Clipboard and Board always show, disabled when unavailable. The More button disables itself when every visible row is disabled and hides when no row is visible.
+- Sections, in order: Clipboard, Group and lock, Layer order, Arrange, Paper color, Shape style, Board. **Contextual sections** (Group and lock, Layer order, Arrange, Paper color, Shape style) show only when they apply to the current selection; Clipboard and Board always show, disabled when unavailable. The More button disables itself when every visible row is disabled and hides when no row is visible.
 - It opens toward the side of the trigger with more room, stays inside the viewport, and scrolls if it is still too tall.
 - Keyboard: Enter, Space or ArrowDown on More opens it on the first enabled row (ArrowUp opens on the last); ArrowUp/ArrowDown move with wrap-around, Home/End jump; Enter runs the row and closes the menu; Escape closes it and returns focus to More; Tab closes it and continues normally.
 - Pointer: clicking More again, pressing outside, or scrolling the page closes it. Running a row keeps the canvas selection.

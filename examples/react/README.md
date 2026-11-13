@@ -29,6 +29,6 @@ Both A and B are independent instances. Hide removes a component and disposes it
 
 ## Validate
 
-`CANVAS_TEST_SPACE_ID=<existing-agent-owned-space> npm run test:frameworks:browser` runs both framework development and production variants in one caller-managed browser space. It verifies lifecycle counts, parent re-renders, independent removal, clipboard, read-only controls, file round trips, mobile RTL, interrupted Pencil creation and ten hide/show cycles. The caller closes its browser space afterward. Hosted CI runs build checks; browser interaction checks require the local Ego Browser app.
+`npm run test:frameworks:browser` runs both framework development and production variants in headless Chromium. It verifies lifecycle counts, parent re-renders, independent removal, clipboard, read-only controls, file round trips, mobile RTL, interrupted Pencil creation and ten hide/show cycles. Hosted CI runs the build checks and these browser checks.
 
 This is a client-rendered integration recipe, not an SSR/hydration, router, HMR, real-touch-device, other-browser or iframe compatibility certification. No application service, publication or portfolio data is used.

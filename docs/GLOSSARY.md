@@ -155,7 +155,7 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 | Tool rail | `orientation: 'vertical'` | The vertical toolbar for tools. |
 | Tool options bar | `drawingPalettes` | Inks and widths for the armed Pencil, Highlighter or Shapes tool, plus the shape kinds, Fill and Round corners for Shapes. |
 | Armed tool | `setTool()`, `setActive()` | The drawing tool that the next drag will use. Only one is armed at a time. |
-| More menu | `menu: true`, `moreLabel` | One native popover for secondary actions, in sections: Clipboard, Group and lock, Layer order, Arrange, Paper color, Board. |
+| More menu | `menu: true`, `moreLabel` | One native popover for secondary actions, in sections: Clipboard, Group and lock, Layer order, Arrange, Paper color, Shape style, Board. |
 | Contextual section | `group` | A More section that only shows when it applies to the selection. |
 | Tooltip | `.canvas-embed-toolbar` | Shows an action's label and real shortcut on hover or focus. |
 | Action id | `data-toolbar-action` | Stable id on every button and menu row, for host code and tests. |
@@ -188,7 +188,7 @@ These terms come up in other editors and on feisal.id, but this library does not
 | Guide lines, snapping | Proposed for 0.4.0. |
 | Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.4.0. |
 | Touch controls | Proposed for 0.4.0. Pencil, Highlighter and Eraser ignore touch today. |
-| Shape style menu, connectors | Shapes can be drawn, resized and saved since 0.3.0-alpha.3; changing an existing shape's style (More › Shape style) follows the [Shapes proposal](prd/SHAPES.md). Connectors are not scheduled. |
+| Connectors | Arrows that stay attached to objects, and multi-point lines, are not scheduled. Excalidraw imports report them as unsupported. |
 | Layers panel, Reset canvas edits | On feisal.id only. |
 | PNG export | Proposed for 0.5.0. |
 | Visitor viewer | A proposed embed mode; see the [viewer spec](architecture/VIEWER-EMBED-SPEC.md). |

@@ -20,7 +20,7 @@ No package installation, dependency upgrade, runtime edit or new browser run was
 
 ## Existing supported commands
 
-[Package scripts](../../package.json) define `check` (unit/types/package), Astro, framework and configurator build checks plus browser suites for core, Astro, frameworks, configurator, inspector and text. [CI](../../.github/workflows/validate.yml) should be consulted for the actual configured workflow; filenames and matrix must match the repository. Browser scripts require an agent-owned Ego Browser space via `CANVAS_TEST_SPACE_ID`; do not reuse someone else's session. Prior recorded results in [extraction](../EXTRACTION.md) are historical evidence.
+[Package scripts](../../package.json) define `check` (unit/types/package), Astro, framework and configurator build checks plus browser suites for core, Astro, frameworks, configurator, inspector and text. [CI](../../.github/workflows/validate.yml) should be consulted for the actual configured workflow; filenames and matrix must match the repository. Browser scripts run in headless Chromium through Playwright, locally and in the CI `browser` job. With `CANVAS_TEST_SPACE_ID` they run in an agent-owned Ego Browser space instead; do not reuse someone else's session. The site suites (`site/scripts/test-*-browser.mjs`) still require Ego Browser. Prior recorded results in [extraction](../EXTRACTION.md) are historical evidence.
 
 ## Required next verification
 

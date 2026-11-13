@@ -3,7 +3,7 @@ import { validateImage } from './canvas-instance-image-data.js';
 import { createTextOwner } from './canvas-instance-text.js';
 import { createStickyNote } from './canvas-instance-sticky.js';
 import { createDrawing } from './canvas-instance-drawing.js';
-import { createShape, validShape } from './canvas-instance-shape.js';
+import { createShape, validShape, styleOf } from './canvas-instance-shape.js';
 import {validateTextStyle,textFonts} from './canvas-instance-text-style.js';
 import {validStroke} from './canvas-instance-stroke.js';
 
@@ -35,7 +35,13 @@ export function validateObject(input) {
     if(!['pencil','highlighter'].includes(tool)||!validStroke(tool,input.strokeWidth,input.ink)||!Array.isArray(input.points)||!input.points.length||input.points.length>2048||input.points.some(p=>!finite(p?.x,0,100000)||!finite(p?.y,0,100000)))throw new TypeError('Invalid drawing artwork.');
     return {type,layout,state,locked,...(layer===undefined?{}:{layer}),...(group===undefined?{}:{group}),strokeWidth:input.strokeWidth,ink:input.ink,...(tool==='highlighter'?{tool}:{}),points:input.points.map(({x,y})=>({x,y}))};
   }
-  if(type==='shape')return {type,layout,state,locked,...(layer===undefined?{}:{layer}),...(group===undefined?{}:{group}),...validShape(input,layout)};
+  if(type==='shape'){
+    // state.style mirrors the record's style so Open can restore authored shapes; it must match when present.
+    const shape=validShape(input,layout),style=styleOf(shape);
+    const given=s.style;
+    if(given!==undefined&&(!given||typeof given!=='object'||Array.isArray(given)||Object.keys(given).length!==Object.keys(style).length||Object.entries(style).some(([key,value])=>given[key]!==value)))throw new TypeError('Shape style mismatch.');
+    return {type,layout,state:{...state,style},locked,...(layer===undefined?{}:{layer}),...(group===undefined?{}:{group}),...shape};
+  }
   if(typeof input.text!=='string'||input.text.length>10000||input.text.includes('\0')||typeof s.content!=='string'||s.content!==input.text)throw new TypeError('Invalid object text.');
   state.content=input.text;
   if(type==='sticky'){

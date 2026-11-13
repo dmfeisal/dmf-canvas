@@ -57,7 +57,7 @@ Do not impose a blanket 44px (or other fixed) minimum width or height on control
 ## Verification
 
 - Run `npm run check` (unit tests, public types, installed archive) for every change. Packaging or integration changes also run `npm run test:astro`, `npm run test:frameworks` and `npm run test:configurator`; documentation, example or site changes also run `npm run build --prefix site`. These match CI. CI ends with `git diff --exit-code`; checks must not modify tracked files.
-- Browser suites (`test:browser`, `test:*:browser`) require an existing agent-owned `CANVAS_TEST_SPACE_ID`. Run them only when one is supplied, one at a time, and never start an overlapping run.
+- Browser suites (`test:browser`, `test:*:browser`) run in headless Chromium through Playwright (`npx playwright install chromium` once) and run in CI. Run browser-facing changes through the suites that cover them, one at a time, and never start an overlapping run. With `CANVAS_TEST_SPACE_ID` set to an existing agent-owned space they run in Ego Browser instead; use that only when a space is supplied.
 - Never report a browser, CI or hosted run that did not actually happen in this change; reused results must be labelled as reused.
 
 ## Documentation

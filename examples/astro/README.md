@@ -16,4 +16,4 @@ The printed project is self-contained and includes `INSTALL-PROVENANCE.json` wit
 
 The host uses explicit owner registration, page-local clipboard and opt-in memory-only drafts. Save a board file before leaving if needed. It does not publish, upload, access portfolio data or persist edits automatically.
 
-Browser checks: `CANVAS_TEST_SPACE_ID=<existing-agent-owned-id> npm run test:astro:browser`. The caller owns that space and its final cleanup. Build checks run in hosted CI; interactive browser checks use Ego Lite locally. Real touch devices, other browser engines and cross-origin iframe support remain unverified.
+Browser checks: `npm run test:astro:browser`, in headless Chromium locally and in hosted CI. Real touch devices, other browser engines and cross-origin iframe support remain unverified.

@@ -1,12 +1,12 @@
 import {prepareFramework,frameworks} from './test-frameworks.mjs';
 import {serve} from '../server.mjs';
-import {spawn} from 'node:child_process';
 import {createRequire} from 'node:module';
 import {readFile,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';
-const spaceId=Number(process.env.CANVAS_TEST_SPACE_ID);if(!Number.isSafeInteger(spaceId)||spaceId<1)throw new Error('Supply an existing agent-owned CANVAS_TEST_SPACE_ID.');
+import {browserSpaceId,runBrowserSuite} from './browser-driver.mjs';
+const spaceId=browserSpaceId();
 const supplied=process.env.CANVAS_FRAMEWORK_FIXTURES?JSON.parse(await readFile(process.env.CANVAS_FRAMEWORK_FIXTURES,'utf8')):null;
 const directories=[],servers=[],targets=[];let blockedWrites=0;
 try{
@@ -22,10 +22,8 @@ try{
   const production=await serve(join(directory,'dist'));servers.push(async()=>{blockedWrites+=production.writes;await production.close();});
   targets.push({framework,mode:'production',base:production.url});
  }
- const source='const frameworkTest='+JSON.stringify({spaceId,targets,temporary:tmpdir()})+';\n'+await readFile(new URL('../tests/frameworks-browser.mjs',import.meta.url),'utf8');
- const child=spawn('ego-browser',['nodejs','-e',source],{stdio:'inherit'});
- const code=await new Promise((resolve,reject)=>{child.once('error',reject);child.once('exit',code=>resolve(code??1));});
- if(code!==0)throw new Error('Framework browser checks failed; resume the same test space.');
+ const code=await runBrowserSuite({suite:'frameworks-browser.mjs',name:'frameworkTest',config:{spaceId,targets,temporary:tmpdir()}});
+ if(code!==0)throw new Error('Framework browser checks failed'+(spaceId?'; resume the same test space.':'.'));
 }finally{
  for(const close of servers.reverse())await close();
  for(const directory of directories)await rm(directory,{recursive:true,force:true});

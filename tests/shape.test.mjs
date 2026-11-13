@@ -69,3 +69,14 @@ test('the shapes tool permission exists, defaults on and is independent of penci
   const next=resolveSettings({tools:{pencil:false}},defaults);assert.equal(next.tools.shapes,true,'Turning Pencil off keeps Shapes');
   assert.equal(resolveSettings({tools:{shapes:false}},defaults).tools.pencil,true,'Turning Shapes off keeps Pencil');
 });
+
+test('shape records mirror their style in state.style so Open can restore it',()=>{
+  const rect=validateObject(shape({fill:'tint',corners:'round'}));
+  assert.deepEqual(rect.state.style,{ink:'blue',strokeWidth:4,fill:'tint',corners:'round'},'Validation always fills in state.style');
+  assert.deepEqual(validateObject(line()).state.style,{ink:'blue',strokeWidth:4,fill:'none'},'Lines carry no corners');
+  const reordered={corners:'round',fill:'tint',strokeWidth:4,ink:'blue'};
+  assert.deepEqual(validateObject(shape({fill:'tint',corners:'round',state:{...base.state,style:reordered}})).state.style,rect.state.style,'Key order does not matter');
+  for(const style of [{ink:'red',strokeWidth:4,fill:'tint',corners:'round'},{ink:'blue',strokeWidth:4,fill:'tint'},{ink:'blue',strokeWidth:4,fill:'tint',corners:'round',extra:1},null,['blue']])
+    assert.throws(()=>validateObject(shape({fill:'tint',corners:'round',state:{...base.state,style}})),TypeError,JSON.stringify(style));
+  assert.equal(validateObject({type:'text',...base,text:'Hi',state:{...base.state,content:'Hi',style:{ink:'blue'}}}).state.style,undefined,'Text drops a shape style, like any unknown state key');
+});
