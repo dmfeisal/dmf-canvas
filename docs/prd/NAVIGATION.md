@@ -1,6 +1,6 @@
 ---
 title: "Navigation"
-status: proposed
+status: accepted
 owner: product
 last_reviewed: 2026-11-14
 source_of_truth: true
@@ -15,7 +15,7 @@ related:
 
 # Navigation
 
-Phase 2 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.5.0: a camera (Hand, pan, zoom, Fit all, Zoom to selection), two-finger touch and full screen. The reference design is the Sticky Notes gallery and Guestbook board on feisal.id (dmf-web `docs/CANVAS.md`, "Camera pan/zoom and dotted-grid behavior" and "Select and Hand tools", and `canvas-touch.js`), adapted to the package's host, owner and settings model. Nothing here is implemented yet, and the decisions below are open.
+Phase 2 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.5.0: a camera (Hand, pan, zoom, Fit all, Zoom to selection), two-finger touch and full screen. The reference design is the Sticky Notes gallery and Guestbook board on feisal.id (dmf-web `docs/CANVAS.md`, "Camera pan/zoom and dotted-grid behavior" and "Select and Hand tools", and `canvas-touch.js`), adapted to the package's host, owner and settings model. Nothing here is implemented yet. The five decisions below were accepted on 14 November 2026 with the recommended answers.
 
 This is the largest change on the roadmap. Today every owner positions itself in the host's untransformed coordinates, and containment, the inspector, snapping, guides, labels, drawing input and Duplicate all assume one screen pixel is one canvas pixel. A camera breaks that assumption everywhere at once, so this proposal settles the model before code.
 
@@ -53,13 +53,13 @@ Pinch keeps the world point under the moving midpoint, equal finger movement pan
 
 A Full screen action (`maximize` / `minimize`, F) puts the host's chrome container, not just the canvas, into native full screen, so toolbars, menus, the inspector and help stay visible and contained. Escape and the browser's own exit leave full screen; the camera keeps its position, and Fit all is one key away. Hosts without the Fullscreen API, or inside an iframe without permission, hide the action rather than show a disabled one.
 
-## Decisions to confirm
+## Decisions (accepted 14 November 2026)
 
-1. **Who provides the world element.** Recommended: **the host marks one** (`camera: {world: element}`), and the package never moves authored nodes. Wrapping the host's children ourselves would break host CSS selectors, layout and framework ownership of those nodes. Created objects are appended to the world element. Alternative: the package creates the wrapper and moves existing children into it.
-2. **Opt-in shape.** Recommended: a `camera` setting on `createCanvas` and `configure()`, `false` by default, or `{world, minScale: 0.2, maxScale: 4}` to enable it, reported in `getState().settings`. `getState().camera` reports `{x, y, scale}`, and `execute('camera', {x, y, scale})`, `execute('zoom', {by|to, around})`, `execute('fit')` and `execute('zoom-to-selection')` drive it. Hand is a core tool, not a new tool permission, because it never changes content; hosts hide it by leaving the camera off.
-3. **Is the camera saved?** Recommended: **no**, matching dmf-web. Board, clipboard and draft formats stay as they are, so there is no schema bump. Hosts that want to restore a view read `getState().camera` and call `execute('camera', …)` themselves, for example from their own storage. Saving it would add an optional board field, a schema 5 and reader rules, for a value most hosts reset anyway.
-4. **Containment on camera hosts.** Recommended: **an unbounded world**. Dragging, paste, Duplicate and the inspector stop clamping to the host on camera hosts, and objects can sit anywhere in the world. Fit all is the way back. Bounded hosts keep today's containment. Alternative: optional world bounds (`camera: {bounds}`) that keep clamping, which can be added later without breaking either choice.
-5. **Where full screen lives.** Recommended: **the toolbar entrypoint** (`dmf-canvas/toolbar`), because it needs the chrome container and a `fullscreenchange` listener on the document, which core must not register. Core exposes nothing new for it beyond tolerating host resizes. Custom hosts call the Fullscreen API themselves.
+1. **Who provides the world element — accepted:** **the host marks one** (`camera: {world: element}`), and the package never moves authored nodes. Wrapping the host's children ourselves would break host CSS selectors, layout and framework ownership of those nodes. Created objects are appended to the world element.
+2. **Opt-in shape — accepted:** a `camera` setting on `createCanvas` and `configure()`, `false` by default, or `{world, minScale: 0.2, maxScale: 4}` to enable it, reported in `getState().settings`. `getState().camera` reports `{x, y, scale}`, and `execute('camera', {x, y, scale})`, `execute('zoom', {by|to, around})`, `execute('fit')` and `execute('zoom-to-selection')` drive it. Hand is a core tool, not a new tool permission, because it never changes content; hosts hide it by leaving the camera off.
+3. **Is the camera saved? — accepted:** **no**, matching dmf-web. Board, clipboard and draft formats stay as they are, so there is no schema bump. Hosts that want to restore a view read `getState().camera` and call `execute('camera', …)` themselves, for example from their own storage. Saving it would add an optional board field, a schema 5 and reader rules, for a value most hosts reset anyway.
+4. **Containment on camera hosts — accepted:** **an unbounded world**. Dragging, paste, Duplicate and the inspector stop clamping to the host on camera hosts, and objects can sit anywhere in the world. Fit all is the way back. Bounded hosts keep today's containment. Optional world bounds (`camera: {bounds}`) that keep clamping can be added later without breaking this.
+5. **Where full screen lives — accepted:** **the toolbar entrypoint** (`dmf-canvas/toolbar`), because it needs the chrome container and a `fullscreenchange` listener on the document, which core must not register. Core exposes nothing new for it beyond tolerating host resizes. Custom hosts call the Fullscreen API themselves.
 
 ## Delivery
 

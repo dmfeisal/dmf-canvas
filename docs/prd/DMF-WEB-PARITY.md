@@ -51,7 +51,7 @@ Why first: these are the gaps users feel on every drag, they stay inside today's
 
 Camera (Hand, Space, wheel pan, zoom, Fit all, Zoom to selection), two-finger touch and full screen.
 
-Why second: it is the largest architectural change. A transformed world affects every owner's coordinates, the inspector, containment, guides, labels and drawing input, so it needs its own proposal (camera state, whether the camera is saved, how bounded hosts opt out) before code. That proposal is [navigation](NAVIGATION.md), proposed on 14 November 2026 with five open decisions. Touch was planned for 0.4.0 and moves here because it depends on the camera.
+Why second: it is the largest architectural change. A transformed world affects every owner's coordinates, the inspector, containment, guides, labels and drawing input, so it needs its own proposal (camera state, whether the camera is saved, how bounded hosts opt out) before code. That proposal is [navigation](NAVIGATION.md); its five decisions were accepted on 14 November 2026. Touch was planned for 0.4.0 and moves here because it depends on the camera.
 
 ### Phase 3 — organisation (0.6.0)
 
