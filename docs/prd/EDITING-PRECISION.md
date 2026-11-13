@@ -1,8 +1,8 @@
 ---
 title: "Editing precision"
-status: proposed
+status: accepted
 owner: product
-last_reviewed: 2026-11-13
+last_reviewed: 2026-11-14
 source_of_truth: true
 related:
   - DMF-WEB-PARITY.md
@@ -13,7 +13,7 @@ related:
 
 # Editing precision
 
-Phase 1 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.4.0: snapping and guides, Alt-drag duplicate, `[`/`]` object navigation and selection labels. The reference design is feisal.id's own Canvas (dmf-web `docs/CANVAS.md`, `docs/CANVAS-RULES.md` and `beginSnap` in `public/js/canvas-tools.js`), adapted to the package's host, owner and settings model. Nothing here is implemented yet. The five decisions below were accepted on 13 November 2026 with the recommended answers.
+Phase 1 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.4.0: snapping and guides, Alt-drag duplicate, `[`/`]` object navigation and selection labels. The reference design is feisal.id's own Canvas (dmf-web `docs/CANVAS.md`, `docs/CANVAS-RULES.md` and `beginSnap` in `public/js/canvas-tools.js`), adapted to the package's host, owner and settings model. The five decisions below were accepted on 13 November 2026 with the recommended answers, and every step shipped in 0.4.0.
 
 None of this changes board, clipboard, draft or portable formats. Snapping and label preferences are host settings, like tool permissions, and never enter saved data.
 
@@ -61,7 +61,7 @@ While something is selected, a small label above its top-left shows its name (th
 6. Selection labels. **Done in 0.4.0-alpha.1.** Labels use the theme's toolbar surface, ink and line rather than dmf-web's selection-blue labels, because white 11px text on the default `#1677ff` falls short of WCAG AA. They are measured once per animation frame rather than from cached deltas.
 7. Docs (API, toolbar standard, glossary, changelog) and browser scenarios in a new suite: align and grid snaps, guides appear and clear, Alt bypass, Shift axis lock, Alt-drag copy with one Undo, `[`/`]` order and wrap, labels during resize and rotation, mobile RTL. **Done in 0.4.0-alpha.1:** `npm run test:editing:browser` runs 17 checks in CI, including multi-selection snapping and teardown, and every acceptance item below has a check.
 
-Land as `0.4.0-alpha.n` and promote to `0.4.0` when the browser suites pass in CI and dmf-web can move one surface (for example the playground specimens) onto the package's snapping. As of 13 November 2026 every step is built in `0.4.0-alpha.1`; both promotion conditions are still open.
+Land as `0.4.0-alpha.n` and promote to `0.4.0` when the browser suites pass in CI and dmf-web can move one surface (for example the playground specimens) onto the package's snapping. Both conditions were met on 14 November 2026: CI passed on main after the last step, and dmf-web vendored `0.4.0-alpha.1` and turned on the package's snapping for its `/ui/` Canvas specimens (dmfeisal/dmf-web#23). Those specimens had no snapping before, so they adopted the package's rather than dropping dmf-web's own `beginSnap`. dmf-web's production canvases still use `beginSnap`, because the package keeps snapping inside `createCanvas` and they do not use it yet; moving them is part of later dmf-web adoption, not 0.4.0.
 
 ## Acceptance
 
