@@ -13,7 +13,8 @@ export type ShapeFill='none'|'tint';
 export type ShapeCorners='sharp'|'round';
 /** Semantic shape style. Closed shapes may use `tint`; rectangles may set `corners`; lines and arrows need two box-local `points` and fill `none`. */
 export type ShapeStyle={shape:'rectangle';ink:DrawingInk;strokeWidth:DrawingWidth;fill?:ShapeFill;corners?:ShapeCorners}|{shape:'ellipse'|'diamond';ink:DrawingInk;strokeWidth:DrawingWidth;fill?:ShapeFill}|{shape:'line'|'arrow';ink:DrawingInk;strokeWidth:DrawingWidth;fill?:'none';points:[DrawingPoint,DrawingPoint]};
-export function createTextOwner(element:HTMLElement,host:HTMLElement,options?:{name?:string;widthHandles?:boolean;editable?:boolean}):CanvasOwner;
+/** `freeResize` gives eight handles that change the box's own width and height (used by shapes); `onBox` runs after each size change. */
+export function createTextOwner(element:HTMLElement,host:HTMLElement,options?:{name?:string;widthHandles?:boolean;editable?:boolean;freeResize?:boolean;onBox?:(width:number,height:number)=>void}):CanvasOwner;
 export const stickyColors:readonly ('yellow'|'blue'|'pink')[];
 export function createStickyNote(host:HTMLElement):CanvasObjectHandle;
 export function createImageObject(host:HTMLElement,input:ImageData,layout?:ObjectLayout|null):CanvasObjectHandle;

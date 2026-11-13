@@ -1,9 +1,10 @@
 // Bounded text geometry owner for the isolation specimen. No automatic discovery,
 // storage or dependency on the production document-global coordinator.
 import {defaultTextStyle,validateTextStyle,resolveTextStyle,textFonts,textWeights,hasTextStyle} from './canvas-instance-text-style.js';
-export function createTextOwner(element, host, { name = 'Text', widthHandles = true, editable = true } = {}) {
-  const formatting=editable&&widthHandles;
-  const kinds=widthHandles?['nw','ne','sw','se','w','e','rotate']:['nw','ne','sw','se','rotate'];
+// freeResize (shapes): eight handles change the box's own width and height instead of its scale; onBox(width,height) runs after every size change.
+export function createTextOwner(element, host, { name = 'Text', widthHandles = true, editable = true, freeResize = false, onBox = null } = {}) {
+  const formatting=editable&&widthHandles&&!freeResize;
+  const kinds=freeResize?['nw','n','ne','e','se','s','sw','w','rotate']:widthHandles?['nw','ne','sw','se','w','e','rotate']:['nw','ne','sw','se','rotate'];
   if (!element || element.parentElement !== host || element.querySelector('input,textarea,button,a,[contenteditable],img,svg') || element.isContentEditable) {
     throw new TypeError('Text owner needs a direct, static text child.');
   }
@@ -23,7 +24,7 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     editor.append(...originalNodes);element.append(editor);
   }
   const hadStyle = element.hasAttribute('style');
-  const original = Object.fromEntries(['translate','scale','rotate','width','transformOrigin',...(formatting?['fontFamily','fontSize','fontWeight','textAlign']:[])].map(key=>[key,element.style[key]]));
+  const original = Object.fromEntries(['translate','scale','rotate','width',...(freeResize?['height']:[]),'transformOrigin',...(formatting?['fontFamily','fontSize','fontWeight','textAlign']:[])].map(key=>[key,element.style[key]]));
   let typography=defaultTextStyle;
   const inverse = element.style.getPropertyValue('--canvas-instance-inverse'), inversePriority = element.style.getPropertyPriority('--canvas-instance-inverse');
   const gaps = ['--canvas-instance-gap-x','--canvas-instance-gap-y'].map(key=>({key,value:element.style.getPropertyValue(key),priority:element.style.getPropertyPriority(key)}));
@@ -32,8 +33,9 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
   for (const kind of kinds) {
     const button = element.ownerDocument.createElement('button');button.type='button';
     button.className='canvas-instance-handle canvas-instance-handle--'+kind;button.dataset.canvasInstanceHandle=kind;
-    const label=kind==='rotate'?'Rotate '+name:kind.length===1?'Change '+(kind==='w'?'left':'right')+' width of '+name:'Resize '+kind.toUpperCase()+' corner of '+name;
-    const hint=kind==='rotate'?'Arrow keys: 5 degrees; Shift: 15-degree snapping':kind.length===1?'Arrow keys: 10px; Shift: 40px':'Arrow keys: 5 percent';
+    const side={w:'left width',e:'right width',n:'top height',s:'bottom height'}[kind];
+    const label=kind==='rotate'?'Rotate '+name:side?'Change '+side+' of '+name:'Resize '+kind.toUpperCase()+' corner of '+name;
+    const hint=kind==='rotate'?'Arrow keys: 5 degrees; Shift: 15-degree snapping':side||freeResize?'Arrow keys: 10px; Shift: 40px':'Arrow keys: 5 percent';
     button.setAttribute('aria-label',label);button.title=label+'. '+hint;
     if(element.getAttribute('aria-describedby'))button.setAttribute('aria-describedby',element.getAttribute('aria-describedby'));
     element.append(button);handles.push(button);
@@ -44,6 +46,8 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     // Keep 24px targets apart when the scaled text becomes shorter/narrower.
     node.style.setProperty('--canvas-instance-gap-x',`${Math.max(0,(24-localWidth*scale)/2)}px`);
     node.style.setProperty('--canvas-instance-gap-y',`${Math.max(0,(24-localHeight*scale)/2)}px`);
+    // Side handles of small free boxes would overlap the corners, so hide them; corners still resize both ways.
+    if(freeResize){node.toggleAttribute('data-canvas-instance-narrow',localWidth*scale<48);node.toggleAttribute('data-canvas-instance-short',localHeight*scale<48);}
   };
   const areaBounds = () => {
     const area=root.getBoundingClientRect();return {left:area.left+root.clientLeft+8,right:area.left+root.clientLeft+root.clientWidth-8,top:area.top+root.clientTop+8,bottom:area.top+root.clientTop+root.clientHeight-32};
@@ -62,10 +66,16 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     const rect=node.getBoundingClientRect(),radians=angle*Math.PI/180,style=node.ownerDocument.defaultView.getComputedStyle(node);
     const dimension=(key,extras)=>parseFloat(style[key])+(style.boxSizing==='border-box'?0:extras.reduce((sum,key)=>sum+parseFloat(style[key]),0));
     const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2,width=dimension('width',['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth'])*scale,height=dimension('height',['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'])*scale;
-    const localX=(kind.includes('w')?1:-1)*width/2,localY=(kind.length===1?0:kind.includes('n')?1:-1)*height/2;
+    // The fixed point opposite the handle: corners use the opposite corner, sides the opposite edge midpoint.
+    const handle=kind==='rotate'?'se':kind,localX=(handle.includes('w')?1:handle.includes('e')?-1:0)*width/2,localY=(handle.includes('n')?1:handle.includes('s')?-1:0)*height/2;
     return {cx,cy,width,height,x:cx+localX*Math.cos(radians)-localY*Math.sin(radians),y:cy+localX*Math.sin(radians)+localY*Math.cos(radians)};
   };
   const setWidth = (width,max) => {node.style.width=`${Math.max(Math.min(80,max),Math.min(max,width))}px`;};
+  const box = () => {const style=node.ownerDocument.defaultView.getComputedStyle(node);return {width:parseFloat(style.width),height:parseFloat(style.height)};};
+  const setBox = (width,height,max) => {
+    node.style.width=`${Math.round(Math.max(16,Math.min(max.width,width))*100)/100}px`;node.style.height=`${Math.round(Math.max(16,Math.min(max.height,height))*100)/100}px`;
+    localWidth=node.offsetWidth;localHeight=node.offsetHeight;const size=box();onBox?.(size.width,size.height);
+  };
   const preserveAnchor = (kind, fixed) => {const now=anchor(kind);x+=fixed.x-now.x;y+=fixed.y-now.y;apply();};
   const applyTypography=(next,width)=>{
     typography=next;
@@ -150,13 +160,16 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
       },
     }),
     serialize() {const style=node.ownerDocument.defaultView.getComputedStyle(node);return {type:'text',layout:{left:node.offsetLeft,top:node.offsetTop,width:Math.ceil(parseFloat(style.width)*100)/100,height:node.offsetHeight,fontSize:parseFloat(style.fontSize),lineHeight:style.lineHeight==='normal'?'normal':parseFloat(style.lineHeight),fontWeight:Number(style.fontWeight)},text:content??originalText,state:{x,y,scale,angle,width:node.style.width,content:content??originalText,...(formatting&&hasTextStyle(typography)?{typography:{...typography}}:{})}};},
-    capture: () => ({ x, y, scale, angle, width:node.style.width, content,...(formatting?{typography:{...typography}}:{}) }),
+    capture: () => ({ x, y, scale, angle, width:node.style.width, ...(freeResize?{height:node.style.height}:{}), content,...(formatting?{typography:{...typography}}:{}) }),
     restore(value) {
       if (!node) return;
       if (value?.content!==null&&(typeof value?.content!=='string'||value.content.length>textLimit))throw new TypeError('Invalid text content.');
       if (!['x','y','scale','angle'].every(key=>Number.isFinite(value?.[key])) || value.scale<=0 || typeof value.width!=='string' || (value.width!==original.width&&!['','fit-content'].includes(value.width)&&!/^\d+(?:\.\d+)?px$/.test(value.width))) throw new TypeError('Invalid text geometry.');
+      if (freeResize && value.height!==undefined && (typeof value.height!=='string'||!/^\d+(?:\.\d+)?px$/.test(value.height))) throw new TypeError('Invalid box height.');
       const next=formatting?validateTextStyle(value.typography??defaultTextStyle):null;
-      ({ x, y, scale, angle, content } = value);renderContent();if(formatting)applyTypography(next,value.width);else node.style.width=value.width;apply();contain();
+      ({ x, y, scale, angle, content } = value);renderContent();if(formatting)applyTypography(next,value.width);else node.style.width=value.width;
+      if(freeResize){if(value.height!==undefined)node.style.height=value.height;localWidth=node.offsetWidth;localHeight=node.offsetHeight;const size=box();onBox?.(size.width,size.height);}
+      apply();contain();
     },
     beginEdit() {
       if(!editable||!node?.isConnected||activeEdit)return null;
@@ -180,7 +193,14 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     },
     beginTransform(kind, point) {
       if (!node?.isConnected || !kinds.includes(kind)) return null;
-      const fixed=anchor(kind),start={x,y,scale,angle,width:node.offsetWidth},radians=angle*Math.PI/180,maxWidth=Math.max(1,root.clientWidth-64);
+      const fixed=anchor(kind),start={x,y,scale,angle,width:node.offsetWidth,...(freeResize?box():{})},radians=angle*Math.PI/180,maxWidth=Math.max(1,root.clientWidth-64);
+      const maxBox={width:Math.max(16,(root.clientWidth-16)/scale),height:Math.max(16,(root.clientHeight-40)/scale)};
+      // Free boxes: local deltas grow the edges a handle owns; Shift on a corner keeps the starting ratio.
+      const reshape=(lx,ly,shift)=>{
+        let width=start.width+(kind.includes('w')?-lx:kind.includes('e')?lx:0),height=start.height+(kind.includes('n')?-ly:kind.includes('s')?ly:0);
+        if(shift&&kind.length===2){const ratio=Math.max(width/start.width,height/start.height);width=start.width*ratio;height=start.height*ratio;}
+        setBox(width,height,maxBox);preserveAnchor(kind,fixed);
+      };
       const vectorX=(point?.clientX??fixed.cx)-fixed.x,vectorY=(point?.clientY??fixed.cy)-fixed.y;
       const bearing=point?Math.atan2(point.clientY-fixed.cy,point.clientX-fixed.cx):0;
       const resize = value => {
@@ -193,6 +213,8 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
             const current=Math.atan2(point.clientY+dy-fixed.cy,point.clientX+dx-fixed.cx);
             angle=start.angle+Math.atan2(Math.sin(current-bearing),Math.cos(current-bearing))*180/Math.PI;
             if(shift)angle=Math.round(angle/15)*15;apply();
+          } else if(freeResize) {
+            reshape((dx*Math.cos(radians)+dy*Math.sin(radians))/start.scale,(-dx*Math.sin(radians)+dy*Math.cos(radians))/start.scale,shift);
           } else if(kind.length===1) {
             const delta=(dx*Math.cos(radians)+dy*Math.sin(radians))/start.scale;
             setWidth(start.width+delta*(kind==='w'?-1:1),maxWidth);preserveAnchor(kind,fixed);
@@ -200,6 +222,13 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
         },
         step(direction,shift) {
           if(kind==='rotate'){angle+=direction*(shift?15:5);if(shift)angle=Math.round(angle/15)*15;apply();}
+          else if(freeResize){
+            // Each step grows (or shrinks) the edges this handle owns; corners keep the current ratio.
+            const now=box(),amount=direction*(shift?40:10),ratio=kind.length===2?(now.width+amount)/now.width:1;
+            start.width=now.width;start.height=now.height;Object.assign(fixed,anchor(kind));
+            const sign=v=>kind.includes(v)?1:0;
+            setBox(kind.length===2?now.width*ratio:now.width+amount*(sign('w')+sign('e')),kind.length===2?now.height*ratio:now.height+amount*(sign('n')+sign('s')),maxBox);preserveAnchor(kind,fixed);
+          }
           else if(kind.length===1){setWidth(node.offsetWidth+direction*(shift?40:10),maxWidth);preserveAnchor(kind,fixed);}
           else resize(scale+direction*.05);
         },

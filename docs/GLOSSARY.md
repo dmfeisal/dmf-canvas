@@ -82,7 +82,7 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 </figure>
 
 1. **Stage** over the **host surface**, with the dotted **grid**.
-2. **Tool rail**: Select (pressed), Add text, Add note, Add image, Pencil, Highlighter, Stroke eraser.
+2. **Tool rail**: Select (pressed), Add text, Add note, Add image, Pencil, Highlighter, Stroke eraser. Shapes follows the eraser on the live rail.
 3. **Tool options bar**: the armed tool's three inks and Thin, Medium and Bold widths.
 4. **Status**: live announcements from core.
 5. **Selection outline** around the selected object.
@@ -134,8 +134,8 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 | Multi-selection | `data-canvas-instance-multiple` | Several selected objects. Moves and transforms apply to all of them as one Undo step. |
 | Marquee | `.canvas-instance-marquee` | The rectangle dragged on empty space to select several objects. |
 | Transform handle | `.canvas-instance-handle` | A 24px hit area around the selection. Hidden while an object is locked or being edited. |
-| Corner handle | `nw` `ne` `sw` `se` | Scales the object proportionally. |
-| Side handle | `w` `e` | Changes a Text object's width; the text rewraps instead of stretching. Drawings have corner and rotate handles only. |
+| Corner handle | `nw` `ne` `sw` `se` | Scales the object proportionally. On shapes, resizes width and height freely; Shift keeps the ratio. |
+| Side handle | `w` `e`, and `n` `s` on shapes | On Text, `w`/`e` change the width and the text rewraps. On shapes, all four sides resize one dimension and sit on the edge midpoints; they hide while the box is under 48px that way. Drawings have corner and rotate handles only. |
 | Rotate handle | `rotate` | Turns the object around its centre. Shift snaps to 15°; with the handle focused, arrow keys turn 5° (15° with Shift). |
 | Halo | `--dmf-color-canvas-halo` | The paper-coloured ring around each handle that keeps it visible on any background. |
 | Group, ungroup | `group`, `ungroup` | A group is selected, moved and transformed as one unit. |
@@ -153,7 +153,7 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 | Floating chrome | `.canvas-embed-chrome__slot` | The standard layout: toolbar groups placed over the stage in `tools`, `options`, `history`, `selection` and `help` slots. |
 | Compact toolbar | `examples/shared/custom-host.js` | The same groups in one inline row, for hosts with their own surrounding controls. |
 | Tool rail | `orientation: 'vertical'` | The vertical toolbar for tools. |
-| Tool options bar | `drawingPalettes` | Inks and widths for the armed Pencil or Highlighter. |
+| Tool options bar | `drawingPalettes` | Inks and widths for the armed Pencil, Highlighter or Shapes tool, plus the shape kinds, Fill and Round corners for Shapes. |
 | Armed tool | `setTool()`, `setActive()` | The drawing tool that the next drag will use. Only one is armed at a time. |
 | More menu | `menu: true`, `moreLabel` | One native popover for secondary actions, in sections: Clipboard, Group and lock, Layer order, Arrange, Paper color, Board. |
 | Contextual section | `group` | A More section that only shows when it applies to the selection. |
@@ -167,7 +167,7 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 
 | Term | Code name | Meaning |
 |---|---|---|
-| Tool permissions | `settings.tools` | Switches for `text`, `sticky`, `image`, `pencil`, `clipboard`, `group`, `arrange`, `layers`, `lock`, `delete`, `duplicate`, `files`, `history` and `paperColor`. Hidden in the UI and refused by commands when off. |
+| Tool permissions | `settings.tools` | Switches for `text`, `sticky`, `image`, `pencil`, `shapes`, `clipboard`, `group`, `arrange`, `layers`, `lock`, `delete`, `duplicate`, `files`, `history` and `paperColor`. Hidden in the UI and refused by commands when off. |
 | Read-only | `readOnly` | Selection, Copy and Save still work; nothing can change. |
 | Theme roles | surface, grid, selection, toolbar, ink, line | The six colours a host sets, with dmf-ui and system fallbacks. |
 | Theme mode | `system`, `light`, `dark`, `inherit` | How `createCanvasTheme()` picks its palette. |
@@ -188,7 +188,7 @@ These terms come up in other editors and on feisal.id, but this library does not
 | Guide lines, snapping | Proposed for 0.4.0. |
 | Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.4.0. |
 | Touch controls | Proposed for 0.4.0. Pencil, Highlighter and Eraser ignore touch today. |
-| Shapes tool, connectors | Shape owners and the schema 4 format exist since 0.3.0-alpha.3 (`createShape`); the drawing tool, free resize and style menu follow the [Shapes proposal](prd/SHAPES.md). Connectors are not scheduled. |
+| Shape style menu, connectors | Shapes can be drawn, resized and saved since 0.3.0-alpha.3; changing an existing shape's style (More › Shape style) follows the [Shapes proposal](prd/SHAPES.md). Connectors are not scheduled. |
 | Layers panel, Reset canvas edits | On feisal.id only. |
 | PNG export | Proposed for 0.5.0. |
 | Visitor viewer | A proposed embed mode; see the [viewer spec](architecture/VIEWER-EMBED-SPEC.md). |

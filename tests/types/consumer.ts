@@ -17,6 +17,7 @@ createDrawing(host,[{x:10,y:20}],{width:4,color:'blue'});validateObject(canvas.s
  createShape(host,{shape:'line',ink:'red',strokeWidth:2},box);
  // @ts-expect-error only rectangles have corners
  createShape(host,{shape:'ellipse',ink:'red',strokeWidth:2,corners:'round'},box);
+ const handle:import('dmf-canvas').TransformHandle='n';void handle;createTextOwner(host.firstElementChild as HTMLElement,host,{freeResize:true,onBox:(width,height)=>void (width+height)});
  const kind:ShapeKind=shapeKinds[0];const version:1|2|3|4=canvas.saveDocument().version;const portable:1|2|3=canvas.savePortableDocument().version;void kind;void version;void portable;}
 canvas.execute('move',{dx:1,dy:2});canvas.execute('image-description','Diagram');canvas.execute('lock',true);canvas.execute('undo');
 canvas.subscribe(s=>{const count:number=s.selectionCount;void count;});
@@ -79,7 +80,10 @@ migrateLegacyDocument(canvas.saveDocument());
 portable.version=4;
 
 // Highlighter: one controller, per-tool settings and typed drawing options.
-{const pen=createPencil(canvas,host);pen.setTool('highlighter');pen.setColor('yellow');pen.setWidth(32);const tool:'pencil'|'highlighter'|'eraser'=pen.getState().tool;void tool;pen.setTool('eraser');const width:number|null=pen.getState().width;void width;canvas.execute('erase',[host]);
+{const pen=createPencil(canvas,host);pen.setTool('highlighter');pen.setColor('yellow');pen.setWidth(32);const tool:'pencil'|'highlighter'|'eraser'|'shape'=pen.getState().tool;void tool;pen.setTool('shape');pen.setShape('diamond');pen.setFill('tint');pen.setCorners('round');const kind:import('dmf-canvas/owners').ShapeKind|null=pen.getState().shape;void kind;
+ // @ts-expect-error unknown shape kinds are rejected
+ pen.setShape('star');
+ canvas.configure({tools:{shapes:false}});pen.setTool('eraser');const width:number|null=pen.getState().width;void width;canvas.execute('erase',[host]);
 // @ts-expect-error unsupported drawing tool
 pen.setTool('marker');}
 // @ts-expect-error erase needs drawing elements

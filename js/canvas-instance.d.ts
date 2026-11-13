@@ -6,7 +6,8 @@ export interface MoveSession {
   move(dx: number, dy: number): void;
   finish?(): void;
 }
-export type TransformHandle = 'nw' | 'ne' | 'sw' | 'se' | 'w' | 'e' | 'rotate';
+/** `n` and `s` exist only on free-resize owners (shapes). */
+export type TransformHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'rotate';
 /** Single-handle prototype session, not yet the production group-transform API. */
 export interface TransformSession {
   pointer(dx: number, dy: number, shift: boolean): void;
@@ -37,7 +38,7 @@ export interface CanvasOwner<T extends JsonValue = JsonValue> {
   serialize?(): CanvasObjectDocument;
   dispose(): void;
 }
-export type CanvasTool = 'text' | 'sticky' | 'image' | 'pencil' | 'clipboard' | 'group' | 'arrange' | 'layers' | 'lock' | 'delete' | 'duplicate' | 'files' | 'history' | 'paperColor';
+export type CanvasTool = 'text' | 'sticky' | 'image' | 'pencil' | 'shapes' | 'clipboard' | 'group' | 'arrange' | 'layers' | 'lock' | 'delete' | 'duplicate' | 'files' | 'history' | 'paperColor';
 export interface CanvasEmbedSettings { readonly readOnly:boolean; readonly tools:Readonly<Record<CanvasTool,boolean>>; }
 export interface CanvasSettingsPatch { readOnly?:boolean; tools?:Partial<Record<CanvasTool,boolean>>; }
 export type CanvasChangeSource = 'text' | 'text-style' | 'move' | 'transform' | 'create' | 'duplicate' | 'delete' | 'erase' | 'paste' | 'lock' | 'paper-color' | 'image-description' | 'group' | 'ungroup' | 'bring-forward' | 'bring-front' | 'send-backward' | 'send-back' | 'align-left' | 'align-center' | 'align-right' | 'align-top' | 'align-middle' | 'align-bottom' | 'distribute-horizontal' | 'distribute-vertical' | 'undo' | 'redo' | 'open';
@@ -92,7 +93,7 @@ export interface CanvasInstance {
   getInspector():Readonly<{x:number;y:number;width:number;height:number;rotation:number;relativeRotation:boolean;editable:boolean}>|null;
   execute(command:'inspect',value:{field:'x'|'y'|'width'|'height'|'rotation';value:number}):CommandResult;
   /** One provisional creation at a time; cancellation owns preview cleanup. */
-  beginCreation(cancel: () => void, kind?: 'text' | 'sticky' | 'image' | 'pencil'): Readonly<{ cancel(): void; commit<T extends JsonValue>(element: HTMLElement, owner: CanvasOwner<T>): Readonly<{ dispose(): void }> | null }> | null;
+  beginCreation(cancel: () => void, kind?: 'text' | 'sticky' | 'image' | 'pencil' | 'shapes'): Readonly<{ cancel(): void; commit<T extends JsonValue>(element: HTMLElement, owner: CanvasOwner<T>): Readonly<{ dispose(): void }> | null }> | null;
   /** Observational events delivered in order after the current JavaScript stack. No initial event. */
   subscribeChanges(listener:(change:Readonly<CanvasChange>)=>void):()=>boolean;
   /** Acknowledge only the revision actually persisted by the host. */
@@ -131,7 +132,7 @@ export interface CanvasObjectDocument {
   layer?:number;
   group?:number;
   layout: {left:number;top:number;width:number;height:number;fontSize:number;lineHeight?:number|'normal';fontWeight?:number};
-  state: {x:number;y:number;scale:number;angle:number;width:string;content:string|null;alt?:string;paperColor?:string;typography?:CanvasTextStyleSnapshot};
+  state: {x:number;y:number;scale:number;angle:number;width:string;/** Shapes only: the box height, for example `'120px'`. */height?:string;content:string|null;alt?:string;paperColor?:string;typography?:CanvasTextStyleSnapshot};
   text?:string;
   image?:{src:string;alt:string;width:number;height:number};
   points?:{x:number;y:number}[];

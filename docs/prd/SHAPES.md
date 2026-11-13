@@ -55,7 +55,7 @@ Non-goals for this slice: connectors that stay attached to objects (bindings), t
 
 - **Rail:** one Shapes button (Lucide `shapes`) after Highlighter. Arming it shows the tool options bar with the five kinds, then ink, width, fill and corners. Proposed icons: `square`, `diamond`, `slash` (line) and `move-up-right` (arrow). `circle` and `minus` already mean ink swatch and stroke width in the sprite, and the [toolbar standard](../design/TOOLBAR.md) allows one meaning per icon, so the ellipse needs its own glyph (Lucide has no ellipse; a local outline ellipse drawn in Lucide style is the likely answer). None of these are in the sprite yet; the toolbar standard table gains a row for each.
 - **Shortcuts (Decided 3):** R rectangle, O ellipse, D diamond, L line, A arrow, matching common editors. Bare D is free (Duplicate is ⌘/Ctrl D); E stays the Eraser.
-- **Pointer:** drag on empty space to draw. Shift constrains to a square or circle, or to 45° steps for lines and arrows. A click without a drag places a 120 × 80px default. Escape cancels; V returns to Select. The tool stays armed for the next shape, like Pencil.
+- **Pointer:** drag on empty space to draw. Shift constrains to a square or circle, or to 45° steps for lines and arrows. A click without a drag places a 120 × 80px default. Escape cancels; V returns to Select. Like Pencil, the editor returns to Select after each shape, with the new shape selected (corrected during step 3: Pencil does not stay armed; only the Eraser does).
 - **Keyboard:** with the tool armed and the canvas focused, Enter places the default shape at the centre of the visible surface and selects it, so creation never needs a pointer.
 - **Selection:** shapes use the existing outline, halo and rotate handle. Arrows and lines keep their box handles in this slice; endpoint handles come with connectors.
 - **Changing style later:** a contextual More › Shape style section (ink, width, fill, corners) applies to every selected shape as one Undo step, mirroring Paper color.
@@ -96,8 +96,8 @@ Fixtures stay synthetic until representative creator boards are available, as th
 ## Delivery
 
 1. Shape owner, renderer and validation, with unit tests and schema 1–4 fixtures. **Done in 0.3.0-alpha.3.**
-2. Free-resize handles and the `TransformHandle` addition, with geometry and inspector tests.
-3. Rail button, options bar, shortcuts, keyboard placement and the `shapes` permission in the configurator.
+2. Free-resize handles and the `TransformHandle` addition, with geometry and inspector tests. **Done in 0.3.0-alpha.3.**
+3. Rail button, options bar, shortcuts, keyboard placement and the `shapes` permission in the configurator. **Done in 0.3.0-alpha.3.**
 4. More › Shape style and clipboard/duplicate/group coverage.
 5. Excalidraw mapping and import-lab report rows.
 6. Docs: API, compatibility, toolbar standard, glossary and changelog; browser suite scenarios for drawing, resizing, styling, Save/Open and mobile RTL.

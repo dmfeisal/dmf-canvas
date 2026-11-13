@@ -22,8 +22,8 @@ Editor surfaces use **floating chrome**: four groups placed over the canvas stag
 
 | Group | Position | Orientation | Actions, in order |
 |---|---|---|---|
-| Tools | Top, inline start | Vertical rail | Select, Add text, Add note, Add image, Pencil, Highlighter, Stroke eraser |
-| Tool options | Top, beside the rail | Horizontal | The armed tool's three inks, then Thin, Medium, Bold (Pencil and Highlighter only) |
+| Tools | Top, inline start | Vertical rail | Select, Add text, Add note, Add image, Pencil, Highlighter, Stroke eraser, Shapes |
+| Tool options | Top, beside the rail | Horizontal | Shapes only: the five kinds first. Then the armed tool's three inks and Thin, Medium, Bold (Pencil, Highlighter and Shapes). Shapes end with Fill (closed shapes) and Round corners (rectangles) |
 | History | Bottom, inline start | Horizontal | Undo, Redo |
 | Selection actions | Bottom, centre | Horizontal | Selection inspector, Duplicate, Delete, More |
 | Help | Bottom, inline end | Horizontal | Keyboard help |
@@ -50,6 +50,11 @@ All artwork is local [Lucide](https://lucide.dev) from `js/canvas-instance-toolb
 | `pencil` | Pencil | `pencil` | P | Tools |
 | `highlighter` | Highlighter | `highlighter` | Shift P | Tools |
 | `eraser` | Stroke eraser | `eraser` | E | Tools |
+| `shapes` | Shapes | `shapes` |  | Tools |
+| `shape-rectangle` / `-ellipse` / `-diamond` / `-line` / `-arrow` | Rectangle/Ellipse/Diamond/Line/Arrow | `square`, local `ellipse`, `diamond`, `slash`, `move-up-right` | R, O, D, L, A | Tool options (Shapes) |
+| `ink-shape-primary` / `-blue` / `-red` | Primary/Blue/Red ink | `circle` filled with the ink |  | Tool options (Shapes) |
+| `shape-fill` | Fill (pressed = tint) | `paint-bucket` |  | Tool options (Shapes, closed kinds) |
+| `shape-corners` | Round corners (pressed = round) | `square-round-corner` |  | Tool options (Shapes, rectangle) |
 | `ink-pencil-primary` / `-blue` / `-red` | Primary/Blue/Red ink | `circle` filled with the ink (`data-swatch`, `--canvas-swatch`) |  | Tool options (Pencil) |
 | `ink-highlighter-yellow` / `-pink` / `-blue` | Yellow/Pink/Blue highlight | `circle` filled with the ink |  | Tool options (Highlighter) |
 | `width-thin` / `-medium` / `-bold` | Thin/Medium/Bold · *n*px | `minus` at stroke 1.5/3/5 (`data-stroke-size`) |  | Tool options |
@@ -94,6 +99,10 @@ The sprite also carries `image-plus` and `layers` for hosts that need them. To a
 - It opens toward the side of the trigger with more room, stays inside the viewport, and scrolls if it is still too tall.
 - Keyboard: Enter, Space or ArrowDown on More opens it on the first enabled row (ArrowUp opens on the last); ArrowUp/ArrowDown move with wrap-around, Home/End jump; Enter runs the row and closes the menu; Escape closes it and returns focus to More; Tab closes it and continues normally.
 - Pointer: clicking More again, pressing outside, or scrolling the page closes it. Running a row keeps the canvas selection.
+
+## Shapes
+
+The Shapes button arms the kind chosen last (Rectangle at first); R, O, D, L and A arm a kind directly, and pressing the armed kind's key again returns to Select. Drag on empty space to draw; Shift keeps a square or circle, or snaps lines and arrows to 45°. A click without a drag places a 120 × 80px default, and Enter with the tool armed places one at the centre of the visible surface. After each shape the editor returns to Select with the new shape selected, as Pencil does. The Shapes button carries no shortcut of its own because each kind has one. Shapes need the `shapes` tool permission and ignore touch, like Pencil. Lucide has no ellipse, so Ellipse is local artwork drawn in Lucide's 24px, 2px-stroke style.
 
 ## Stroke eraser
 

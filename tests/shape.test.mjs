@@ -53,3 +53,19 @@ test('shape-free content keeps its existing versions',()=>{
   assert.equal(migrateLegacyDocument({format:'dmf-canvas',version:4,originals:[],objects:[text]}).version,1);
   assert.equal(validateTransfer({format:'dmf-canvas-clipboard',version:1,objects:[{data:text,bounds:{left:10,top:10,width:120,height:80}}]}).version,1);
 });
+
+test('only shapes keep a box height in their saved state',()=>{
+  assert.equal(validateObject(shape({state:{...base.state,height:'96.5px'}})).state.height,'96.5px');
+  assert.equal(validateObject(shape()).state.height,undefined,'Height is optional');
+  for(const height of ['96',96,'1e3px','-4px','96.5em'])assert.throws(()=>validateObject(shape({state:{...base.state,height}})),TypeError);
+  const text={type:'text',...base,text:'Hi',state:{...base.state,content:'Hi',height:'40px'}};
+  assert.throws(()=>validateObject(text),TypeError,'Text never stores a height');
+});
+
+test('the shapes tool permission exists, defaults on and is independent of pencil',async()=>{
+  const {resolveSettings,canvasToolNames}=await import('../js/canvas-instance-settings.js');
+  assert(canvasToolNames.includes('shapes'));
+  const defaults=resolveSettings();assert.equal(defaults.tools.shapes,true);
+  const next=resolveSettings({tools:{pencil:false}},defaults);assert.equal(next.tools.shapes,true,'Turning Pencil off keeps Shapes');
+  assert.equal(resolveSettings({tools:{shapes:false}},defaults).tools.pencil,true,'Turning Shapes off keeps Pencil');
+});
