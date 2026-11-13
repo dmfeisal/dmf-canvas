@@ -123,6 +123,7 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 | Drawing | `.canvas-instance-drawing` | A freehand stroke. Drawings can be moved, scaled and rotated but not edited. |
 | Pencil stroke | `tool: 'pencil'` | A drawing in 2, 4 or 8px with primary, blue or red ink. |
 | Highlight | `tool: 'highlighter'` | A drawing in 12, 20 or 32px, yellow, pink or blue at 32% opacity. Owners are named "Highlight". |
+| Shape | `.canvas-instance-shape`, `createShape()` | A rectangle, ellipse, diamond, line or arrow with ink, width, `none`/`tint` fill and, for rectangles, sharp or round corners. Geometry-only, like a Drawing. Saved as schema 4. |
 | Ink | `primary`, `blue`, `yellow` … | A stroke colour, saved as its semantic key, never as a resolved CSS value. |
 
 ## Selection and transform
@@ -187,7 +188,7 @@ These terms come up in other editors and on feisal.id, but this library does not
 | Guide lines, snapping | Proposed for 0.4.0. |
 | Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.4.0. |
 | Touch controls | Proposed for 0.4.0. Pencil, Highlighter and Eraser ignore touch today. |
-| Shapes, connectors | Shapes are the remaining 0.3.0 item; connectors are not scheduled. |
+| Shapes tool, connectors | Shape owners and the schema 4 format exist since 0.3.0-alpha.3 (`createShape`); the drawing tool, free resize and style menu follow the [Shapes proposal](prd/SHAPES.md). Connectors are not scheduled. |
 | Layers panel, Reset canvas edits | On feisal.id only. |
 | PNG export | Proposed for 0.5.0. |
 | Visitor viewer | A proposed embed mode; see the [viewer spec](architecture/VIEWER-EMBED-SPEC.md). |

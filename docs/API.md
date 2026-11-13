@@ -7,7 +7,7 @@ The package export map and installed TypeScript declarations define supported na
 | Import | Responsibility |
 | --- | --- |
 | `dmf-canvas` | `createCanvas`, `resolveSettings`, `canvasToolNames`, instance and owner types |
-| `dmf-canvas/owners` | Text, Sticky Note, Drawing and Image owners; document adapter |
+| `dmf-canvas/owners` | Text, Sticky Note, Drawing, Image and Shape owners; document adapter |
 | `dmf-canvas/pencil` | Optional scoped Pencil input controller |
 | `dmf-canvas/clipboard` | Explicitly shared page-local object clipboard |
 | `dmf-canvas/toolbar` | Optional action toolbar |
@@ -56,6 +56,12 @@ Custom owners opt in through `geometry.read()` and `geometry.prepare(target)`. R
 `drawingPalettes` from `dmf-canvas/pencil` lists each tool's semantic inks with display colours and its thin/medium/bold widths, for host swatches. Boards still store only the semantic keys.
 
 A highlight is a Drawing owner (`createDrawing(host, points, {tool:'highlighter', width, color})`) named "Highlight", with the same geometry, locks, layers, grouping, Duplicate, Copy/Paste and history. Its record is `type:'drawing'` plus `tool:'highlighter'` and semantic `ink`/`strokeWidth`; resolved colours are never stored. See [compatibility](COMPATIBILITY.md#highlighter-schema-3) for versioning.
+
+## Shapes (0.3.0-alpha.3)
+
+`createShape(host, style, layout)` from `dmf-canvas/owners` creates a geometry-only shape owner: `rectangle`, `ellipse`, `diamond`, `line` or `arrow` (`shapeKinds`). `style` takes the Pencil `ink` (`primary`, `blue`, `red`) and `strokeWidth` (2, 4, 8), `fill` `none` (default) or `tint` for closed shapes, `corners` `sharp` (default) or `round` for rectangles, and two box-local `points` for lines and arrows. `layout` places the box in host pixels. Register the result like any owner; shapes share geometry, locks, layers, grouping, Duplicate, Copy/Paste and history, and the stroke Eraser never removes them. Records are `type:'shape'` with only these semantic keys; SVG, CSS and resolved colours are never stored. See [compatibility](COMPATIBILITY.md#shapes-schema-4).
+
+This release adds the owner and data format only. The Shapes tool, free-resize handles, the `shapes` permission, More › Shape style and Excalidraw mapping follow the [Shapes proposal](prd/SHAPES.md); until then shapes use the corner (proportional) and rotate handles.
 
 ## Toolbar and More menu (0.3.0-alpha.1)
 

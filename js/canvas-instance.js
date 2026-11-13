@@ -593,7 +593,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if(!entry.group)delete data.group;
       const r=entry.element.getBoundingClientRect();return {data,bounds:{left:r.left-area.left-root.clientLeft,top:r.top-area.top-root.clientTop,width:r.width,height:r.height}};
     });
-    clipboard.write(validateTransfer({format:'dmf-canvas-clipboard',version:objects.some(item=>item.data.tool==='highlighter')?3:objects.some(item=>item.data.state.typography||item.data.layout.fontSize>200)?2:1,objects}));
+    clipboard.write(validateTransfer({format:'dmf-canvas-clipboard',version:objects.some(item=>item.data.type==='shape')?4:objects.some(item=>item.data.tool==='highlighter')?3:objects.some(item=>item.data.state.typography||item.data.layout.fontSize>200)?2:1,objects}));
     status.textContent=`${objects.length} object${objects.length===1?'':'s'} copied for this page.`;return result(true);
   }
   function pasteSelection() {
@@ -657,14 +657,14 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     }
     const records=[...document.originals.map(item=>item.data),...document.objects];
     // Schema 2 carries typography; schema 3 adds Highlighter strokes. Older readers reject newer versions.
-    if(records.some(item=>item.tool==='highlighter'))document.version=3;else if(records.some(item=>item.state.typography||item.layout.fontSize>200))document.version=2;
+    if(records.some(item=>item.type==='shape'))document.version=4;else if(records.some(item=>item.tool==='highlighter'))document.version=3;else if(records.some(item=>item.state.typography||item.layout.fontSize>200))document.version=2;
     const json=JSON.stringify(document);if(new TextEncoder().encode(json).byteLength>1048576)throw new RangeError('Board file exceeds 1 MiB.');
     return JSON.parse(json);
   }
   function savePortableDocument(){
     const board=saveDocument();let index=0;
     const nodes=[...owners.values()].filter(entry=>entry.present).map(entry=>({id:entry.portableId,data:entry.created?board.objects[index++]:board.originals.find(item=>item.id===entry.id).data,...(entry.portableSource?{source:entry.portableSource}:{})}));
-    return validatePortable({format:'dmf-canvas-portable',version:nodes.some(node=>node.data.tool==='highlighter')?2:1,nodes},documents?.validate);
+    return validatePortable({format:'dmf-canvas-portable',version:nodes.some(node=>node.data.type==='shape')?3:nodes.some(node=>node.data.tool==='highlighter')?2:1,nodes},documents?.validate);
   }
   function loadPortableDocument(input){
     if(!alive)return result(false,'destroyed');
@@ -685,7 +685,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     // Validate the complete envelope before allocating or changing live owners.
     const json=JSON.stringify(document);if(!json||new TextEncoder().encode(json).byteLength>1048576)throw new RangeError('Board file exceeds 1 MiB.');
     const value=JSON.parse(json),originals=[...owners.values()].filter(entry=>!entry.created);
-    if(value?.format!=='dmf-canvas'||![1,2,3].includes(value.version)||!Array.isArray(value.originals)||!Array.isArray(value.objects)||value.originals.length!==originals.length||value.objects.length+originals.length>50||value.version===1&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.state?.typography||item?.layout?.fontSize>200)||value.version<3&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.tool==='highlighter'))throw new TypeError('Unsupported board file.');
+    if(value?.format!=='dmf-canvas'||![1,2,3,4].includes(value.version)||!Array.isArray(value.originals)||!Array.isArray(value.objects)||value.originals.length!==originals.length||value.objects.length+originals.length>50||value.version===1&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.state?.typography||item?.layout?.fontSize>200)||value.version<3&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.tool==='highlighter')||value.version<4&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.type==='shape'))throw new TypeError('Unsupported board file.');
     const ids=new Set();
     const plans=value.originals.map(item=>{
       const entry=originals.find(entry=>entry.id===item.id);if(!entry||ids.has(item.id))throw new TypeError('Board originals do not match this canvas.');ids.add(item.id);

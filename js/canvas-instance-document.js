@@ -3,13 +3,14 @@ import { validateImage } from './canvas-instance-image-data.js';
 import { createTextOwner } from './canvas-instance-text.js';
 import { createStickyNote } from './canvas-instance-sticky.js';
 import { createDrawing } from './canvas-instance-drawing.js';
+import { createShape, validShape } from './canvas-instance-shape.js';
 import {validateTextStyle,textFonts} from './canvas-instance-text-style.js';
 import {validStroke} from './canvas-instance-stroke.js';
 
 const finite=(value,min,max)=>typeof value==='number'&&Number.isFinite(value)&&value>=min&&value<=max;
 // Whitelist data only. Files never contain HTML, SVG markup, remote URLs or CSS rules. Images use bounded raster data.
 export function validateObject(input) {
-  if(!input||!['text','sticky','drawing','image'].includes(input.type))throw new TypeError('Unsupported object type.');
+  if(!input||!['text','sticky','drawing','image','shape'].includes(input.type))throw new TypeError('Unsupported object type.');
   if(new TextEncoder().encode(JSON.stringify(input)).byteLength>65536)throw new RangeError('Object data exceeds 64 KiB.');
   if(input.locked!==undefined&&typeof input.locked!=='boolean')throw new TypeError('Invalid object lock state.');
   const locked=input.locked??false;
@@ -33,6 +34,7 @@ export function validateObject(input) {
     if(!['pencil','highlighter'].includes(tool)||!validStroke(tool,input.strokeWidth,input.ink)||!Array.isArray(input.points)||!input.points.length||input.points.length>2048||input.points.some(p=>!finite(p?.x,0,100000)||!finite(p?.y,0,100000)))throw new TypeError('Invalid drawing artwork.');
     return {type,layout,state,locked,...(layer===undefined?{}:{layer}),...(group===undefined?{}:{group}),strokeWidth:input.strokeWidth,ink:input.ink,...(tool==='highlighter'?{tool}:{}),points:input.points.map(({x,y})=>({x,y}))};
   }
+  if(type==='shape')return {type,layout,state,locked,...(layer===undefined?{}:{layer}),...(group===undefined?{}:{group}),...validShape(input,layout)};
   if(typeof input.text!=='string'||input.text.length>10000||input.text.includes('\0')||typeof s.content!=='string'||s.content!==input.text)throw new TypeError('Invalid object text.');
   state.content=input.text;
   if(type==='sticky'){
@@ -46,6 +48,7 @@ function createObject(host,input) {
   try{
     if(data.type==='image')item=createImageObject(host,data.image,data.layout);
     else if(data.type==='sticky')item=createStickyNote(host);
+    else if(data.type==='shape')item=createShape(host,data,data.layout);
     else if(data.type==='drawing')item=createDrawing(host,data.points,{width:data.strokeWidth,color:data.ink,layout:data.layout,tool:data.tool??'pencil'});
     else {
       const element=host.ownerDocument.createElement('p');element.className='canvas-instance-local-text';element.textContent=data.text;element.setAttribute('aria-label','Text');host.append(element);
@@ -57,7 +60,7 @@ function createObject(host,input) {
     }
     const {element,owner}=item;
     Object.assign(element.style,{left:data.layout.left+'px',top:data.layout.top+'px',fontSize:data.layout.fontSize+'px'});
-    if(data.type!=='drawing')Object.assign(element.style,{lineHeight:data.layout.lineHeight==='normal'?'normal':data.layout.lineHeight+'px',fontWeight:String(data.layout.fontWeight)});
+    if(data.type!=='drawing'&&data.type!=='shape')Object.assign(element.style,{lineHeight:data.layout.lineHeight==='normal'?'normal':data.layout.lineHeight+'px',fontWeight:String(data.layout.fontWeight)});
     if(data.type!=='text')Object.assign(element.style,{width:data.layout.width+'px',height:data.layout.height+'px'});
     // Factories start with pixel widths; equivalent auto widths are materialized.
     owner.restore({...data.state,width:['','fit-content'].includes(data.state.width)?data.type==='text'&&data.state.typography?'fit-content':data.layout.width+'px':data.state.width});
