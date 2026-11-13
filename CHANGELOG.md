@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 (prepared 13 November 2026, private)
+
+Completes the 0.3.0 milestone (Shapes, Highlighter, stroke Eraser). Promotes 0.3.0-alpha.3 with no runtime change; the alpha entries below hold the details.
+
+- **Shapes:** rectangle, ellipse, diamond, line and arrow. Draw them with the Shapes tool (R, O, D, L, A, Shift constraints, click or Enter placement), resize them freely with eight handles, and restyle the selection with More › Shape style. They follow the new `shapes` tool permission. `createShape` and `execute('shape-style')` serve custom hosts.
+- **Highlighter and stroke Eraser:** translucent 12/20/32px strokes, and an Eraser that removes whole Pencil and Highlighter strokes as one Undo step.
+- **Portable documents and Excalidraw import:** stable node IDs, legacy migration, and an experimental adapter (version 2) that converts Text, freehand, basic shapes and two-point lines/arrows, with a loss report for every object.
+- **Toolbar standard:** floating rail, tool options bar, history, selection actions with a More menu, and help, with one Lucide icon per action. The chrome now always stays above canvas objects.
+- **dmf-ui token fallbacks** behind every `--dmf-color-*` variable, and natural sizing for inspector and editor controls.
+- **Verification:** the browser suites run headless in CI through Playwright, including the new Shapes suite.
+
+Migration from 0.2.0: boards and clipboard transfers use schema 3 when they contain a highlight and schema 4 when they contain a shape; portable documents use version 2 and 3 for the same content. Readers accept board schemas 1–4 and portable versions 1–3, and 0.2.0 readers reject the newer schemas instead of dropping content. Files without highlights or shapes are written exactly as before. See [compatibility](docs/COMPATIBILITY.md). `TransformHandle` adds `n`/`s`, `PencilTool` adds `shape`, and `canvasToolNames` adds `shapes`, so hosts that switch exhaustively on these see new cases.
+
 ## 0.3.0-alpha.3 (prepared 13 November 2026, private, experimental)
 
 - Add Shapes delivery step 1 ([proposal](docs/prd/SHAPES.md)): `createShape` and `shapeKinds` from `dmf-canvas/owners` create geometry-only `rectangle`, `ellipse`, `diamond`, `line` and `arrow` owners drawn as local SVG from semantic keys: Pencil `ink` and `strokeWidth`, `fill` `none`/`tint`, rectangle `corners` `sharp`/`round`, and two points for lines and arrows. Shapes share geometry, locks, layers, grouping, Duplicate, Copy/Paste, Save/Open and history; the stroke Eraser never removes them.

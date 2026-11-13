@@ -1,6 +1,6 @@
 ---
 title: "Shapes"
-status: proposed
+status: accepted
 owner: product
 last_reviewed: 2026-11-13
 source_of_truth: true
@@ -14,7 +14,7 @@ related:
 
 # Shapes
 
-Shapes are the last open item of the 0.3.0 milestone (Shapes, Highlighter, stroke Eraser). They also unblock the next Excalidraw import step: rectangles, ellipses, diamonds, lines and arrows are currently reported as unsupported because no general-shape owner exists. This page proposes the first slice. Nothing here is implemented yet. The five decisions below were accepted on 13 November 2026 with the recommended answers; the board format is the part that is hard to undo, so change it only through this page.
+Shapes are the last open item of the 0.3.0 milestone (Shapes, Highlighter, stroke Eraser). They also unblock the next Excalidraw import step: rectangles, ellipses, diamonds, lines and arrows are currently reported as unsupported because no general-shape owner exists. This page records the first slice, implemented across 0.3.0-alpha.3 and released in 0.3.0. The five decisions below were accepted on 13 November 2026 with the recommended answers; the board format is the part that is hard to undo, so change it only through this page.
 
 ## Goals and non-goals
 
@@ -102,7 +102,7 @@ Fixtures stay synthetic until representative creator boards are available, as th
 5. Excalidraw mapping and import-lab report rows. **Done in 0.3.0-alpha.3** (adapter version 2).
 6. Docs: API, compatibility, toolbar standard, glossary and changelog; browser suite scenarios for drawing, resizing, styling, Save/Open and mobile RTL. **Done in 0.3.0-alpha.3:** `npm run test:shapes:browser` (headless Chromium, in CI) covers the rail and options bar, drawing by drag, Shift constraints, click and Enter placement, free resize with 24px handles, More › Shape style with one Undo step, Save/Open, the `shapes` permission and mobile RTL.
 
-Release: land as `0.3.0-alpha.3`. Promote to `0.3.0` only after the browser suites pass and the archive checks in the [release checklist](../RELEASE-CHECKLIST.md) run.
+Release: landed as `0.3.0-alpha.3` and promoted to `0.3.0` after the browser suites passed in CI. The archive checks in the [release checklist](../RELEASE-CHECKLIST.md) run when the archive is packed.
 
 ## Acceptance
 
