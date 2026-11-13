@@ -2,6 +2,12 @@
 import '../../../css/canvas-instance.css';
 import '../../../css/canvas-instance-toolbar.css';
 import '../../../examples/configurator/canvas-embed.css';
+import {version} from '../../../package.json';
+import SiteHeader from '../components/SiteHeader.astro';
+import '../styles/tokens.css';
+// Lucide 1.60.0 rotate-ccw artwork (ISC, see LICENSES/lucide.txt).
+const rotate='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
+const github='https://github.com/dmfeisal/dmf-canvas';
 ---
 <!doctype html>
 <html lang="en">
@@ -12,38 +18,76 @@ import '../../../examples/configurator/canvas-embed.css';
   <link rel="canonical" href="https://canvas.feisal.id/" />
   <link rel="icon" href="/favicon.svg" />
   <title>Try Canvas | DMF Canvas</title>
+  <script is:inline>
+   // Resolve the theme before paint from the choice the site header stores (Starlight's key; '' means system).
+   (()=>{let saved='';try{saved=localStorage.getItem('starlight-theme')||'';}catch{}document.documentElement.dataset.theme=saved==='light'||saved==='dark'?saved:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';})();
+  </script>
  </head>
- <body>
+ <body class="dmf-ui">
   <a class="skip" href="#canvas-demo">Skip to Canvas</a>
-  <header class="site-header"><a class="brand" href="/">DMF Canvas</a><nav aria-label="Main"><a href="/docs/">Documentation</a><a href="https://github.com/dmfeisal/dmf-canvas">GitHub</a></nav></header>
+  <header class="site-header"><SiteHeader /></header>
   <main>
-   <div class="intro"><div><h1>Try Canvas.</h1><p>Write, sketch, and arrange your ideas. Everything you make stays in this browser tab until you save a board file.</p></div><span class="version">Editor preview · 0.3.0-alpha.1</span></div>
-   <section class="workspace" aria-label="Canvas playground">
-    <div class="workspace-heading"><h2>Your canvas</h2><div class="host-actions"><label>Theme <select id="theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label><button id="reset" type="button" disabled>Reset demo</button></div></div>
-    <p id="canvas-help" class="hint">Pick a tool from the tool rail. Drag to move, double-click Text to edit, and use the bar below a selection for the inspector, Duplicate, Delete and More.</p>
+   <section class="hero" aria-labelledby="hero-title">
+    <h1 id="hero-title">Write, sketch and arrange ideas on the web.</h1>
+    <p>DMF Canvas is an embeddable, framework-free editor for Text, Sticky Notes, Drawings and Images. Try it below. Everything you make stays in this browser tab until you save a board file.</p>
+    <div class="actions">
+     <a class="button button-primary" href="/docs/getting-started/">Start integrating</a>
+     <a class="button button-outline" href="/docs/api/">Read the API</a>
+    </div>
+    <p class="note">Experimental · Private {version} preview · Native ESM, zero runtime dependencies</p>
+   </section>
+
+   <section class="workspace" aria-labelledby="workspace-title">
+    <div class="workspace-heading">
+     <div><h2 id="workspace-title">Your canvas</h2><p id="canvas-help" class="hint">Pick a tool from the rail. Drag to move, double-click Text to edit, and use the bar below a selection for the inspector, Duplicate, Delete and More.</p></div>
+     <button id="reset" class="button button-outline" type="button" disabled><Fragment set:html={rotate}/>Reset demo</button>
+    </div>
     <div id="canvas-demo" tabindex="-1" aria-describedby="canvas-help"></div>
     <output id="playground-status" aria-live="polite">Loading the editor…</output>
     <noscript><p>JavaScript is required for this editor. You can still read the <a href="/docs/getting-started/">integration guide</a>.</p></noscript>
    </section>
-   <details class="help"><summary>Keyboard controls, saving, and limits</summary><div><p><strong>Keyboard:</strong> Tab to an object. Press Enter or F2 to edit Text, and Escape to finish. Arrow keys move a selected object. Undo and Redo sit at the bottom left; More holds copy and paste, grouping, locks, layers, alignment, paper colour and board files. The ? button lists every shortcut.</p><p><strong>Saving:</strong> Save board downloads a DMF Canvas JSON file. Open board restores that file. There is no automatic storage or upload; refreshing or leaving this page discards unsaved edits. Opening a board starts new history.</p><p><strong>Images:</strong> Add a local PNG, JPEG, or WebP. Images stay in the local board; they are not uploaded. Select an image to edit its description.</p><p><strong>Limits:</strong> Up to 50 objects on a bounded surface. This preview has no pan/zoom, general shapes, Excalidraw/FigJam import, or published visitor viewer. Touch-only use and other browser engines have not been certified.</p></div></details>
-   <footer><a href="/docs/text-formatting/">Text formatting guide</a><a href="/docs/product/product-roadmap/">What’s planned</a><a href="/docs/compatibility/">Compatibility</a></footer>
+
+   <details class="help"><summary>Keyboard controls, saving and limits</summary><div><p><strong>Keyboard:</strong> Tab to an object. Press Enter or F2 to edit Text, and Escape to finish. Arrow keys move a selected object. P draws with the Pencil, Shift+P with the Highlighter and E erases strokes. Undo and Redo sit at the bottom left; More holds copy and paste, grouping, locks, layers, alignment, paper colour and board files. The ? button lists every shortcut.</p><p><strong>Saving:</strong> Save board downloads a DMF Canvas JSON file. Open board restores that file. There is no automatic storage or upload; refreshing or leaving this page discards unsaved edits. Opening a board starts new history.</p><p><strong>Images:</strong> Add a local PNG, JPEG or WebP. Images stay in the local board; they are not uploaded. Select an image to edit its description.</p><p><strong>Limits:</strong> Up to 50 objects on a bounded surface. This preview has no pan/zoom, general shapes, FigJam import or published visitor viewer. Touch-only use and other browser engines have not been certified.</p></div></details>
+
+   <section class="section" aria-labelledby="start-title">
+    <h2 id="start-title">Choose a starting point</h2>
+    <div class="grid">
+     <article class="entry"><a href="/docs/getting-started/">Integration guide</a><p>Mount a canvas in your own page, register owners and clean up with the host lifecycle.</p></article>
+     <article class="entry"><a href="/docs/api/">API contract</a><p>Entrypoints, commands, results, events, Pencil, toolbar and inspector options.</p></article>
+     <article class="entry"><a href="/docs/examples/configurator/">Embed configurator</a><p>Set tool permissions, read-only mode and themes, then copy HTML, Astro, React or Vue code.</p></article>
+    </div>
+   </section>
+
+   <section class="section" aria-labelledby="limits-title">
+    <h2 id="limits-title">Know what ships today</h2>
+    <div class="grid">
+     <article class="entry"><a href="/docs/compatibility/">Compatibility</a><p>Board, clipboard and portable formats, schema versions and what older readers reject.</p></article>
+     <article class="entry"><a href="/docs/text-formatting/">Text formatting</a><p>Fonts, sizes, weight, alignment and wrapping in the Selection inspector.</p></article>
+     <article class="entry"><a href="/docs/product/product-roadmap/">Roadmap</a><p>Planned milestones such as Shapes, touch controls and PNG export. Nothing here is a release promise.</p></article>
+    </div>
+   </section>
   </main>
+  <footer class="site-footer">
+   <span>DMF Canvas · Experimental editor preview</span>
+   <nav aria-label="Project links"><a href="/docs/">Documentation</a><a href="/docs/changelog/">Changelog</a><a href="/labs/import/">Import lab</a><a href={github}>GitHub</a></nav>
+  </footer>
   <script>
    import {mountEmbed} from '../../../examples/configurator/canvas-embed.js';
-      const container=document.getElementById('canvas-demo')!;
+   const container=document.getElementById('canvas-demo')!;
    const status=document.getElementById('playground-status')!;
-      const reset=document.getElementById('reset') as HTMLButtonElement;
-   const theme=document.getElementById('theme') as HTMLSelectElement;
+   const reset=document.getElementById('reset') as HTMLButtonElement;
+   const resolved=()=>document.documentElement.dataset.theme==='dark'?'dark':'light';
    let embed:ReturnType<typeof mountEmbed>|null=null,unsubscribe:(()=>void)|null=null;
+   // Follow the shared header's theme toggle.
+   document.addEventListener('site-theme-change',()=>{if(embed&&embed.getConfig().theme!==resolved())embed.update({...embed.getConfig(),theme:resolved()});});
    function render(){const state=embed?.canvas?.getState();reset.disabled=!state;status.textContent=state?.dirty?'Unsaved changes — Save board to keep a local copy.':'Ready. Edits stay in this tab; save a board before leaving.';}
    function mount(){
-    embed=mountEmbed(container,{width:1600,height:480,theme:theme.value});
+    embed=mountEmbed(container,{width:1600,height:480,theme:resolved()});
     embed.root!.querySelector('[data-host]')!.setAttribute('aria-describedby','canvas-help');
     unsubscribe=embed.canvas!.subscribe(render);render();
    }
    function dispose(){unsubscribe?.();unsubscribe=null;embed?.dispose();embed=null;}
    try{mount();}catch(error){dispose();status.textContent='The editor could not start. Please reload or check the compatibility guide.';console.error(error);}
-   theme.addEventListener('change',()=>{if(embed)embed.update({...embed.getConfig(),theme:theme.value});});
    reset.addEventListener('click',()=>{if(!embed)return;if(embed.canvas?.getState().dirty&&!confirm('Reset this demo and discard unsaved edits? Save a board first to keep them.'))return;dispose();mount();});
    window.addEventListener('pagehide',()=>{unsubscribe?.();unsubscribe=null;});
    window.addEventListener('pageshow',event=>{if(event.persisted&&embed){unsubscribe?.();unsubscribe=embed.canvas?.subscribe(render)??null;render();}});
@@ -51,6 +95,53 @@ import '../../../examples/configurator/canvas-embed.css';
  </body>
 </html>
 <style is:global>
- :root{color-scheme:light dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:CanvasText;background:Canvas;--accent:light-dark(#185cab,#8ebdff)}
- *{box-sizing:border-box}body{margin:0}a{color:var(--accent);text-underline-offset:3px}button,select{font:inherit;color:inherit;background:Canvas;border:1px solid GrayText;border-radius:6px;padding:8px 12px}button{cursor:pointer}button:disabled{opacity:.5;cursor:default}:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.skip{position:absolute;left:16px;top:-80px}.skip:focus{top:8px;z-index:10;background:Canvas;padding:12px}.site-header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px max(24px,calc((100vw - 1240px)/2));border-bottom:1px solid color-mix(in srgb,CanvasText 15%,transparent)}.brand{text-decoration:none;font-size:22px;font-weight:650;letter-spacing:-.04em}.site-header nav{display:flex;gap:20px;font-size:14px}main{max-width:1240px;margin:auto;padding:40px 24px}.intro{display:flex;justify-content:space-between;align-items:start;gap:24px;margin-bottom:28px}h1{font-size:clamp(2rem,5vw,3.3rem);line-height:1.1;letter-spacing:-.045em;margin:0 0 14px}.intro p{max-width:68ch;line-height:1.65;margin:0;font-size:16px}.version{white-space:nowrap;font-size:13px;color:GrayText;padding-top:10px}.workspace{border:1px solid color-mix(in srgb,CanvasText 20%,transparent);border-radius:10px;padding:20px;min-width:0}.workspace-heading{display:flex;justify-content:space-between;align-items:center;gap:16px}h2{font-size:18px;margin:0}.host-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.host-actions label{display:flex;align-items:center;gap:8px;font-size:13px}.hint{font-size:14px;line-height:1.6;max-width:90ch;margin:12px 0 18px;color:GrayText}#canvas-demo{min-width:0}.configured-canvas .embed-fields button,.configured-canvas .embed-fields select{padding:8px 10px}.configured-canvas .embed-fields label{flex-wrap:wrap}.configured-canvas .embed-fields{gap:10px 16px}.configured-canvas [data-host]{border-radius:5px}#playground-status{display:block;min-height:22px;font-size:13px;line-height:1.5;margin-top:14px;color:GrayText}.help{margin:24px 0;max-width:85ch;line-height:1.7}.help summary{cursor:pointer;padding:10px 0;font-weight:600}.help p{font-size:14px}footer{display:flex;flex-wrap:wrap;gap:20px;font-size:14px;margin-top:28px}@media(max-width:640px){main{padding:28px 16px}.site-header{padding:16px}.site-header nav{gap:12px;font-size:13px}.intro{display:block}.version{display:block;margin-top:12px}.workspace{padding:12px}.workspace-heading{display:block}.host-actions{margin-top:12px}.configured-canvas .embed-fields{gap:8px}.hint{font-size:13px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+ .dmf-ui{--gutter:clamp(16px,4vw,40.96px)}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--background);color:var(--foreground);font:16px/1.5 -apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+ a{color:inherit;text-underline-offset:3px}
+ :focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+  .skip{position:absolute;left:16px;top:-80px;z-index:20;padding:8px 12px;border-radius:8px;background:var(--background);border:1px solid var(--border)}.skip:focus{top:8px}
+ svg{flex:none}
+
+ .site-header{position:sticky;top:0;z-index:30;height:3.5rem;padding:.75rem 1rem;background:var(--background);border-bottom:1px solid var(--border)}
+ @media (min-width:50rem){.site-header{padding-inline:1.5rem}}
+
+ main{max-width:1600px;margin:auto;padding:56px var(--gutter) 24px}
+ .hero{max-width:44rem}
+ h1{font-size:clamp(2rem,1.4rem + 2.6vw,2.56rem);font-weight:600;letter-spacing:-.035em;line-height:1.08;margin:0 0 20px;text-wrap:balance}
+ .hero>p{margin:0;font-size:16px;line-height:1.75;color:var(--muted-foreground);max-width:38rem}
+ .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+ .button{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 10px;border-radius:8px;border:1px solid transparent;font:inherit;font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap;cursor:pointer}
+ .button-primary{background:var(--primary);color:var(--primary-foreground)}.button-primary:hover{background:color-mix(in oklch,var(--primary) 90%,transparent)}
+ .button-outline{background:var(--background);color:var(--foreground);border-color:var(--border)}.button-outline:hover{background:var(--accent)}
+ .button:disabled{opacity:.5;cursor:default}
+ .hero>.note{margin:24px 0 0;font-size:14px;color:var(--muted-foreground)}
+
+ .workspace{margin-top:48px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--card);min-width:0}
+ .workspace-heading{display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:16px}
+ h2{font-size:1.15rem;font-weight:600;letter-spacing:-.01em;margin:0}
+ .hint{font-size:14px;line-height:1.6;max-width:90ch;margin:4px 0 0;color:var(--muted-foreground)}
+ #canvas-demo{min-width:0}
+ .configured-canvas [data-host]{border-radius:8px;border-color:var(--border)}
+ .configured-canvas :is(.embed-fields,.embed-image,.embed-help) :is(button,select,input){height:32px;padding:0 10px;border:1px solid var(--input);border-radius:8px;background:var(--background);color:var(--foreground);font:inherit;font-size:14px}
+ .configured-canvas :is(.embed-fields,.embed-image,.embed-help) button{cursor:pointer}
+ .configured-canvas .embed-fields{gap:10px 16px}.configured-canvas .embed-fields label{flex-wrap:wrap}
+ #playground-status{display:block;min-height:22px;font-size:13px;line-height:1.5;margin-top:12px;color:var(--muted-foreground)}
+
+ .help{margin:24px 0 0;border:1px solid var(--border);border-radius:12px;padding:0 16px;max-width:none}
+ .help summary{cursor:pointer;padding:12px 0;font-size:14px;font-weight:600}
+ .help>div{padding-bottom:4px;max-width:85ch}.help p{font-size:14px;line-height:1.7;color:var(--muted-foreground)}.help strong{color:var(--foreground)}
+
+ .section{margin-top:64px}.section h2{margin-bottom:16px}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,18rem),1fr));gap:16px}
+ .entry{position:relative;padding:16px;border:1px solid var(--border);border-radius:12px}
+ .entry:hover{background:var(--accent)}
+ .entry a{font-size:1.15rem;font-weight:600;text-decoration:none}.entry a::after{content:"";position:absolute;inset:0;border-radius:inherit}
+ .entry p{margin:8px 0 0;font-size:14px;line-height:1.6;color:var(--muted-foreground)}
+
+ .site-footer{margin-top:64px;border-top:1px solid var(--border);padding:28px var(--gutter);display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 24px;font-size:.9rem;color:var(--muted-foreground)}
+ .site-footer nav{display:flex;flex-wrap:wrap;gap:8px 20px}.site-footer a{text-decoration:none}.site-footer a:hover{color:var(--foreground);text-decoration:underline}
+
+ @media (max-width:640px){main{padding-top:36px}.workspace{padding:12px}.workspace-heading{flex-direction:column}.help{padding:0 12px}}
+ @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>

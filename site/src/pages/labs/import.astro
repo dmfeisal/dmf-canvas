@@ -2,9 +2,11 @@
 import '../../../../css/canvas-instance.css';
 import '../../../../css/canvas-instance-toolbar.css';
 import '../../../../examples/configurator/canvas-embed.css';
+import '../../styles/tokens.css';
+import SiteHeader from '../../components/SiteHeader.astro';
 ---
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="robots" content="noindex"/><title>Portable import lab | DMF Canvas</title></head><body>
-<header><a href="/docs/">DMF Canvas docs</a><a href="/">Editor playground</a></header>
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="robots" content="noindex"/><title>Portable import lab | DMF Canvas</title><script is:inline>(()=>{let saved='';try{saved=localStorage.getItem('starlight-theme')||'';}catch{}document.documentElement.dataset.theme=saved==='light'||saved==='dark'?saved:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';})();</script></head><body>
+<header class="site-header"><SiteHeader /></header>
 <main><h1>Portable import lab</h1><p>Experimental local-file import. Text and freehand strokes convert to editable objects. Other elements receive an explicit unsupported report. Nothing is uploaded.</p>
 <section class="controls" aria-label="Import controls"><label>Excalidraw file <input id="source-file" type="file" accept=".excalidraw,application/json"/></label><button id="sample">Preview synthetic sample</button><button id="apply" disabled>Apply preview</button><button id="save">Save portable document</button><label>Open portable document <input id="portable-file" type="file" accept="application/json,.json"/></label></section>
 <p>Previewing preserves the current board. Applying replaces it and starts new history. Save your work first. The sample is a hand-authored schema fixture, not evidence of real-board fidelity.</p>
@@ -22,7 +24,9 @@ import '../../../../examples/configurator/canvas-embed.css';
  import sample from '../../../../tests/fixtures/portable-excalidraw.excalidraw?raw';
  const host=document.getElementById('host')!,editor=document.getElementById('editor')!,message=document.getElementById('message')!,report=document.getElementById('report')!,apply=document.getElementById('apply') as HTMLButtonElement;
  const canvas=createCanvas(host,{documents:canvasDocuments});Object.assign(host,{canvasLab:canvas});
- const theme=createCanvasTheme(editor,{mode:'system'});
+ const resolved=()=>document.documentElement.dataset.theme==='dark'?'dark':'light';
+ const theme=createCanvasTheme(editor,{mode:resolved()});
+ document.addEventListener('site-theme-change',()=>theme.configure({mode:resolved()}));
  const pencil=createPencil(canvas,host,()=>sync());
  let pending:ReturnType<typeof importExcalidraw>|null=null,generation=0,alive=true;
  const execute=(command:'undo'|'redo'|'duplicate'|'delete')=>{pencil.setActive(false);canvas.execute(command);};
@@ -48,5 +52,24 @@ import '../../../../examples/configurator/canvas-embed.css';
  window.addEventListener('pagehide',()=>{alive=false;generation++;observer.disconnect();if(frame!==null)cancelAnimationFrame(frame);release();off();inspector.dispose();pencil.dispose();canvas.destroy();toolbar.dispose();history.dispose();tools.dispose();theme.dispose();},{once:true});
  window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
 </script>
-<style is:global>html{font:16px/1.65 system-ui;color-scheme:light dark;background:Canvas;color:CanvasText}body{margin:0}header,main{max-width:1120px;margin:auto;padding:24px}header{display:flex;gap:24px}a{color:LinkText}.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center}button,input{font:inherit;max-width:100%}button{color:inherit;background:Canvas;border:1px solid GrayText;border-radius:5px;padding:8px 12px;cursor:pointer}label{display:flex;flex-direction:column;max-width:100%}#message{display:block;margin:16px 0}#report{max-height:240px;overflow:auto;padding-left:24px}#host{height:520px}#toolbar{margin-top:12px}.canvas-instance-status{font-size:13px}:focus-visible{outline:2px solid Highlight;outline-offset:3px}@media(max-width:600px){header,main{padding:16px}#host{height:440px}}</style>
+<style is:global>
+ html{font:16px/1.65 -apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif;color-scheme:light;background:var(--background);color:var(--foreground)}
+ :root[data-theme="dark"]{color-scheme:dark}
+ body{margin:0}
+ .site-header{position:sticky;top:0;z-index:30;height:3.5rem;padding:.75rem 1rem;background:var(--background);border-bottom:1px solid var(--border)}
+ @media (min-width:50rem){.site-header{padding-inline:1.5rem}}
+ main{max-width:1120px;margin:auto;padding:24px}
+ h1{font-size:clamp(1.9rem,4vw,2.4rem);font-weight:600;letter-spacing:-.035em;line-height:1.1}
+ main>p{color:var(--muted-foreground)}
+ a{color:inherit;text-underline-offset:3px}
+ .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+ button,input{font:inherit;max-width:100%}
+ .controls button{height:32px;padding:0 10px;color:var(--foreground);background:var(--background);border:1px solid var(--border);border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
+ .controls button:hover:not(:disabled){background:var(--accent)}.controls button:disabled{opacity:.5;cursor:default}
+ label{display:flex;flex-direction:column;max-width:100%;font-size:14px}
+ #message{display:block;margin:16px 0}#report{max-height:240px;overflow:auto;padding-left:24px}
+ #host{height:520px;border-color:var(--border);border-radius:8px}#toolbar{margin-top:12px}.canvas-instance-status{font-size:13px}
+ :focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+ @media(max-width:600px){main{padding:16px}#host{height:440px}}
+</style>
 </body></html>

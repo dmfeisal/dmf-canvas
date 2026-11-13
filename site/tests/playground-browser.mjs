@@ -2,7 +2,7 @@ const task=await taskSpace(playgroundTest.spaceId),page=task.page('p1');
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 await page.goto(playgroundTest.base+'/');
 await page.waitForFunction(()=>!!document.getElementById('canvas-demo').canvasEmbed?.canvas);
-await page.evaluate(()=>{window.playgroundErrors=[];window.addEventListener('error',e=>window.playgroundErrors.push(e.message));window.addEventListener('unhandledrejection',e=>window.playgroundErrors.push(String(e.reason)));window.storageBefore=JSON.stringify({...localStorage});});
+await page.evaluate(()=>{window.playgroundErrors=[];window.addEventListener('error',e=>window.playgroundErrors.push(e.message));window.addEventListener('unhandledrejection',e=>window.playgroundErrors.push(String(e.reason)));window.storageBefore=JSON.stringify(Object.fromEntries(Object.entries(localStorage).filter(([key])=>key!=='starlight-theme')));});
 await page.click('[data-toolbar-action=text]');await page.keyboard.press('ControlOrMeta+a');await page.keyboard.type('My live Canvas');await page.keyboard.press('Escape');
 assert(await page.evaluate(()=>{const c=document.getElementById('canvas-demo').canvasEmbed.canvas;return c.getState().objects===2&&c.saveDocument().objects[0].text==='My live Canvas';}),'New Text edit failed');
 await page.click('button[aria-label="Selection inspector"]');await page.fill('[data-inspector-text=size]','28');await page.press('[data-inspector-text=size]','Enter');
@@ -23,7 +23,7 @@ const rect=await page.evaluate(()=>document.querySelector('[data-host]').getBoun
 await page.mouse.move(rect.x+120,rect.y+340);await page.mouse.down();await page.mouse.move(rect.x+180,rect.y+370);await page.mouse.move(rect.x+230,rect.y+340);await page.mouse.up();
 assert(await page.evaluate(()=>document.getElementById('canvas-demo').canvasEmbed.canvas.getState().objects===5&&!!document.querySelector('[data-canvas-instance-drawing]')),'Pencil creation failed');
 await page.screenshot({path:playgroundTest.desktop});
-await page.cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await page.selectOption('#theme','dark');
+await page.cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});for(let i=0;i<3&&await page.evaluate(()=>document.documentElement.dataset.theme)!=='dark';i++)await page.click('[data-theme-toggle]');
 await page.click('[data-original]');await page.click('button[aria-label="Selection inspector"]');await page.fill('[data-inspector-text=size]','24');await page.press('[data-inspector-text=size]','Enter');
 assert(await page.evaluate(()=>{const p=document.querySelector('.canvas-embed-inspector'),r=p.getBoundingClientRect();return document.documentElement.scrollWidth<=innerWidth&&r.left>=0&&r.right<=innerWidth&&document.getElementById('canvas-demo').canvasEmbed.canvas.getTextStyle().size===24;}),'Mobile style editing overflowed or failed');
 await page.click('.canvas-embed-inspector__close');await page.screenshot({path:playgroundTest.mobile});
@@ -31,7 +31,7 @@ await page.click('#reset');await page.dismissDialog();assert(await page.evaluate
 await page.click('#reset');await page.acceptDialog();
 assert(await page.evaluate(()=>document.getElementById('canvas-demo').canvasEmbed.canvas.getState().objects===1&&!document.querySelector('[data-toolbar-action=text]').disabled),'Reset did not reinitialize');
 for(let i=0;i<5;i++)await page.click('#reset');
-assert(await page.evaluate(()=>document.querySelectorAll('[data-canvas-instance-status]').length===1&&document.querySelectorAll('.canvas-embed-toolbar').length===5&&JSON.stringify({...localStorage})===window.storageBefore&&window.playgroundErrors.length===0),'Reset leaked UI, stored data or raised errors');
+assert(await page.evaluate(()=>document.querySelectorAll('[data-canvas-instance-status]').length===1&&document.querySelectorAll('.canvas-embed-toolbar').length===5&&JSON.stringify(Object.fromEntries(Object.entries(localStorage).filter(([key])=>key!=='starlight-theme')))===window.storageBefore&&window.playgroundErrors.length===0),'Reset leaked UI, stored data or raised errors');
 await page.click('header a[href="/docs/"]');await page.waitForURL(playgroundTest.base+'/docs/');
 await page.goto(playgroundTest.base+'/');await page.waitForFunction(()=>document.getElementById('canvas-demo').canvasEmbed?.canvas?.getState().mounted);
 assert(await page.evaluate(()=>document.getElementById('canvas-demo').canvasEmbed.canvas.getState().objects===1),'Return from docs did not mount a fresh canvas');

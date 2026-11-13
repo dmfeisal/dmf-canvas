@@ -1,0 +1,47 @@
+/* dmf-ui Nova / Neutral tokens, as on ui.feisal.id. Shared by the home page and the Starlight docs.
+   Canvas styles fall back to --foreground, --background, --border and --primary when a host defines no --dmf-color-*. */
+:root {
+ --background: oklch(1 0 0);
+ --foreground: oklch(.145 0 0);
+ --card: oklch(1 0 0);
+ --primary: oklch(.205 0 0);
+ --primary-foreground: oklch(.985 0 0);
+ --muted: oklch(.97 0 0);
+ --muted-foreground: oklch(.556 0 0);
+ --accent: oklch(.97 0 0);
+ --accent-foreground: oklch(.205 0 0);
+ --border: oklch(.922 0 0);
+ --input: oklch(.922 0 0);
+ --ring: oklch(.708 0 0);
+ --radius: .625rem;
+}
+:root[data-theme="dark"] {
+ --background: oklch(.145 0 0);
+ --foreground: oklch(.985 0 0);
+ --card: oklch(.205 0 0);
+ --primary: oklch(.922 0 0);
+ --primary-foreground: oklch(.205 0 0);
+ --muted: oklch(.269 0 0);
+ --muted-foreground: oklch(.708 0 0);
+ --accent: oklch(.269 0 0);
+ --accent-foreground: oklch(.985 0 0);
+ --border: oklch(1 0 0 / .1);
+ --input: oklch(1 0 0 / .15);
+ --ring: oklch(.556 0 0);
+}
+@media (prefers-color-scheme: dark) {
+ :root:not([data-theme]) {
+  --background: oklch(.145 0 0);
+  --foreground: oklch(.985 0 0);
+  --card: oklch(.205 0 0);
+  --primary: oklch(.922 0 0);
+  --primary-foreground: oklch(.205 0 0);
+  --muted: oklch(.269 0 0);
+  --muted-foreground: oklch(.708 0 0);
+  --accent: oklch(.269 0 0);
+  --accent-foreground: oklch(.985 0 0);
+  --border: oklch(1 0 0 / .1);
+  --input: oklch(1 0 0 / .15);
+  --ring: oklch(.556 0 0);
+ }
+}
