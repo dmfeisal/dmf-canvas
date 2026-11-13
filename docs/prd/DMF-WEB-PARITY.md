@@ -15,7 +15,7 @@ related:
 
 # dmf-web parity
 
-**Priority set on 13 November 2026:** bring the package up to the Canvas that already runs on feisal.id (dmf-web's own runtime) before other new work. Each phase ends with a slice of dmf-web able to drop its built-in code for the package, so the two stop drifting apart. This page orders the gaps, maps them to milestones and records what each one needs from the package. Phase 1 is built in 0.4.0-alpha.1; the later phases are not implemented yet.
+**Priority set on 13 November 2026:** bring the package up to the Canvas that already runs on feisal.id (dmf-web's own runtime) before other new work. Each phase ends with a slice of dmf-web able to drop its built-in code for the package, so the two stop drifting apart. This page orders the gaps, maps them to milestones and records what each one needs from the package. Phase 1 shipped in 0.4.0; the later phases are not implemented yet.
 
 dmf-web's behaviour is documented in its `docs/CANVAS.md` and `docs/CANVAS-RULES.md`; treat those as the reference design and adapt it to the package's host, owner and permission model instead of copying portfolio code.
 
@@ -71,7 +71,7 @@ The PNG export previously planned for 0.5.0 moves here.
 
 ## Decisions to confirm
 
-1. **Order:** accepted on 13 November 2026 as the four phases above. Phase 1 starts with its own proposal, [editing precision](EDITING-PRECISION.md), built in 0.4.0-alpha.1; Phase 2's is [navigation](NAVIGATION.md).
+1. **Order:** accepted on 13 November 2026 as the four phases above. Phase 1 starts with its own proposal, [editing precision](EDITING-PRECISION.md), shipped in 0.4.0; Phase 2's is [navigation](NAVIGATION.md).
 2. **Layer names:** saved in board files, or visit-local like dmf-web.
 3. **PNG export:** host-supplied exporter hook, or built-in capture.
 4. **Sticky colours:** adopt dmf-web's 16 swatches as package keys, or keep 3 built-in keys and let hosts add more.
