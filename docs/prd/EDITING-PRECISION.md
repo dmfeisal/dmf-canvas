@@ -57,7 +57,7 @@ While something is selected, a small label above its top-left shows its name (th
 2. Guides and gap labels. **Done in 0.4.0-alpha.1.**
 3. Shift axis lock and Alt bypass. **Done in 0.4.0-alpha.1** (Alt bypass already landed with step 1).
 4. Alt-drag duplicate. **Done in 0.4.0-alpha.1.**
-5. `[`/`]` navigation.
+5. `[`/`]` navigation. **Done in 0.4.0-alpha.1.**
 6. Selection labels.
 7. Docs (API, toolbar standard, glossary, changelog) and browser scenarios in a new suite: align and grid snaps, guides appear and clear, Alt bypass, Shift axis lock, Alt-drag copy with one Undo, `[`/`]` order and wrap, labels during resize and rotation, mobile RTL.
 

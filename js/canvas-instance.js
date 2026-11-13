@@ -105,6 +105,22 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       try { listener(snapshot); } catch (error) { view.reportError(error); }
     }
   }
+  // Reading (DOM) order, like Tab. A group is one stop: stepping skips the rest of the current object's group.
+  // Starting with nothing selected, ] picks the first object and [ the last; both wrap at the ends.
+  function stepSelection(direction) {
+    const order=[...owners.values()].filter(usable).sort((a,b)=>a.element.compareDocumentPosition(b.element)&view.Node.DOCUMENT_POSITION_FOLLOWING?-1:1);
+    if(!order.length){status.textContent='No objects to select.';return;}
+    const current=usable(selected)&&order.includes(selected)?selected:null,count=order.length,start=current?order.indexOf(current):-1;
+    let next=null,wrapped=false;
+    for(let step=1;step<=count&&!next;step++){
+      const raw=current?start+direction*step:(direction>0?step-1:count-step),candidate=order[((raw%count)+count)%count];
+      if(current&&(raw<0||raw>=count))wrapped=true;
+      if(!current||candidate!==current&&!(current.group&&candidate.group===current.group))next=candidate;
+    }
+    if(!next)return;
+    select(next);next.element.focus({preventScroll:true});
+    status.textContent=`${next.adapter.name||'Object'} ${order.indexOf(next)+1} of ${count} selected${wrapped?direction>0?', back to the first':', back to the last':''}.`;
+  }
   function select(entry) {
     selectEntries(entry?[entry]:[]);
   }
@@ -478,6 +494,10 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     }
     if((event.ctrlKey||event.metaKey)&&!event.altKey&&!event.shiftKey&&event.key.toLowerCase()==='a'){
       event.preventDefault();if(!event.repeat)execute('select-all');return;
+    }
+    // [ and ] select the previous or next object in reading order (docs/prd/EDITING-PRECISION.md).
+    if(!event.ctrlKey&&!event.metaKey&&!event.altKey&&['[',']'].includes(event.key)){
+      event.preventDefault();if(!event.repeat&&!gesture)stepSelection(event.key===']'?1:-1);return;
     }
     if(!event.shiftKey&&!event.altKey&&((!event.ctrlKey&&!event.metaKey&&['Delete','Backspace'].includes(event.key))||((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='d'))){
       const command=['Delete','Backspace'].includes(event.key)?'delete':'duplicate';event.preventDefault();if(!event.repeat)execute(command);return;

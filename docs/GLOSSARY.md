@@ -138,6 +138,7 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 | Side handle | `w` `e`, and `n` `s` on shapes | On Text, `w`/`e` change the width and the text rewraps. On shapes, all four sides resize one dimension and sit on the edge midpoints; they hide while the box is under 48px that way. Drawings have corner and rotate handles only. |
 | Rotate handle | `rotate` | Turns the object around its centre. Shift snaps to 15°; with the handle focused, arrow keys turn 5° (15° with Shift). |
 | Halo | `--dmf-color-canvas-halo` | The paper-coloured ring around each handle that keeps it visible on any background. |
+| Object navigation | `[`, `]` | Select the previous or next object in reading order, like Tab; wraps at the ends. |
 | Alt-drag duplicate | Alt/Option + drag | Hold Alt before dragging to drop a copy where you release; the original stays. One Undo removes it. |
 | Group, ungroup | `group`, `ungroup` | A group is selected, moved and transformed as one unit. |
 | Lock | `data-canvas-instance-locked` | A locked object can still be selected, but not moved, transformed, edited, recoloured, duplicated, copied or deleted. |
@@ -188,7 +189,7 @@ These terms come up in other editors and on feisal.id, but this library does not
 
 | Term | Status |
 |---|---|
-| `[`/`]` navigation, selection labels | The remaining steps of [editing precision](prd/EDITING-PRECISION.md) (0.4.0); snapping, guides, the Shift axis lock and Alt-drag duplicate exist since 0.4.0-alpha.1. dmf-web already has them. |
+| Selection labels | The last feature step of [editing precision](prd/EDITING-PRECISION.md) (0.4.0); snapping, guides, the Shift axis lock, Alt-drag duplicate and `[`/`]` navigation exist since 0.4.0-alpha.1. dmf-web already has them. |
 | Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.5.0 (parity phase 2). |
 | Touch controls | Proposed for 0.5.0 with the camera. Pencil, Highlighter and Eraser ignore touch today. |
 | Connectors | Arrows that stay attached to objects, and multi-point lines, are not scheduled. Excalidraw imports report them as unsupported. |

@@ -125,6 +125,25 @@ await check('Alt-drag drops a snapped copy as one Undo step; an Alt-click or Esc
  assert(escaped.objects===before.objects&&escaped.rects.length===1,'Escape left a copy behind: '+JSON.stringify(escaped));
 });
 
+await check('[ and ] step through objects in reading order, wrap, and leave text editing alone',async()=>{
+ const state=()=>page.evaluate(sel=>{const c=document.querySelector('main').configurator.previews.A.canvas;const active=document.activeElement;return {name:c.getState().selectionName,count:c.getState().selectionCount,focus:active?.matches('[data-original]')?'Text':active?.getAttribute('aria-label')??active?.localName,status:document.querySelector(sel+' [data-canvas-instance-status]').textContent};},A);
+ await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.select(null));await page.focus(A+' [data-host]');
+ await page.keyboard.press(']');const first=await state();
+ await page.keyboard.press(']');const second=await state();
+ await page.keyboard.press(']');const wrapped=await state();
+ await page.keyboard.press('[');const back=await state();
+ assert(first.name==='Text'&&first.count===1&&first.focus==='Text','] did not start at the first object: '+JSON.stringify(first));
+ assert(second.name==='Rectangle'&&second.focus==='Rectangle'&&/Rectangle 2 of 2 selected/.test(second.status),'] did not move to the next object: '+JSON.stringify(second));
+ assert(wrapped.name==='Text'&&/back to the first/.test(wrapped.status),'] did not wrap to the first object: '+JSON.stringify(wrapped));
+ assert(back.name==='Rectangle'&&/back to the last/.test(back.status),'[ did not wrap to the last object: '+JSON.stringify(back));
+ // While editing Text, [ is typed, not navigation.
+ await page.keyboard.press('['); await page.keyboard.press('Enter');
+ await page.keyboard.press('End');await page.keyboard.type('[');await page.keyboard.press('Escape');
+ const text=await page.evaluate(sel=>document.querySelector(sel+' [data-original]').textContent,A);
+ assert(text.endsWith('['),'Typing [ while editing did not insert it: '+text);
+ await page.click(action('undo'));
+});
+
 await check('snapping never enters saved boards',async()=>{
  const json=await page.evaluate(()=>JSON.stringify(document.querySelector('main').configurator.previews.A.canvas.saveDocument()));
  assert(!/snapping|"align"|"grid"/.test(json),'Snapping leaked into the board file');
