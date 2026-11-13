@@ -82,5 +82,7 @@ jobs:
         run: npm run test:shapes:browser
       - name: Editing precision (snapping)
         run: npm run test:editing:browser
+      - name: Navigation (camera)
+        run: npm run test:navigation:browser
       - name: Verify checks leave tracked files unchanged
         run: git diff --exit-code

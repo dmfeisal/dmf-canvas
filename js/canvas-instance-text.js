@@ -49,11 +49,20 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     // Side handles of small free boxes would overlap the corners, so hide them; corners still resize both ways.
     if(freeResize){node.toggleAttribute('data-canvas-instance-narrow',localWidth*scale<48);node.toggleAttribute('data-canvas-instance-short',localHeight*scale<48);}
   };
+  // Camera worlds (docs/prd/NAVIGATION.md): inside a world element the owner keeps world units in its state and
+  // converts the screen-space deltas core gives it by the world's measured scale. Worlds are unbounded.
+  const unbounded = () => !!root?.hasAttribute('data-canvas-instance-world');
+  const worldScale = () => {
+    if (!unbounded()) return 1;
+    const width = root.getBoundingClientRect().width;
+    return root.offsetWidth > 0 && width > 0 ? width / root.offsetWidth : 1;
+  };
   const areaBounds = () => {
     const area=root.getBoundingClientRect();return {left:area.left+root.clientLeft+8,right:area.left+root.clientLeft+root.clientWidth-8,top:area.top+root.clientTop+8,bottom:area.top+root.clientTop+root.clientHeight-32};
   };
   const contain = () => {
     localWidth=node.offsetWidth;localHeight=node.offsetHeight;
+    if(unbounded())return;
     const area=areaBounds();let rect=node.getBoundingClientRect();
     const fit=Math.min(1,Math.max(1,area.right-area.left)/rect.width,Math.max(1,area.bottom-area.top)/rect.height);
     if(fit<1){scale*=fit;apply();rect=node.getBoundingClientRect();}
@@ -63,9 +72,9 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
   };
   const anchor = kind => {
     localWidth=node.offsetWidth;localHeight=node.offsetHeight;
-    const rect=node.getBoundingClientRect(),radians=angle*Math.PI/180,style=node.ownerDocument.defaultView.getComputedStyle(node);
+    const rect=node.getBoundingClientRect(),radians=angle*Math.PI/180,style=node.ownerDocument.defaultView.getComputedStyle(node),k=worldScale();
     const dimension=(key,extras)=>parseFloat(style[key])+(style.boxSizing==='border-box'?0:extras.reduce((sum,key)=>sum+parseFloat(style[key]),0));
-    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2,width=dimension('width',['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth'])*scale,height=dimension('height',['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'])*scale;
+    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2,width=dimension('width',['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth'])*scale*k,height=dimension('height',['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'])*scale*k;
     // The fixed point opposite the handle: corners use the opposite corner, sides the opposite edge midpoint.
     const handle=kind==='rotate'?'se':kind,localX=(handle.includes('w')?1:handle.includes('e')?-1:0)*width/2,localY=(handle.includes('n')?1:handle.includes('s')?-1:0)*height/2;
     return {cx,cy,width,height,x:cx+localX*Math.cos(radians)-localY*Math.sin(radians),y:cy+localX*Math.sin(radians)+localY*Math.cos(radians)};
@@ -76,7 +85,7 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     node.style.width=`${Math.round(Math.max(16,Math.min(max.width,width))*100)/100}px`;node.style.height=`${Math.round(Math.max(16,Math.min(max.height,height))*100)/100}px`;
     localWidth=node.offsetWidth;localHeight=node.offsetHeight;const size=box();onBox?.(size.width,size.height);
   };
-  const preserveAnchor = (kind, fixed) => {const now=anchor(kind);x+=fixed.x-now.x;y+=fixed.y-now.y;apply();};
+  const preserveAnchor = (kind, fixed) => {const now=anchor(kind),k=worldScale();x+=(fixed.x-now.x)/k;y+=(fixed.y-now.y)/k;apply();};
   const applyTypography=(next,width)=>{
     typography=next;
     node.style.fontFamily=next.font==='original'?original.fontFamily:textFonts[next.font];
@@ -154,8 +163,8 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
       },
       prepare(target){
         if(!node?.isConnected||activeEdit)return null;
-        const rect=node.getBoundingClientRect(),area=root.getBoundingClientRect();
-        const nextX=x+target.centerX-(rect.left+rect.width/2-area.left-root.clientLeft),nextY=y+target.centerY-(rect.top+rect.height/2-area.top-root.clientTop);
+        const rect=node.getBoundingClientRect(),area=root.getBoundingClientRect(),k=worldScale();
+        const nextX=x+(target.centerX-(rect.left+rect.width/2-area.left-root.clientLeft))/k,nextY=y+(target.centerY-(rect.top+rect.height/2-area.top-root.clientTop))/k;
         return ()=>{x=nextX;y=nextY;scale=target.scale;angle=target.angle;localWidth=node.offsetWidth;localHeight=node.offsetHeight;apply();};
       },
     }),
@@ -182,7 +191,10 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     },
     beginMove() {
       if (!node?.isConnected) return null;
-      const rect = node.getBoundingClientRect(), area = root.getBoundingClientRect(), startX = x, startY = y;
+      const startX = x, startY = y, k = worldScale();
+      // Limits and deltas are screen pixels; a camera world has no limits.
+      if (unbounded()) return { limits: { left: -Infinity, right: Infinity, top: -Infinity, bottom: Infinity }, move(dx,dy) { x = startX + dx / k;y = startY + dy / k;apply(); }, finish: contain };
+      const rect = node.getBoundingClientRect(), area = root.getBoundingClientRect();
       const left = area.left + root.clientLeft + 8 - rect.left, right = area.left + root.clientLeft + root.clientWidth - 8 - rect.right;
       const top = area.top + root.clientTop + 8 - rect.top, bottom = area.top + root.clientTop + root.clientHeight - 32 - rect.bottom;
       return {
@@ -193,7 +205,7 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     },
     beginTransform(kind, point) {
       if (!node?.isConnected || !kinds.includes(kind)) return null;
-      const fixed=anchor(kind),start={x,y,scale,angle,width:node.offsetWidth,...(freeResize?box():{})},radians=angle*Math.PI/180,maxWidth=Math.max(1,root.clientWidth-64);
+      const fixed=anchor(kind),k=worldScale(),start={x,y,scale,angle,width:node.offsetWidth,...(freeResize?box():{})},radians=angle*Math.PI/180,maxWidth=Math.max(1,root.clientWidth-64);
       const maxBox={width:Math.max(16,(root.clientWidth-16)/scale),height:Math.max(16,(root.clientHeight-40)/scale)};
       // Free boxes: local deltas grow the edges a handle owns; Shift on a corner keeps the starting ratio.
       const reshape=(lx,ly,shift)=>{
@@ -205,7 +217,7 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
       const bearing=point?Math.atan2(point.clientY-fixed.cy,point.clientX-fixed.cx):0;
       const resize = value => {
         scale=Math.max(.5,Math.min(1.8,value));const compensation=1-scale/start.scale;
-        x=start.x+(fixed.x-fixed.cx)*compensation;y=start.y+(fixed.y-fixed.cy)*compensation;apply();
+        x=start.x+(fixed.x-fixed.cx)*compensation/k;y=start.y+(fixed.y-fixed.cy)*compensation/k;apply();
       };
       return {
         pointer(dx,dy,shift) {
@@ -214,9 +226,9 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
             angle=start.angle+Math.atan2(Math.sin(current-bearing),Math.cos(current-bearing))*180/Math.PI;
             if(shift)angle=Math.round(angle/15)*15;apply();
           } else if(freeResize) {
-            reshape((dx*Math.cos(radians)+dy*Math.sin(radians))/start.scale,(-dx*Math.sin(radians)+dy*Math.cos(radians))/start.scale,shift);
+            reshape((dx*Math.cos(radians)+dy*Math.sin(radians))/start.scale/k,(-dx*Math.sin(radians)+dy*Math.cos(radians))/start.scale/k,shift);
           } else if(kind.length===1) {
-            const delta=(dx*Math.cos(radians)+dy*Math.sin(radians))/start.scale;
+            const delta=(dx*Math.cos(radians)+dy*Math.sin(radians))/start.scale/k;
             setWidth(start.width+delta*(kind==='w'?-1:1),maxWidth);preserveAnchor(kind,fixed);
           } else resize(start.scale*((vectorX+dx)*vectorX+(vectorY+dy)*vectorY)/Math.max(1,vectorX**2+vectorY**2));
         },

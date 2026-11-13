@@ -1,6 +1,6 @@
 {
   "name": "dmf-canvas",
-  "version": "0.4.0",
+  "version": "0.5.0-alpha.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -99,7 +99,8 @@
     "test:inspector:browser": "node scripts/test-inspector-browser.mjs",
     "test:text:browser": "node scripts/test-text-browser.mjs",
     "test:shapes:browser": "node scripts/test-shapes-browser.mjs",
-    "test:editing:browser": "node scripts/test-editing-browser.mjs"
+    "test:editing:browser": "node scripts/test-editing-browser.mjs",
+    "test:navigation:browser": "node scripts/test-navigation-browser.mjs"
   },
   "devDependencies": {
     "playwright": "1.64.1",

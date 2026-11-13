@@ -4,7 +4,9 @@
   width: 24px; height: 24px; min-width: 0; min-height: 0; margin: 0; padding: 0;
   border: 0; border-radius: 0; background: transparent; line-height: 1;
   color: var(--dmf-color-canvas-selection,var(--primary,Highlight)); touch-action: auto;
-  transform: scale(var(--canvas-instance-inverse, 1)); transform-origin: center;
+  /* Handles stay 24 screen pixels: undo the object's scale and, inside a camera world, the camera's. */
+  --canvas-instance-handle-inverse: calc(var(--canvas-instance-inverse, 1) * var(--canvas-instance-camera-inverse, 1));
+  transform: scale(var(--canvas-instance-handle-inverse, 1)); transform-origin: center;
 }
 [data-canvas-instance-selected] > .canvas-instance-handle { visibility: visible; }
 .canvas-instance-handle::after {
@@ -12,22 +14,22 @@
   border: 1px solid currentColor; background: var(--dmf-color-canvas-handle,var(--background,Canvas));
   box-shadow: 0 0 0 1px var(--dmf-color-canvas-halo,var(--background,Canvas));
 }
-.canvas-instance-handle--nw { top: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); left: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); cursor: nwse-resize; }
-.canvas-instance-handle--ne { top: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); right: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); cursor: nesw-resize; }
-.canvas-instance-handle--sw { bottom: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); left: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); cursor: nesw-resize; }
-.canvas-instance-handle--se { bottom: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); right: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); cursor: nwse-resize; }
-.canvas-instance-handle--w { top: calc(50% - 12px); left: calc(-12px - (16px + var(--canvas-instance-gap-x, 0px)) * var(--canvas-instance-inverse, 1)); cursor: ew-resize; }
-.canvas-instance-handle--e { top: calc(50% - 12px); right: calc(-12px - (16px + var(--canvas-instance-gap-x, 0px)) * var(--canvas-instance-inverse, 1)); cursor: ew-resize; }
+.canvas-instance-handle--nw { top: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-handle-inverse, 1)); left: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-handle-inverse, 1)); cursor: nwse-resize; }
+.canvas-instance-handle--ne { top: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-handle-inverse, 1)); right: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-handle-inverse, 1)); cursor: nesw-resize; }
+.canvas-instance-handle--sw { bottom: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-handle-inverse, 1)); left: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-handle-inverse, 1)); cursor: nesw-resize; }
+.canvas-instance-handle--se { bottom: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-handle-inverse, 1)); right: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-handle-inverse, 1)); cursor: nwse-resize; }
+.canvas-instance-handle--w { top: calc(50% - 12px); left: calc(-12px - (16px + var(--canvas-instance-gap-x, 0px)) * var(--canvas-instance-handle-inverse, 1)); cursor: ew-resize; }
+.canvas-instance-handle--e { top: calc(50% - 12px); right: calc(-12px - (16px + var(--canvas-instance-gap-x, 0px)) * var(--canvas-instance-handle-inverse, 1)); cursor: ew-resize; }
 .canvas-instance-handle--w::before, .canvas-instance-handle--e::before { content: ''; position: absolute; top: 12px; width: 12px; border-top: 1px solid currentColor; pointer-events: none; }
 .canvas-instance-handle--w::before { left: 16px; }
 .canvas-instance-handle--e::before { right: 16px; }
-.canvas-instance-handle--rotate { top: calc(-12px - 28px * var(--canvas-instance-inverse, 1)); left: calc(50% - 12px); cursor: crosshair; }
+.canvas-instance-handle--rotate { top: calc(-12px - 28px * var(--canvas-instance-handle-inverse, 1)); left: calc(50% - 12px); cursor: crosshair; }
 .canvas-instance-handle--rotate::after { border-radius: 50%; }
 /* Free-resize boxes (shapes): top/bottom handles, and side handles on the edge midpoints instead of 16px outside. */
-.canvas-instance-handle--n { top: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); left: calc(50% - 12px); cursor: ns-resize; }
-.canvas-instance-handle--s { bottom: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-inverse, 1)); left: calc(50% - 12px); cursor: ns-resize; }
-.canvas-instance-shape > .canvas-instance-handle--w { left: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); }
-.canvas-instance-shape > .canvas-instance-handle--e { right: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-inverse, 1)); }
+.canvas-instance-handle--n { top: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-handle-inverse, 1)); left: calc(50% - 12px); cursor: ns-resize; }
+.canvas-instance-handle--s { bottom: calc(-12px - var(--canvas-instance-gap-y, 0px) * var(--canvas-instance-handle-inverse, 1)); left: calc(50% - 12px); cursor: ns-resize; }
+.canvas-instance-shape > .canvas-instance-handle--w { left: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-handle-inverse, 1)); }
+.canvas-instance-shape > .canvas-instance-handle--e { right: calc(-12px - var(--canvas-instance-gap-x, 0px) * var(--canvas-instance-handle-inverse, 1)); }
 .canvas-instance-shape > :is(.canvas-instance-handle--w,.canvas-instance-handle--e)::before { content: none; }
 [data-canvas-instance-narrow] > :is(.canvas-instance-handle--n,.canvas-instance-handle--s), [data-canvas-instance-short] > :is(.canvas-instance-handle--w,.canvas-instance-handle--e) { display: none; }
 .canvas-instance-handle--rotate::before { content: ''; position: absolute; left: 12px; top: 17px; height: 23px; border-left: 1px solid currentColor; }

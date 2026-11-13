@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Camera fixture</title>
+<link rel="stylesheet" href="/css/canvas-instance.css">
+<style>
+  body { margin: 0; font: 16px/1.4 system-ui, sans-serif; }
+  #host { position: relative; width: 800px; height: 500px; margin: 40px; overflow: hidden; border: 1px solid #888;
+    background-image: radial-gradient(circle, #888 1px, transparent 1px); background-size: 24px 24px; }
+  #world { position: absolute; inset: 0; }
+  #text { position: absolute; left: 100px; top: 100px; margin: 0; }
+</style>
+<!-- Navigation browser suite fixture (docs/prd/NAVIGATION.md): a camera host with one Text and one Rectangle. -->
+<div id="host" aria-label="Camera canvas"><div id="world"><p id="text">Camera text</p></div></div>
+<script type="module">
+  import {createCanvas} from '/index.js';
+  import {createTextOwner,createShape,canvasDocuments} from '/owners.js';
+  const host = document.getElementById('host'), world = document.getElementById('world'), text = document.getElementById('text');
+  const canvas = createCanvas(host, {documents: canvasDocuments, camera: {world}});
+  canvas.register(text, createTextOwner(text, world));
+  const rect = createShape(world, {shape: 'rectangle', ink: 'primary', strokeWidth: 2, fill: 'none', corners: 'sharp'}, {left: 400, top: 250, width: 120, height: 80});
+  canvas.register(rect.element, rect.owner, {created: true});
+  window.cam = {canvas, host, world, text, rect: rect.element};
+</script>
+</html>
