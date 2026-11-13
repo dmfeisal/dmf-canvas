@@ -101,6 +101,30 @@ await check('Shift after a drag starts locks the dominant axis until it is relea
  assert(freed.top>locked.top+20,'Releasing Shift did not restore free movement');
 });
 
+await check('Alt-drag drops a snapped copy as one Undo step; an Alt-click or Escape makes none',async()=>{
+ const canvas=()=>page.evaluate(()=>{const c=document.querySelector('main').configurator.previews.A.canvas,s=c.getState();return {objects:s.objects,canUndo:s.canUndo,revision:s.revision,rects:[...document.querySelectorAll('[data-preview=A] [data-canvas-instance-shape=rectangle]')].map(e=>{const r=e.getBoundingClientRect();return {left:r.left,top:r.top};})};});
+ const start=await canvas(),r=await box(RECT),x=r.left+r.width/2,y=r.top+r.height/2,h=await host();
+ // Alt held before pressing: a copy follows the pointer and still snaps to the grid (Alt does not bypass a copy).
+ await page.keyboard.down('Alt');await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+50,y+40,{steps:5});await page.mouse.move(x+97,y+61,{steps:5});await page.mouse.up();await page.keyboard.up('Alt');
+ const copied=await canvas(),copy=copied.rects[1];
+ assert(copied.objects===start.objects+1&&copied.rects.length===2,'Alt-drag did not make exactly one copy');
+ assert(Math.abs(copied.rects[0].left-r.left)<0.5&&Math.abs(copied.rects[0].top-r.top)<0.5,'The original moved during an Alt-drag');
+ const offset=((copy.left-h.x)%24+24)%24;assert(Math.abs(offset-12)<0.5,'The copy did not snap to the grid: '+offset);
+ await page.click(action('undo'));const undone=await canvas();
+ assert(undone.objects===start.objects&&undone.rects.length===1,'One Undo did not remove the copy');
+ await page.click(action('redo'));const redone=await canvas();
+ assert(redone.rects.length===2&&Math.abs(redone.rects[1].left-copy.left)<0.5&&Math.abs(redone.rects[1].top-copy.top)<0.5,'Redo did not restore the copy where it was dropped');
+ await page.click(action('undo'));
+ // Alt-click without moving, and Escape part-way, leave no copy and no history.
+ const before=await canvas();const r2=await box(RECT),x2=r2.left+r2.width/2,y2=r2.top+r2.height/2;
+ await page.keyboard.down('Alt');await page.mouse.move(x2,y2);await page.mouse.down();await page.mouse.up();await page.keyboard.up('Alt');
+ const clicked=await canvas();assert(clicked.objects===before.objects&&clicked.revision===before.revision,'An Alt-click made a copy or history');
+ await page.keyboard.down('Alt');await page.mouse.move(x2,y2);await page.mouse.down();await page.mouse.move(x2+60,y2+30,{steps:5});
+ await page.keyboard.up('Alt');await page.keyboard.press('Escape');await page.mouse.up();
+ const escaped=await canvas();
+ assert(escaped.objects===before.objects&&escaped.rects.length===1,'Escape left a copy behind: '+JSON.stringify(escaped));
+});
+
 await check('snapping never enters saved boards',async()=>{
  const json=await page.evaluate(()=>JSON.stringify(document.querySelector('main').configurator.previews.A.canvas.saveDocument()));
  assert(!/snapping|"align"|"grid"/.test(json),'Snapping leaked into the board file');
