@@ -63,7 +63,7 @@ Proposed as [organisation](ORGANISATION.md). Needs a decision: whether custom la
 
 Text ink, line height and letter spacing; the 16 sticky-note swatches and S/M/L presets; PNG export.
 
-Needs decisions:
+Proposed as [styling and export](STYLING-EXPORT.md). Needs decisions:
 - Text ink, line height and letter spacing extend the typography record, and more paper colours extend the sticky-note keys. Both are schema changes with the usual reader/writer rules.
 - PNG export cannot use dmf-web's `html-to-image`, because the package has no runtime dependencies. Options: a host-supplied exporter hook (the host brings its own library), or a built-in SVG-to-canvas capture limited to the package's own owners.
 
