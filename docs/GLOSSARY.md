@@ -164,6 +164,8 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 | Armed tool | `setTool()`, `setActive()` | The drawing tool that the next drag will use. Only one is armed at a time. |
 | More menu | `menu: true`, `moreLabel` | One native popover for secondary actions, in sections: Clipboard, Group and lock, Layer order, Arrange, Paper color, Shape style, Board. |
 | Contextual section | `group` | A More section that only shows when it applies to the selection. |
+| Layers panel | `createCanvasLayers()`, `getLayers()` | A popover listing objects front to back, with search, visit-local rename and reset. Names and resets never change saved names, and resets are the only layer edits that change the board. |
+| Context menu | `createCanvasContextMenu()` | Right-click, or Shift+F10 on a focused object, opens the toolbar's own actions for the current state. |
 | Tooltip | `.canvas-embed-toolbar` | Shows an action's label and real shortcut on hover or focus. |
 | Action id | `data-toolbar-action` | Stable id on every button and menu row, for host code and tests. |
 | Selection inspector | `createCanvasInspector()` | A popover with X, Y, Width, Height and Rotation (Turn for several objects) plus Text fields. See [inspector](INSPECTOR.md). |
