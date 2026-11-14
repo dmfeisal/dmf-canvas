@@ -61,7 +61,13 @@ Phase 2 of dmf-web parity ([navigation](prd/NAVIGATION.md)) adds an opt-in camer
   - The wheel pans (Shift for horizontal on a plain wheel). Pinch, or Ctrl/⌘ with the wheel, zooms around the pointer, about 1.28× per wheel notch. The canvas consumes the wheel only over a camera host, so the page never scrolls as well.
   - Canvas keys: `+`/`=` and `-` zoom by 1.2×, `0` returns to 100%, Shift+1 is Fit all and Shift+2 is Zoom to selection. Arrow keys with nothing selected pan by 50 screen pixels.
   - Camera writes are coalesced into one animation frame, and layout is read only there. Wheel and pinch zoom announce "Zoom N%" once they settle (after 400ms).
-- **Not in alpha.1 yet:** two-finger touch and full screen. These follow in the next steps of the proposal.
+- **Touch** (camera hosts only; bounded hosts still ignore touch). Camera hosts set `touch-action: none` on the host, restored on `destroy()`.
+  - One finger on an object drags it once it moves 4px. One finger on empty space, a handle or a locked object pans.
+  - Two fingers take the camera: an object drag already applied finishes as its normal Undo step, a marquee is cancelled, and the pair then pinches around its midpoint and pans with it.
+  - A third finger or a replaced pair rebases without a jump, and lifting to one finger keeps panning until every finger is up.
+  - Up to ten contacts are tracked. Native fields and controls never start touch gestures, and geometry is read only at handoff and rebase.
+  - Checked with emulated multi-touch only so far; a physical-device check is part of the 0.5.0 promotion.
+- **Not in alpha.1 yet:** full screen. It follows in the next step of the proposal.
 
 ## Compatibility changes
 
