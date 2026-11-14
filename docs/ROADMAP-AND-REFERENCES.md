@@ -4,7 +4,7 @@ Recorded 23 October 2026. The full 20-item product backlog is maintained in the 
 
 ## Proposed version milestones — 23 October 2026
 
-Record this as the working release plan, not permission to publish. The proposal began at private `0.0.0`; private `0.1.0` established the first supported API and release checks, private `0.2.0` is prepared locally with the inspector and text formatting, private `0.3.0-alpha.1` is an experimental prerelease for portable documents, private `0.3.0-alpha.2` corrects its shipped documentation, private `0.3.0-alpha.3` adds Shapes, private `0.3.0` completes the 0.3.0 milestone, and private `0.4.0-alpha.1` delivers dmf-web parity phase 1, editing precision, private `0.4.0` completes it, and private `0.5.0-alpha.1` starts phase 2, navigation, and private `0.5.0` completes it. Later milestones remain proposed.
+Record this as the working release plan, not permission to publish. The proposal began at private `0.0.0`; private `0.1.0` established the first supported API and release checks, private `0.2.0` is prepared locally with the inspector and text formatting, private `0.3.0-alpha.1` is an experimental prerelease for portable documents, private `0.3.0-alpha.2` corrects its shipped documentation, private `0.3.0-alpha.3` adds Shapes, private `0.3.0` completes the 0.3.0 milestone, and private `0.4.0-alpha.1` delivers dmf-web parity phase 1, editing precision, private `0.4.0` completes it, and private `0.5.0-alpha.1` starts phase 2, navigation, and private `0.5.0` completes it, and private `0.6.0` completes phase 3 (organisation). Later milestones remain proposed.
 
 | Target | Scope |
 | --- | --- |
@@ -17,8 +17,8 @@ Record this as the working release plan, not permission to publish. The proposal
 | `0.3.0` | Recorded private release: Shapes, Highlighter and stroke Eraser, plus portable documents, Excalidraw import and the toolbar standard from the alphas; browser suites in CI |
 | `0.4.0` | Recorded private release. dmf-web parity, editing precision: snapping and guides, Alt-drag duplicate, `[`/`]` navigation, selection labels |
 | `0.5.0-alpha.1` | Recorded private experimental prerelease: opt-in camera model in core (world element, camera commands, world-accurate drags and nudges, dotted grid, unbounded world, plus inspector, creation, paste and drawing at zoom; Hand, wheel, pinch and keyboard zoom, touch, full screen, host options, coverage; navigation steps 1–7; device check pending) |
-| `0.5.0` | Current private release. dmf-web parity, navigation: opt-in camera (Hand, wheel and pinch zoom, zoom keys, Fit all, Zoom to selection), two-finger touch, full screen, configurator and custom host options; device check pending ([proposal](prd/NAVIGATION.md)) |
-| `0.6.0` | dmf-web parity, organisation: Layers panel, Reset canvas edits, context menu ([proposal](prd/ORGANISATION.md)) |
+| `0.5.0` | Recorded private release. dmf-web parity, navigation: opt-in camera (Hand, wheel and pinch zoom, zoom keys, Fit all, Zoom to selection), two-finger touch, full screen, configurator and custom host options; device check pending ([proposal](prd/NAVIGATION.md)) |
+| `0.6.0` | Current private release. dmf-web parity, organisation: Layers panel, Reset canvas edits, context menu ([proposal](prd/ORGANISATION.md)) |
 | `0.7.0` | dmf-web parity, styling and export: text ink and spacing, sticky swatches and presets, PNG export; expanded release validation |
 | `1.0.0-beta.1` | API freeze and integration testing |
 | `1.0.0` | Stable documented API, compatibility baseline and resolved licensing |
