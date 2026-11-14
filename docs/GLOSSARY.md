@@ -100,7 +100,11 @@ The names used for DMF Canvas parts, in the editor, the code and these docs. Eve
 
 | Term | Code name | Meaning |
 |---|---|---|
-| Host, surface | `data-host` | The positioned element a canvas mounts on. Objects are its direct children and the host owns its size. |
+| Host, surface | `data-host` | The positioned element a canvas mounts on. Objects are its direct children (or the world's, on a camera host) and the host owns its size. |
+| Camera | `camera`, `getState().camera` | Opt-in zoom and pan (0.5.0-alpha.1): `{x, y, scale}`, the world point at the world's top-left and the zoom. Never saved, never in history. |
+| World | `camera: {world}`, `data-canvas-instance-world` | On a camera host, the element covering the host that holds the objects and takes the camera's one transform. Unbounded on screen, kept within ±100,000 world units so boards can always be saved. |
+| Hand | `execute('hand')`, H, Space | A tool that pans the camera on drag without moving objects. Space held is a temporary Hand. |
+| Fit all, Zoom to selection | `execute('fit')`, `execute('zoom-to-selection')` | Frame every object (never past 100%) or the selection, with 32px of room. Shift+1 and Shift+2. |
 | Stage | `.canvas-embed-chrome`, `data-stage` | Optional wrapper around the host that the floating toolbars are placed over. |
 | Grid | `--canvas-embed-grid` | The dotted background, one of the six theme roles. |
 | Instance | `createCanvas()` | One editor. Instances on the same page are independent: selection, history and settings never leak between them. |
@@ -190,8 +194,7 @@ These terms come up in other editors and on feisal.id, but this library does not
 
 | Term | Status |
 |---|---|
-| Camera: zoom, pan, Fit all, Zoom to selection | Proposed for 0.5.0 (parity phase 2). |
-| Touch controls | Proposed for 0.5.0 with the camera. Pencil, Highlighter and Eraser ignore touch today. |
+| Touch on hosts without a camera | Only camera hosts handle touch (pan, pinch and one-finger drags, 0.5.0-alpha.1). Bounded hosts, and Pencil, Highlighter and Eraser, ignore touch. |
 | Connectors | Arrows that stay attached to objects, and multi-point lines, are not scheduled. Excalidraw imports report them as unsupported. |
 | Layers panel, Reset canvas edits | On feisal.id only; proposed for 0.6.0 (parity phase 3). |
 | PNG export | Proposed for 0.7.0 (parity phase 4). |
