@@ -1,6 +1,18 @@
 # Changelog
 
-## 0.6.0-alpha.1 (prepared 14 November 2026, private, experimental)
+## 0.6.0 (prepared 14 November 2026, private)
+
+Completes [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 3, [organisation](docs/prd/ORGANISATION.md). Promotes 0.6.0-alpha.1 with no runtime change; the alpha entries below hold the details.
+
+- **Layers panel:** `getLayers()` and `createCanvasLayers()` in `dmf-canvas/toolbar`, front to back, with search, visit-local rename (`execute('rename')`, one Undo step, never dirties the board) and Reset selected / Reset canvas edits.
+- **Reset:** `reset-object` returns the selection to its registration state; `reset-canvas` removes unlocked visit-local objects and restores the rest. Each is one Undo step and changes the board.
+- **Context menu:** `createCanvasContextMenu()` lists the toolbar's own actions on right-click and Shift+F10, reusing `toolbar.entries()` and `activate()`.
+- **Hosts:** the configurator and the shared custom host have a Layers action and the context menu.
+- **Verification:** the navigation browser suite has 57 checks in CI.
+
+Migration from 0.5.0: no board, clipboard, draft or portable format change. Layer names are never saved. Resets change the board, as any owner or object change does.
+
+## 0.6.0-alpha.1 (prepared 14 November 2026, private, experimental)## 0.6.0-alpha.1 (prepared 14 November 2026, private, experimental)
 
 Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 3, [organisation](docs/prd/ORGANISATION.md), with steps 1–6: the Layers panel, rename and search, reset, the context menu, the host examples, then browser coverage.
 
