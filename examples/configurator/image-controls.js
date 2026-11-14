@@ -29,7 +29,7 @@ export function createImageControls(container,getCanvas,onImported=()=>{}){
       const encoded=await encodeImage(img,container.ownerDocument,{active:()=>alive&&id===generation&&getCanvas()===canvas,onProgress:({width,height})=>{output.textContent=`Optimizing ${width} × ${height} px…`;}});
       if(!alive||id!==generation||getCanvas()!==canvas||!eligible())return;
       if(canvas.getState().revision!==revision)throw new Error('Canvas changed during import. Choose the image again.');
-      const alt=file.name.replace(/\.[^.]+$/,'').replace(/[\u0000-\u001f]/g,'').slice(0,120)||'Image',item=createImageObject(host,validateImage({...encoded,alt}));
+      const alt=file.name.replace(/\.[^.]+$/,'').replace(/[\u0000-\u001f]/g,'').slice(0,120)||'Image',item=createImageObject(host.querySelector(':scope > [data-canvas-instance-world]')??host,validateImage({...encoded,alt}));
       try{canvas.register(item.element,item.owner,{created:true});}catch(error){item.owner.dispose();throw error;}onImported();canvas.select(item.element);item.element.focus({preventScroll:true});output.textContent=`Image added: ${width} × ${height} → ${encoded.width} × ${encoded.height} px · ${(encoded.src.length/1024).toFixed(1)} KiB. ${encoded.transparent?'Transparency preserved.':'JPEG image.'}`;
     }catch(error){if(alive&&id===generation)output.textContent=error.message;}
     finally{if(img)img.removeAttribute('src');if(url)URL.revokeObjectURL(url);if(id===generation){pending=null;busy=false;render();}}

@@ -34,7 +34,7 @@ Editor surfaces use **floating chrome**: four groups placed over the canvas stag
 - Status text that core announces (`.canvas-instance-status`) sits top, inline end, clear of every group.
 - Original content starts at least 72px from the inline-start edge so the rail does not cover it on first load. Objects may be moved under the rail later, as on feisal.id. The floating chrome always stays above objects: `toolbar.css` isolates the host's stacking context, so object layer order (z-index 1–50) never rises over the toolbar slots.
 
-**Compact hosts** (test fixtures and recipe consumers with their own surrounding controls) may render the same groups, in the same order, as one inline horizontal toolbar, with secondary actions in the same More menu. `examples/shared/custom-host.js` is the reference. Never invent a different grouping.
+**Compact hosts** (test fixtures and recipe consumers with their own surrounding controls) may render the same groups, in the same order, as one inline horizontal toolbar, with secondary actions in the same More menu. `examples/shared/custom-host.js` is the reference; with `camera: true` it adds Hand to Tools and a Camera group before History. Never invent a different grouping.
 
 Hide an action whose tool permission is off (`settings.tools`), and disable an action that is permitted but not possible right now (for example Undo with nothing to undo). Empty groups hide themselves.
 

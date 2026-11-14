@@ -353,4 +353,65 @@ await check('destroy restores the world and the host background',async()=>{
  const errors=await page.evaluate(()=>window.camErrors);assert(!errors.length,'Page errors: '+errors.join('; '));
 });
 
+// Step 6: the camera in a real host, the configurator's preview A.
+await page.goto(navigationTest.base+'/examples/configurator/');await page.waitForFunction(()=>!document.getElementById('copy').disabled);
+await page.evaluate(()=>{window.hostErrors=[];window.addEventListener('error',e=>window.hostErrors.push(e.message));window.addEventListener('unhandledrejection',e=>window.hostErrors.push(String(e.reason)));});
+const A='[data-preview=A]',embed=()=>page.evaluate(()=>{const p=document.querySelector('main').configurator.previews.A,s=p.canvas.getState();return {camera:s.camera,hand:s.hand,objects:s.objects,config:p.getConfig().camera};});
+const visible=selector=>page.evaluate(selector=>{const b=document.querySelector(selector);return !!b&&!b.hidden&&b.getBoundingClientRect().width>0;},selector);
+
+await check('the configurator has no camera by default and hides the camera controls',async()=>{
+ const e=await embed();assert(e.camera===null&&e.config===false,'Camera on by default: '+JSON.stringify(e));
+ for(const id of ['hand','zoom-in','zoom-out','fit','fullscreen'])assert(!(await visible(`${A} [data-toolbar-action="${id}"]`)),id+' visible without a camera');
+});
+
+await check('Zoom and pan remounts preview A with a world, Hand, the Camera group and help rows',async()=>{
+ await page.check('input[name=camera]');await page.waitForFunction(()=>!!document.querySelector('main').configurator.previews.A.canvas.getState().camera);
+ const e=await embed();assert(e.config===true&&e.objects===1&&await page.evaluate(sel=>!!document.querySelector(sel+' [data-world] [data-original]'),A),'No world around the original: '+JSON.stringify(e));
+ for(const id of ['hand','zoom-in','zoom-out','fit','fullscreen'])assert(await visible(`${A} [data-toolbar-action="${id}"]`),id+' hidden with a camera');
+ assert(await page.evaluate(sel=>/Fit all/.test(document.querySelector(sel+' [data-help]').textContent),A),'Keyboard help lacks camera rows');
+ assert(/zoom and pan/.test(await page.textContent('[data-preview-summary=A]')),'Summary does not mention zoom and pan');
+ const files=await page.evaluate(()=>document.querySelector('main').configurator.files);
+ assert(Object.values(files).some(text=>/"camera": true/.test(text)),'Generated code does not pass camera');
+});
+
+await check('the toolbar zooms, fits and arms Hand, and new notes land at the visible centre',async()=>{
+ await page.click(`${A} [data-toolbar-action="zoom-in"]`);assert(near((await embed()).camera.scale,1.2,1e-9),'Zoom in button');
+ await page.click(`${A} [data-toolbar-action="hand"]`);assert((await embed()).hand==='tool'&&await page.getAttribute(`${A} [data-toolbar-action="hand"]`,'aria-pressed')==='true','Hand button');
+ await page.click(`${A} [data-toolbar-action="select"]`);assert((await embed()).hand===null,'Select did not leave Hand');
+ await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.execute('camera',{x:900,y:600}));
+ await page.click(`${A} [data-toolbar-action="sticky"]`);
+ const note=await page.evaluate(sel=>{const n=document.querySelector(sel+' [data-world] .canvas-instance-note'),h=document.querySelector(sel+' [data-host]'),a=n.getBoundingClientRect(),b=h.getBoundingClientRect();return {nx:a.left+a.width/2,hx:b.left+h.clientLeft+h.clientWidth/2};},A);
+ assert(near(note.nx,note.hx,1.5),'Note not at the visible centre: '+JSON.stringify(note));
+ await page.click(`${A} [data-toolbar-action="fit"]`);const fitted=(await embed()).camera;assert(fitted.scale<=1,'Fit all: '+JSON.stringify(fitted));
+});
+
+await check('Full screen from the toolbar takes the whole chrome and swaps its icon and label',async()=>{
+ await page.click(`${A} [data-toolbar-action="fullscreen"]`);
+ await page.waitForFunction(sel=>document.fullscreenElement===document.querySelector(sel+' [data-stage]'),A,{timeout:3000});
+ const button=await page.evaluate(sel=>{const b=document.querySelector(sel+' [data-toolbar-action="fullscreen"]');return {label:b.textContent.trim(),pressed:b.getAttribute('aria-pressed'),icon:b.querySelector('svg').innerHTML.includes('M8 3v3')};},A);
+ assert(button.pressed==='true'&&/Exit full screen/.test(button.label)&&button.icon,'Button not updated (pressed, label, Minimize icon): '+JSON.stringify(button));
+ await page.click(`${A} [data-toolbar-action="fullscreen"]`);await page.waitForFunction(()=>!document.fullscreenElement,null,{timeout:3000});
+});
+
+await check('turning Zoom and pan off remounts without a camera and leaves no page errors',async()=>{
+ await page.uncheck('input[name=camera]');await page.waitForFunction(()=>document.querySelector('main').configurator.previews.A.canvas.getState().camera===null);
+ assert(!(await page.evaluate(sel=>!!document.querySelector(sel+' [data-world]'),A)),'World left behind');
+ assert(!(await visible(`${A} [data-toolbar-action="hand"]`)),'Hand still visible');
+ const errors=await page.evaluate(()=>window.hostErrors);assert(!errors.length,'Page errors: '+errors.join('; '));
+});
+
+await check('the shared custom host takes camera: true and shows Hand and the Camera group',async()=>{
+ await page.goto(navigationTest.base+'/');await page.waitForFunction(()=>!!document.querySelector('[data-consumer]'));
+ const seen=await page.evaluate(async()=>{
+  const {mountConsumer}=await import('/consumer.js'),parent=document.createElement('div');document.body.append(parent);
+  const item=mountConsumer(parent,'Cam',{camera:true}),bar=id=>item.root.querySelector(`[data-toolbar-action="${id}"]`);
+  const before=item.canvas.getState().camera.scale;bar('zoom-in').click();const after=item.canvas.getState().camera.scale;
+  const out={world:!!item.host.querySelector('[data-world] [data-original]'),hand:!bar('hand').hidden,fit:!bar('fit').hidden,before,after,overflow:getComputedStyle(item.host).overflow};
+  item.dispose();parent.remove();
+  const plain=mountConsumer(document.body,'Flat');out.plainHand=plain.root.querySelector('[data-toolbar-action="hand"]').hidden;out.plainCamera=plain.canvas.getState().camera;plain.dispose();return out;
+ });
+ assert(seen.world&&seen.hand&&seen.fit&&near(seen.after,seen.before*1.2,1e-9)&&seen.overflow==='hidden','Camera consumer wrong: '+JSON.stringify(seen));
+ assert(seen.plainHand===true&&seen.plainCamera===null,'Default consumer gained a camera: '+JSON.stringify(seen));
+});
+
 console.log(`PASS navigation: ${passed} checks`);

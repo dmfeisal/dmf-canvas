@@ -15,9 +15,9 @@ function renderCode(){
  status.textContent='Code for preview '+active+'. Copy each file to use this example.';
 }
 function renderSettings(){
- const c=previews[active].getConfig();form.elements.readOnly.checked=c.readOnly;form.elements.theme.value=c.theme;form.elements.width.value=c.width;form.elements.height.value=c.height;for(const input of form.querySelectorAll('[data-tool]'))input.checked=c.tools[input.dataset.tool];error.textContent='';for(const field of [form.elements.width,form.elements.height])field.removeAttribute('aria-invalid');
+ const c=previews[active].getConfig();form.elements.readOnly.checked=c.readOnly;form.elements.camera.checked=c.camera;form.elements.theme.value=c.theme;form.elements.width.value=c.width;form.elements.height.value=c.height;for(const input of form.querySelectorAll('[data-tool]'))input.checked=c.tools[input.dataset.tool];error.textContent='';for(const field of [form.elements.width,form.elements.height])field.removeAttribute('aria-invalid');
  document.getElementById('settings-title').textContent='Preview '+active+' settings';for(const button of document.querySelectorAll('[data-preview-select]'))button.setAttribute('aria-pressed',String(button.dataset.previewSelect===active));
- for(const [name,preview]of Object.entries(previews)){const c=preview.getConfig();document.querySelector('[data-preview-summary='+name+']').textContent=(c.readOnly?'Read-only':'Editable')+' · '+c.width+' × '+c.height+' px maximum';}
+ for(const [name,preview]of Object.entries(previews)){const c=preview.getConfig();document.querySelector('[data-preview-summary='+name+']').textContent=(c.readOnly?'Read-only':'Editable')+(c.camera?' · zoom and pan':'')+' · '+c.width+' × '+c.height+' px maximum';}
  renderCode();
 }
 form.addEventListener('submit',event=>event.preventDefault());
@@ -25,6 +25,7 @@ form.addEventListener('change',event=>{
  const previous=previews[active].getConfig(),field=event.target;let patch;
  if(field.dataset.tool)patch={tools:{...previous.tools,[field.dataset.tool]:field.checked}};
  else if(field.name==='readOnly')patch={readOnly:field.checked};
+ else if(field.name==='camera')patch={camera:field.checked};
  else if(field.name==='theme')patch={theme:field.value};
  else if(['width','height'].includes(field.name))patch={[field.name]:Number(field.value)};
  else return;
