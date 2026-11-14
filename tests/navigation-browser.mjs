@@ -367,6 +367,42 @@ await check('F puts the whole chrome container into full screen, and the camera 
  assert(!(await page.evaluate(()=>document.fullscreenElement)),'Full screen left on after an in-flight dispose');
 });
 
+// Organisation step 1: the Layers panel (docs/prd/ORGANISATION.md) against the canvas's own order.
+const layerRows=()=>page.evaluate(()=>[...document.querySelectorAll('.canvas-embed-layers__row')].map(b=>({id:+b.dataset.layerId,name:b.querySelector('span').textContent,pressed:b.getAttribute('aria-pressed')})));
+const openLayers=async()=>{await page.evaluate(()=>{if(!document.querySelector('.canvas-embed-layers').matches(':popover-open'))document.getElementById('layers').click();});await frame();};
+const zOrder=()=>page.evaluate(()=>{const items=window.cam.canvas.getLayers();return items.map(item=>({id:item.id,z:Number.parseInt(getComputedStyle(item.element).zIndex,10)||0}));});
+
+await check('the Layers panel lists objects front to back, in the same order as the canvas stacks them',async()=>{
+ await page.evaluate(()=>window.cam.canvas.select(null));await openLayers();
+ const rows=await layerRows(),layers=await page.evaluate(()=>window.cam.canvas.getLayers().map(item=>item.id));
+ assert(rows.length>=2&&rows.map(row=>row.id).join()===layers.join(),'Rows do not match getLayers: '+JSON.stringify({rows,layers}));
+ const z=await zOrder();const zs=z.map(item=>item.z);
+ assert(zs.every((value,index)=>index===0||zs[index-1]>=value),'Front-to-back order wrong against z-index: '+JSON.stringify(z));
+ assert(rows.every(row=>row.name.length>0&&row.name!=='undefined'),'Missing type names: '+JSON.stringify(rows));
+});
+
+await check('the Layers order follows bring-front and send-back, and a row selects its object',async()=>{
+ const rect=await page.evaluate(()=>window.cam.canvas.getLayers().find(item=>item.element===window.cam.rect)?.id??null);
+ assert(rect!==null,'No rectangle layer');
+ await page.evaluate(()=>{const c=window.cam.canvas;c.select(window.cam.rect);c.execute('send-back');});
+ const sent=(await layerRows()).map(row=>row.id);
+ assert(sent[sent.length-1]===rect,'send-back did not move the rectangle to the back: '+JSON.stringify(sent));
+ await page.click(`.canvas-embed-layers__row[data-layer-id="${rect}"]`);
+ const selected=await page.evaluate(()=>window.cam.canvas.getState().selectionName);
+ assert(selected==='Rectangle','Row did not select its object: '+selected);
+ assert((await layerRows()).find(row=>row.id===rect).pressed==='true','Selected row not pressed');
+ await page.evaluate(()=>window.cam.canvas.execute('bring-front'));
+});
+
+await check('the Layers panel follows new objects while open, and Escape closes it and returns focus',async()=>{
+ await openLayers();const before=(await layerRows()).length;
+ await page.evaluate(()=>window.cam.addNote());await frame();
+ assert((await layerRows()).length===before+1,'New note not listed while open');
+ await page.keyboard.press('Escape');await frame();
+ const state=await page.evaluate(()=>({open:document.querySelector('.canvas-embed-layers').matches(':popover-open'),expanded:document.getElementById('layers').getAttribute('aria-expanded'),focus:document.activeElement?.id}));
+ assert(!state.open&&state.expanded==='false'&&state.focus==='layers','Escape did not close or return focus: '+JSON.stringify(state));
+});
+
 await check('destroy restores the world and the host background',async()=>{
  const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length+(h.hasAttribute('data-canvas-instance-hand')||h.hasAttribute('data-canvas-instance-panning')?1:0)};});
  assert(left.style===null&&!left.marked&&left.size===''&&left.position===''&&left.overlays===0,'Left behind: '+JSON.stringify(left));

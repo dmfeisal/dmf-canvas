@@ -1179,6 +1179,14 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       const styles=entries.map(entry=>entry.adapter.textStyle.read());if(styles.some(style=>!style))return null;
       return Object.freeze({...Object.fromEntries(['font','size','weight','align','wrap'].map(key=>[key,styles.every(style=>style[key]===styles[0][key]&&(key!=='font'||style.font!=='original'||style.family===styles[0].family))?styles[0][key]:null])),weights:Object.freeze(styles[0].weights.filter(weight=>styles.every(style=>style.weights.includes(weight)))),editable:!settings.readOnly&&settings.tools.text&&entries.every(entry=>!entry.locked)});
     },
+    // Layers (docs/prd/ORGANISATION.md): every present object, front to back, with the type name hosts show and the
+    // element to select. Visit-local: never saved, never in history.
+    getLayers(){
+      if(!alive)return Object.freeze([]);
+      return Object.freeze(stack().filter(entry=>usable(entry)).reverse().map(entry=>Object.freeze({
+        id:entry.id,name:entry.name,locked:entry.locked,group:entry.group??null,selected:selection.has(entry),element:entry.element,
+      })));
+    },
     getInspector(){
       if(!alive||editing||creation||gesture||!selection.size)return null;
       const entries=[...selection];if(entries.some(entry=>!usable(entry)||!entry.adapter.geometry))return null;

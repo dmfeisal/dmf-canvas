@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.5.0 (prepared 14 November 2026, private)
+## 0.6.0-alpha.1 (prepared 14 November 2026, private, experimental)
+
+Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 3, [organisation](docs/prd/ORGANISATION.md), with step 1: the Layers panel.
+
+- Add `getLayers()`: every present object, front to back, with its id, type name, lock and group state, selection, and the element to pass to `select()`. It is visit-local and never saved or in history.
+- Add `createCanvasLayers(container, {canvas, trigger})` in `dmf-canvas/toolbar`: a native popover, opened from a contained button, that lists objects front to back with their type icon and name. Choosing a row selects that object. It follows changes while open. Escape closes it and returns focus to the button.
+- The navigation browser suite grows to 45 checks, including Layers order against z-index, bring-to-front and send-back, row selection, and Escape.
+
+Migration: no format change. Layer names are not yet editable (rename is step 2).
+
+## 0.5.0 (prepared 14 November 2026, private)## 0.5.0 (prepared 14 November 2026, private)
 
 Completes [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 2, [navigation](docs/prd/NAVIGATION.md). Promotes 0.5.0-alpha.1 with no runtime change; the alpha entries below hold the details.
 

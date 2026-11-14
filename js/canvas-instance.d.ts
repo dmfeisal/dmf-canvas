@@ -124,6 +124,8 @@ export interface CanvasInstance {
   /** Restyle every selected shape as one history step; needs the `shapes` tool. Fill skips lines and arrows, corners apply to rectangles. */
   execute(command:'shape-style',value:CanvasShapeStylePatch):CommandResult;
   getInspector():Readonly<{x:number;y:number;width:number;height:number;rotation:number;relativeRotation:boolean;editable:boolean}>|null;
+  /** Layers, front to back. `element` is the object to pass to select(); visit-local and never saved. */
+  getLayers():readonly Readonly<{id:number;name:string;locked:boolean;group:number|null;selected:boolean;element:HTMLElement}>[];
   execute(command:'inspect',value:{field:'x'|'y'|'width'|'height'|'rotation';value:number}):CommandResult;
   /** One provisional creation at a time; cancellation owns preview cleanup. */
   beginCreation(cancel: () => void, kind?: 'text' | 'sticky' | 'image' | 'pencil' | 'shapes'): Readonly<{ cancel(): void; commit<T extends JsonValue>(element: HTMLElement, owner: CanvasOwner<T>): Readonly<{ dispose(): void }> | null }> | null;

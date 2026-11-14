@@ -68,6 +68,7 @@ Phase 2 of dmf-web parity ([navigation](prd/NAVIGATION.md)) adds an opt-in camer
   - Up to ten contacts are tracked. Native fields and controls never start touch gestures, and geometry is read only at handoff and rebase.
   - Checked with emulated multi-touch only so far; a physical-device check is part of the 0.5.0 promotion.
 - **Full screen:** `createCanvasFullscreen` in `dmf-canvas/toolbar` (below).
+- **Layers** (0.6.0-alpha.1): `getLayers()` lists objects front to back, and `createCanvasLayers(container, {canvas, trigger})` from `dmf-canvas/toolbar` shows them in a popover. Visit-local, never saved.
 
 ## Compatibility changes
 
