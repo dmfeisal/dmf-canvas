@@ -1,6 +1,17 @@
 // Bounded text geometry owner for the isolation specimen. No automatic discovery,
 // storage or dependency on the production document-global coordinator.
 import {defaultTextStyle,validateTextStyle,resolveTextStyle,textFonts,textWeights,hasTextStyle} from './canvas-instance-text-style.js';
+// The centre of what the host currently shows, in the coordinates objects placed on `host` use: the host's own
+// pixels, or world units when `host` is a camera world (docs/prd/NAVIGATION.md). Reads the camera from the world's
+// inline custom properties, and returns null when the host is hidden.
+export function visibleCenter(host) {
+  const camera = host?.hasAttribute('data-canvas-instance-world'), outer = camera ? host.parentElement : host;
+  if (!outer?.clientWidth || !outer.clientHeight) return null;
+  const read = name => parseFloat(host.style.getPropertyValue(name));
+  const scale = camera && read('--canvas-instance-camera-scale') > 0 ? read('--canvas-instance-camera-scale') : 1;
+  const x = camera ? read('--canvas-instance-camera-x') || 0 : 0, y = camera ? read('--canvas-instance-camera-y') || 0 : 0;
+  return { x: x + outer.clientWidth / 2 / scale, y: y + outer.clientHeight / 2 / scale, scale };
+}
 // freeResize (shapes): eight handles change the box's own width and height instead of its scale; onBox(width,height) runs after every size change.
 export function createTextOwner(element, host, { name = 'Text', widthHandles = true, editable = true, freeResize = false, onBox = null } = {}) {
   const formatting=editable&&widthHandles&&!freeResize;
@@ -163,15 +174,18 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     geometry:Object.freeze({
       read(){
         if(!node?.isConnected||activeEdit)return null;
-        const rect=node.getBoundingClientRect(),area=root.getBoundingClientRect(),bounds=areaBounds(),style=node.ownerDocument.defaultView.getComputedStyle(node);
-        const left=area.left+root.clientLeft,top=area.top+root.clientTop;
+        const rect=node.getBoundingClientRect(),area=root.getBoundingClientRect(),style=node.ownerDocument.defaultView.getComputedStyle(node),k=worldScale();
+        const left=area.left+root.clientLeft*k,top=area.top+root.clientTop*k;
+        // Host pixels on bounded hosts; world units in a camera world, which has no containment bounds.
+        const bounds=unbounded()?{left:left-1e6*k,right:left+1e6*k,top:top-1e6*k,bottom:top+1e6*k}:areaBounds();
         const dimension=(key,extras)=>parseFloat(style[key])+(style.boxSizing==='border-box'?0:extras.reduce((sum,key)=>sum+parseFloat(style[key]),0));
-        return {centerX:rect.left+rect.width/2-left,centerY:rect.top+rect.height/2-top,localWidth:dimension('width',['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth']),localHeight:dimension('height',['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth']),scale,angle,minScale:Math.min(.5,scale),maxScale:Math.max(1.8,scale),bounds:{left:bounds.left-left,right:bounds.right-left,top:bounds.top-top,bottom:bounds.bottom-top}};
+        return {centerX:(rect.left+rect.width/2-left)/k,centerY:(rect.top+rect.height/2-top)/k,localWidth:dimension('width',['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth']),localHeight:dimension('height',['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth']),scale,angle,minScale:Math.min(.5,scale),maxScale:Math.max(1.8,scale),bounds:{left:(bounds.left-left)/k,right:(bounds.right-left)/k,top:(bounds.top-top)/k,bottom:(bounds.bottom-top)/k}};
       },
       prepare(target){
         if(!node?.isConnected||activeEdit)return null;
+        // Targets use the same units as read(): host pixels, or world units in a camera world.
         const rect=node.getBoundingClientRect(),area=root.getBoundingClientRect(),k=worldScale();
-        const nextX=x+(target.centerX-(rect.left+rect.width/2-area.left-root.clientLeft))/k,nextY=y+(target.centerY-(rect.top+rect.height/2-area.top-root.clientTop))/k;
+        const nextX=x+target.centerX-(rect.left+rect.width/2-area.left-root.clientLeft*k)/k,nextY=y+target.centerY-(rect.top+rect.height/2-area.top-root.clientTop*k)/k;
         return ()=>{x=nextX;y=nextY;scale=target.scale;angle=target.angle;localWidth=node.offsetWidth;localHeight=node.offsetHeight;apply();};
       },
     }),

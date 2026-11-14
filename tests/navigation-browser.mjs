@@ -135,6 +135,72 @@ await check('at low zoom, handle spacing and small-box hiding use the drawn size
  assert(near(seen.nw.width,24,.5),'Handle size '+seen.nw.width);
 });
 
+// Step 2: coordinates everywhere else.
+const worldLeft=()=>page.evaluate(()=>{const r=window.cam.world.getBoundingClientRect();return {x:r.left,y:r.top};});
+const selectedRect=()=>page.evaluate(()=>{const el=[...window.cam.host.querySelectorAll('[data-canvas-instance-selected]')][0];const r=el.getBoundingClientRect();return {left:r.left,top:r.top,width:r.width,height:r.height,cx:r.left+r.width/2,cy:r.top+r.height/2};});
+
+await check('the inspector reports and applies world units at 2x',async()=>{
+ await run('camera',{x:300,y:200,scale:2});await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));
+ const r=await rect('#host [data-canvas-instance-shape]'),w=await worldLeft(),ins=await page.evaluate(()=>window.cam.canvas.getInspector());
+ assert(near(ins.x,(r.left-w.x)/2,.6)&&near(ins.y,(r.top-w.y)/2,.6),'Inspector position not in world units: '+JSON.stringify({ins,r,w}));
+ assert(near(ins.width,r.width/2,.6)&&near(ins.height,r.height/2,.6),'Inspector size not in world units: '+JSON.stringify(ins));
+ assert((await run('inspect',{field:'x',value:ins.x+50})).ok,'Inspector X refused');
+ const after=await rect('#host [data-canvas-instance-shape]');assert(near(after.left-r.left,100,.6),'X +50 world moved '+(after.left-r.left)+' screen px');
+});
+
+await check('the inspector panel closes when the camera moves and says it shows canvas units',async()=>{
+ const open=await page.evaluate(()=>{window.cam.inspector.toggle();const p=document.querySelector('.canvas-embed-inspector');return {open:p.matches(':popover-open'),help:p.querySelector('p').textContent};});
+ assert(open.open&&/Canvas units/.test(open.help),'Inspector did not open with canvas-unit help: '+JSON.stringify(open));
+ await run('camera',{x:310});
+ assert(!(await page.evaluate(()=>document.querySelector('.canvas-embed-inspector').matches(':popover-open'))),'Inspector stayed open after a pan');
+});
+
+await check('a new Sticky Note goes to the visible centre',async()=>{
+ await run('camera',{x:1000,y:800,scale:.5});const h=await host();
+ assert(await page.evaluate(()=>!!window.cam.addNote()),'Note not created');
+ const note=await page.evaluate(()=>{const r=window.cam.world.querySelector('.canvas-instance-note').getBoundingClientRect();return {cx:r.left+r.width/2,cy:r.top+r.height/2,width:r.width};});
+ // The note sits 16 world units above the centre (room for its toolbar), 8 screen px at 0.5x.
+ assert(near(note.cx,h.x+h.width/2,1)&&near(note.cy,h.y+h.height/2-8,1.5),'Note not at the visible centre: '+JSON.stringify({note,h}));
+});
+
+await check('paste puts copies at the visible centre',async()=>{
+ await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));assert((await run('copy')).ok,'Copy failed');
+ await run('camera',{x:-1500,y:-900,scale:1});assert((await run('paste')).ok,'Paste failed');
+ const h=await host(),copy=await selectedRect();
+ assert(near(copy.cx,h.x+h.width/2,1)&&near(copy.cy,h.y+h.height/2,1),'Paste not centred: '+JSON.stringify({copy,h}));
+});
+
+await check('Pencil strokes at 2x land under the pointer in world units',async()=>{
+ await run('camera',{x:-1500,y:-900,scale:2});const h=await host();
+ const count=()=>page.evaluate(()=>window.cam.world.querySelectorAll('.canvas-instance-drawing').length),before=await count();
+ assert(await page.evaluate(()=>{window.cam.pencil.setTool('pencil');return window.cam.pencil.setActive(true);}),'Pencil did not arm');
+ await drag({x:h.x+100,y:h.y+100},{x:h.x+300,y:h.y+200});
+ assert(await count()===before+1,'No drawing committed');
+ const d=await selectedRect();
+ // 200 x 100 screen px at 2x is 100 x 50 world units, plus 4 units of padding on each side (16 screen px in all).
+ assert(near(d.width,216,3)&&near(d.height,116,3)&&near(d.left,h.x+92,3)&&near(d.top,h.y+92,3),'Drawing misplaced: '+JSON.stringify({d,h}));
+});
+
+await check('a camera change mid-stroke cancels the unfinished ink',async()=>{
+ const h=await host(),count=()=>page.evaluate(()=>window.cam.world.querySelectorAll('.canvas-instance-drawing').length),before=await count();
+ await page.evaluate(()=>window.cam.pencil.setActive(true));
+ await page.mouse.move(h.x+400,h.y+300);await page.mouse.down();await page.mouse.move(h.x+450,h.y+320,{steps:4});
+ assert(await page.evaluate(()=>window.cam.pencil.getState().drawing),'Stroke did not start');
+ await run('camera',{x:-1400});await page.mouse.move(h.x+500,h.y+340,{steps:2});await page.mouse.up();
+ const left=await page.evaluate(()=>({drawing:window.cam.pencil.getState().drawing,previews:window.cam.host.querySelectorAll('[data-canvas-instance-preview]').length}));
+ assert(await count()===before&&!left.drawing&&left.previews===0,'Stroke survived the camera change: '+JSON.stringify(left));
+ await page.evaluate(()=>window.cam.pencil.setActive(false));
+});
+
+await check('the Shapes tool at 2x draws world-unit shapes under the pointer',async()=>{
+ await run('camera',{x:-1500,y:-900,scale:2});const h=await host();
+ assert(await page.evaluate(()=>{window.cam.pencil.setTool('shape');window.cam.pencil.setShape('ellipse');return window.cam.pencil.setActive(true);}),'Shapes did not arm');
+ await drag({x:h.x+500,y:h.y+120},{x:h.x+600,y:h.y+180});
+ const shape=await selectedRect(),layout=await page.evaluate(()=>{const s=window.cam.canvas.saveDocument().objects.find(o=>o.shape==='ellipse');return s.layout;});
+ assert(near(shape.left,h.x+500,1)&&near(shape.width,100,1)&&near(shape.height,60,1),'Shape misplaced: '+JSON.stringify({shape,h}));
+ assert(near(layout.width,50,.1)&&near(layout.height,30,.1),'Shape not in world units: '+JSON.stringify(layout));
+});
+
 await check('destroy restores the world and the host background',async()=>{
  const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length};});
  assert(left.style===null&&!left.marked&&left.size===''&&left.position===''&&left.overlays===0,'Left behind: '+JSON.stringify(left));

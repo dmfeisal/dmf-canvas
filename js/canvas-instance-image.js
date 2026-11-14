@@ -1,11 +1,13 @@
-import { createTextOwner } from './canvas-instance-text.js';
+import { createTextOwner, visibleCenter } from './canvas-instance-text.js';
 import { validateImage,validateDescription } from './canvas-instance-image-data.js';
 export function createImageObject(host,input,layout=null){
   const data=validateImage(input);
   if(!host?.isConnected||host.clientWidth<80||host.clientHeight<100)throw new TypeError('Image needs a visible sized canvas.');
   let root=host,node=host.ownerDocument.createElement('div');node.className='canvas-instance-image';node.dataset.canvasInstanceImage='';node.setAttribute('aria-label',data.alt||'Image');
   const ratio=Math.min(1,(host.clientWidth-64)/data.width,(host.clientHeight-80)/data.height),width=Math.max(1,layout?.width??data.width*ratio),height=Math.max(1,layout?.height??data.height*ratio);
-  Object.assign(node.style,{width:width+'px',height:height+'px',left:(layout?.left??(host.clientWidth-width)/2)+'px',top:(layout?.top??(host.clientHeight-height)/2)+'px'});root.append(node);
+  // Without a layout the image goes to the middle of what the host shows (the visible centre in a camera world).
+  const center=visibleCenter(host)??{x:host.clientWidth/2,y:host.clientHeight/2};
+  Object.assign(node.style,{width:width+'px',height:height+'px',left:(layout?.left??center.x-width/2)+'px',top:(layout?.top??center.y-height/2)+'px'});root.append(node);
   let base;try{base=createTextOwner(node,root,{name:'Image',widthHandles:false,editable:false});}catch(error){node.remove();throw error;}
   const img=host.ownerDocument.createElement('img');img.alt=data.alt;img.src=data.src;img.draggable=false;img.width=data.width;img.height=data.height;node.prepend(img);base.restore(base.capture());
   const {beginEdit,...geometry}=base;let alt=data.alt;

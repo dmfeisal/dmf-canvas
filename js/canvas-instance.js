@@ -150,13 +150,13 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   // history, change events or saved data.
   let cameraView = { x: 0, y: 0, scale: 1 };
   const cameraOriginal = world ? { transform: world.style.transform, origin: world.style.transformOrigin, marked: world.hasAttribute('data-canvas-instance-world'),
-    inverse: world.style.getPropertyValue('--canvas-instance-camera-inverse'), zoom: world.style.getPropertyValue('--canvas-instance-camera-scale'), size: root.style.backgroundSize, position: root.style.backgroundPosition } : null;
+    inverse: world.style.getPropertyValue('--canvas-instance-camera-inverse'), zoom: world.style.getPropertyValue('--canvas-instance-camera-scale'), cameraX: world.style.getPropertyValue('--canvas-instance-camera-x'), cameraY: world.style.getPropertyValue('--canvas-instance-camera-y'), size: root.style.backgroundSize, position: root.style.backgroundPosition } : null;
   function applyCamera() {
     if (!world) return;
     const { x, y, scale } = cameraView, tile = 24 * scale, offset = value => ((value % tile) + tile) % tile;
     world.toggleAttribute('data-canvas-instance-world', true); world.style.transformOrigin = '0 0';
     world.style.transform = `translate(${-x * scale}px, ${-y * scale}px) scale(${scale})`;
-    world.style.setProperty('--canvas-instance-camera-inverse', String(1 / scale)); world.style.setProperty('--canvas-instance-camera-scale', String(scale));
+    world.style.setProperty('--canvas-instance-camera-inverse', String(1 / scale)); world.style.setProperty('--canvas-instance-camera-scale', String(scale)); world.style.setProperty('--canvas-instance-camera-x', String(x)); world.style.setProperty('--canvas-instance-camera-y', String(y));
     // Dots keep the 24px world gap and stay 1 screen pixel; their offset follows the pan.
     root.style.backgroundSize = `${tile}px ${tile}px`; root.style.backgroundPosition = `${offset(-x * scale)}px ${offset(-y * scale)}px`;
   }
@@ -907,6 +907,14 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if(!world&&allocated.some((item,index)=>{const r=item.element.getBoundingClientRect(),b=objects[index].bounds;return Math.abs(r.left-area.left-root.clientLeft-b.left-dx)>.75||Math.abs(r.top-area.top-root.clientTop-b.top-dy)>.75||Math.abs(r.width-b.width)>.75||Math.abs(r.height-b.height)>.75;})){
         for(const item of allocated)item.owner.dispose();return result(false,'bounds');
       }
+      // Camera hosts: pasted copies go to the centre of the visible world, keeping their arrangement.
+      if(world){
+        const rects=allocated.map(item=>item.element.getBoundingClientRect()),moves=allocated.map(item=>item.owner.beginMove?.());
+        if(moves.some(move=>!move))throw new TypeError('Pasted objects need movement.');
+        const cx=(Math.min(...rects.map(r=>r.left))+Math.max(...rects.map(r=>r.right)))/2,cy=(Math.min(...rects.map(r=>r.top))+Math.max(...rects.map(r=>r.bottom)))/2;
+        const area=root.getBoundingClientRect(),tx=area.left+root.clientLeft+root.clientWidth/2,ty=area.top+root.clientTop+root.clientHeight/2;
+        for(const move of moves){move.move(tx-cx,ty-cy);move.finish?.();}
+      }
       batchRegistration=true;
       for(const item of allocated){instance.register(item.element,item.owner,{created:true});entries.push(owners.get(item.element));}
       const groups=new Map();records.forEach((record,index)=>{if(record.group!==undefined){if(!groups.has(record.group))groups.set(record.group,++groupSerial);entries[index].group=groups.get(record.group);}});
@@ -1151,6 +1159,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
         const original=cameraOriginal;world.style.transform=original.transform;world.style.transformOrigin=original.origin;world.toggleAttribute('data-canvas-instance-world',original.marked);
         if(original.inverse)world.style.setProperty('--canvas-instance-camera-inverse',original.inverse);else world.style.removeProperty('--canvas-instance-camera-inverse');
         if(original.zoom)world.style.setProperty('--canvas-instance-camera-scale',original.zoom);else world.style.removeProperty('--canvas-instance-camera-scale');
+        for(const [name,value]of [['--canvas-instance-camera-x',original.cameraX],['--canvas-instance-camera-y',original.cameraY]])if(value)world.style.setProperty(name,value);else world.style.removeProperty(name);
         root.style.backgroundSize=original.size;root.style.backgroundPosition=original.position;if(!world.getAttribute('style'))world.removeAttribute('style');world=null;
       }
       mounted.delete(root);status.remove();done.remove();if(guides)for(const node of Object.values(guides))node.remove();guides=null;if(labelFrame!==null)view.cancelAnimationFrame(labelFrame);labelFrame=null;if(labelNodes){labelNodes.name.remove();labelNodes.size.remove();}labelNodes=null;

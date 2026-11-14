@@ -10,6 +10,11 @@ Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 2, [navigation](docs/p
 - On camera hosts the world is unbounded: dragging, transforms, Duplicate and paste never clamp objects to the host. Built-in owners convert screen-pixel deltas to world units inside a camera world.
 - Owners may implement `cameraChanged()`, called after each zoom change; built-in owners use it so handle spacing and small-box handle hiding follow the drawn size. Text editing anchors are kept in world coordinates, so panning or zooming while editing never moves the text.
 
+- Navigation step 2, coordinates at zoom. On camera hosts:
+  - the inspector reports and applies world units, and its panel closes on any pan or zoom;
+  - new Sticky Notes and images go to the visible centre, and paste centres the copies there;
+  - Pencil, Highlighter, Eraser and Shapes map input into the world, draw previews there, commit world coordinates without containment, and cancel unfinished input when the camera changes.
+
 Migration: hosts without `camera` are unchanged. No board, clipboard, draft or portable format change.
 
 ## 0.4.0 (prepared 14 November 2026, private)

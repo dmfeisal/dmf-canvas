@@ -52,7 +52,10 @@ Phase 2 of dmf-web parity ([navigation](prd/NAVIGATION.md)) adds an opt-in camer
   - The host's dotted background follows the camera (inline `background-size` and `background-position`, restored on `destroy()`).
 - **Unbounded world:** on camera hosts, dragging, transforms, Duplicate and paste never clamp objects to the host, and `contain` leaves them where they are. Duplicate and paste offset copies by 24 world units.
 - **Owners:** built-in owners keep world units in their state and convert the screen-pixel deltas core gives them. Custom owners inside a camera world must do the same: movement limits and deltas stay in screen pixels. Owners may implement `cameraChanged()`, which core calls after each zoom change (style writes only); built-in owners use it to keep handle spacing and small-box handle hiding right at the drawn size. Text editing anchors are kept in world coordinates, so panning or zooming while editing never moves the text.
-- **Not in alpha.1 yet:** inspector values in world units, creation and paste at the visible centre, drawing input at zoom, Hand, wheel, pinch and keyboard zoom, two-finger touch and full screen. These follow in the next steps of the proposal.
+- **Inspector:** on camera hosts, `getInspector()` and `execute('inspect')` use world units, and the Selection inspector panel says so. Any pan or zoom closes the panel.
+- **New objects and paste:** `createStickyNote` and `createImageObject` (without a layout) place new objects at the centre of what the host shows, in world units. Paste centres the copies there and keeps their arrangement. The camera does not move. Owner factories read the camera from the world's inline `--canvas-instance-camera-x`, `-y` and `-scale` properties.
+- **Drawing:** Pencil, Highlighter, Eraser and Shapes map pointer input into the world. They sample at least 0.5 world units apart, draw the preview inside the world, commit world coordinates with no containment, and cancel an unfinished stroke, shape or erase when the camera changes. `createDrawing` accepts world points in any direction on a camera world.
+- **Not in alpha.1 yet:** Hand, wheel, pinch and keyboard zoom, two-finger touch and full screen. These follow in the next steps of the proposal.
 
 ## Compatibility changes
 
