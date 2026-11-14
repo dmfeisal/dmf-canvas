@@ -115,6 +115,26 @@ await check('configure changes the limits but not the world',async()=>{
  assert(threw,'Turning the camera off was accepted');
 });
 
+await check('panning and zooming while editing text does not move it when editing ends',async()=>{
+ await run('camera',{x:0,y:0,scale:1});
+ const read=()=>page.evaluate(()=>{const o=window.cam.canvas.saveDocument().originals[0].data.state;return {x:o.x,y:o.y};});
+ const before=await read();
+ await page.evaluate(()=>{window.cam.canvas.select(window.cam.text);window.cam.canvas.execute('edit');});
+ assert(await page.evaluate(()=>window.cam.canvas.getState().editing),'Editing did not start');
+ assert((await run('zoom',{to:1.5,around:{x:50,y:40}})).ok&&(await run('camera',{x:-30,y:20})).ok,'Camera refused while editing');
+ await run('finish-edit');const after=await read();
+ assert(near(after.x,before.x,.01)&&near(after.y,before.y,.01),'Text moved: '+JSON.stringify({before,after}));
+});
+
+await check('at low zoom, handle spacing and small-box hiding use the drawn size',async()=>{
+ await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));await run('zoom-to-selection');await run('zoom',{to:.2});
+ const seen=await page.evaluate(()=>{const n=window.cam.rect,box=n.getBoundingClientRect(),h=k=>n.querySelector('.canvas-instance-handle--'+k).getBoundingClientRect();
+  return {width:box.width,height:box.height,narrow:n.hasAttribute('data-canvas-instance-narrow'),short:n.hasAttribute('data-canvas-instance-short'),nw:h('nw').toJSON(),sw:h('sw').toJSON(),ne:h('ne').toJSON()};});
+ assert(seen.width<48&&seen.narrow&&seen.short,'Small-box hiding ignored the zoom: '+JSON.stringify(seen));
+ assert(seen.nw.bottom<=seen.sw.top+.5&&seen.nw.right<=seen.ne.left+.5,'Corner handles overlap: '+JSON.stringify(seen));
+ assert(near(seen.nw.width,24,.5),'Handle size '+seen.nw.width);
+});
+
 await check('destroy restores the world and the host background',async()=>{
  const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length};});
  assert(left.style===null&&!left.marked&&left.size===''&&left.position===''&&left.overlays===0,'Left behind: '+JSON.stringify(left));

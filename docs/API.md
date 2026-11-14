@@ -51,7 +51,7 @@ Phase 2 of dmf-web parity ([navigation](prd/NAVIGATION.md)) adds an opt-in camer
   - Transform handles stay 24 screen pixels.
   - The host's dotted background follows the camera (inline `background-size` and `background-position`, restored on `destroy()`).
 - **Unbounded world:** on camera hosts, dragging, transforms, Duplicate and paste never clamp objects to the host, and `contain` leaves them where they are. Duplicate and paste offset copies by 24 world units.
-- **Owners:** built-in owners keep world units in their state and convert the screen-pixel deltas core gives them. Custom owners inside a camera world must do the same: movement limits and deltas stay in screen pixels.
+- **Owners:** built-in owners keep world units in their state and convert the screen-pixel deltas core gives them. Custom owners inside a camera world must do the same: movement limits and deltas stay in screen pixels. Owners may implement `cameraChanged()`, which core calls after each zoom change (style writes only); built-in owners use it to keep handle spacing and small-box handle hiding right at the drawn size. Text editing anchors are kept in world coordinates, so panning or zooming while editing never moves the text.
 - **Not in alpha.1 yet:** inspector values in world units, creation and paste at the visible centre, drawing input at zoom, Hand, wheel, pinch and keyboard zoom, two-finger touch and full screen. These follow in the next steps of the proposal.
 
 ## Compatibility changes
