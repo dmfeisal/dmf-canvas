@@ -150,13 +150,13 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   // history, change events or saved data.
   let cameraView = { x: 0, y: 0, scale: 1 };
   const cameraOriginal = world ? { transform: world.style.transform, origin: world.style.transformOrigin, marked: world.hasAttribute('data-canvas-instance-world'),
-    inverse: world.style.getPropertyValue('--canvas-instance-camera-inverse'), size: root.style.backgroundSize, position: root.style.backgroundPosition } : null;
+    inverse: world.style.getPropertyValue('--canvas-instance-camera-inverse'), zoom: world.style.getPropertyValue('--canvas-instance-camera-scale'), size: root.style.backgroundSize, position: root.style.backgroundPosition } : null;
   function applyCamera() {
     if (!world) return;
     const { x, y, scale } = cameraView, tile = 24 * scale, offset = value => ((value % tile) + tile) % tile;
     world.toggleAttribute('data-canvas-instance-world', true); world.style.transformOrigin = '0 0';
     world.style.transform = `translate(${-x * scale}px, ${-y * scale}px) scale(${scale})`;
-    world.style.setProperty('--canvas-instance-camera-inverse', String(1 / scale));
+    world.style.setProperty('--canvas-instance-camera-inverse', String(1 / scale)); world.style.setProperty('--canvas-instance-camera-scale', String(scale));
     // Dots keep the 24px world gap and stay 1 screen pixel; their offset follows the pan.
     root.style.backgroundSize = `${tile}px ${tile}px`; root.style.backgroundPosition = `${offset(-x * scale)}px ${offset(-y * scale)}px`;
   }
@@ -171,7 +171,12 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if (![next.x, next.y, scale].every(Number.isFinite)) return result(false, 'invalid-camera');
     const zoomed = scale !== cameraView.scale, moved = zoomed || next.x !== cameraView.x || next.y !== cameraView.y;
     cameraView = { x: next.x, y: next.y, scale };
-    if (moved) { applyCamera(); emit(); if (zoomed) status.textContent = `Zoom ${Math.round(scale * 100)}%.`; }
+    if (moved) {
+      applyCamera();
+      // Owners size their handle spacing from the drawn size; style writes only, no layout reads.
+      if (zoomed) for (const entry of owners.values()) if (usable(entry)) try { entry.adapter.cameraChanged?.(); } catch (error) { view.reportError(error); }
+      emit(); if (zoomed) status.textContent = `Zoom ${Math.round(scale * 100)}%.`;
+    }
     return result(true);
   }
   const plain = value => !!value && Object.getPrototypeOf(value) === Object.prototype;
@@ -1145,6 +1150,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if(world){
         const original=cameraOriginal;world.style.transform=original.transform;world.style.transformOrigin=original.origin;world.toggleAttribute('data-canvas-instance-world',original.marked);
         if(original.inverse)world.style.setProperty('--canvas-instance-camera-inverse',original.inverse);else world.style.removeProperty('--canvas-instance-camera-inverse');
+        if(original.zoom)world.style.setProperty('--canvas-instance-camera-scale',original.zoom);else world.style.removeProperty('--canvas-instance-camera-scale');
         root.style.backgroundSize=original.size;root.style.backgroundPosition=original.position;if(!world.getAttribute('style'))world.removeAttribute('style');world=null;
       }
       mounted.delete(root);status.remove();done.remove();if(guides)for(const node of Object.values(guides))node.remove();guides=null;if(labelFrame!==null)view.cancelAnimationFrame(labelFrame);labelFrame=null;if(labelNodes){labelNodes.name.remove();labelNodes.size.remove();}labelNodes=null;

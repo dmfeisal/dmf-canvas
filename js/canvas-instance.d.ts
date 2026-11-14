@@ -30,6 +30,8 @@ export interface CanvasOwner<T extends JsonValue = JsonValue> {
   beginEdit?(): EditSession | null;
   /** Required only for visit-local created registrations. */
   setPresent?(present: boolean): void;
+  /** Camera hosts call this after the zoom changes, for chrome sized from the drawn size (handle spacing). Write styles only; never read layout. */
+  cameraChanged?(): void;
   paperColor?: { read(): string; set(value: string): boolean };
   /** Shapes: read the kind and style; prepare a patch of the keys this kind supports, or null when none apply. */
   shapeStyle?:{read():CanvasShapeStyle&{shape:'rectangle'|'ellipse'|'diamond'|'line'|'arrow'};prepare(patch:CanvasShapeStylePatch):{apply():void}|null};

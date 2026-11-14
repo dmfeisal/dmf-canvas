@@ -43,12 +43,15 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
   const apply = () => {
     node.style.translate = `${x}px ${y}px`;node.style.scale=String(scale);node.style.rotate=`${angle}deg`;
     node.style.transformOrigin='center';node.style.setProperty('--canvas-instance-inverse',String(1/scale));
-    // Keep 24px targets apart when the scaled text becomes shorter/narrower.
-    node.style.setProperty('--canvas-instance-gap-x',`${Math.max(0,(24-localWidth*scale)/2)}px`);
-    node.style.setProperty('--canvas-instance-gap-y',`${Math.max(0,(24-localHeight*scale)/2)}px`);
+    // Keep 24px targets apart when the object is drawn shorter/narrower, counting the camera zoom. The zoom is read
+    // from the world's inline style, never from layout, and core calls cameraChanged() when it changes.
+    const zoom=cameraZoom(),width=localWidth*scale*zoom,height=localHeight*scale*zoom;
+    node.style.setProperty('--canvas-instance-gap-x',`${Math.max(0,(24-width)/2)}px`);
+    node.style.setProperty('--canvas-instance-gap-y',`${Math.max(0,(24-height)/2)}px`);
     // Side handles of small free boxes would overlap the corners, so hide them; corners still resize both ways.
-    if(freeResize){node.toggleAttribute('data-canvas-instance-narrow',localWidth*scale<48);node.toggleAttribute('data-canvas-instance-short',localHeight*scale<48);}
+    if(freeResize){node.toggleAttribute('data-canvas-instance-narrow',width<48);node.toggleAttribute('data-canvas-instance-short',height<48);}
   };
+  const cameraZoom = () => { const value = parseFloat(root?.style.getPropertyValue('--canvas-instance-camera-scale')); return value > 0 ? value : 1; };
   // Camera worlds (docs/prd/NAVIGATION.md): inside a world element the owner keeps world units in its state and
   // converts the screen-space deltas core gives it by the world's measured scale. Worlds are unbounded.
   const unbounded = () => !!root?.hasAttribute('data-canvas-instance-world');
@@ -86,6 +89,10 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     localWidth=node.offsetWidth;localHeight=node.offsetHeight;const size=box();onBox?.(size.width,size.height);
   };
   const preserveAnchor = (kind, fixed) => {const now=anchor(kind),k=worldScale();x+=(fixed.x-now.x)/k;y+=(fixed.y-now.y)/k;apply();};
+  // Long-lived anchors (text editing) are kept in the root's own coordinates, so a camera pan or zoom, or page
+  // scroll, while editing does not move the object when the anchor is restored.
+  const localAnchor = kind => {const point=anchor(kind),rect=root.getBoundingClientRect(),k=worldScale();return {x:(point.x-rect.left)/k,y:(point.y-rect.top)/k};};
+  const preserveLocal = (kind, fixed) => {const now=localAnchor(kind);x+=fixed.x-now.x;y+=fixed.y-now.y;apply();};
   const applyTypography=(next,width)=>{
     typography=next;
     node.style.fontFamily=next.font==='original'?original.fontFamily:textFonts[next.font];
@@ -109,7 +116,7 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     let text=readText();
     if(!composing&&!event?.isComposing&&text.length>textLimit){text=text.slice(0,textLimit);editor.textContent=text;caretAtEnd();}
     content=text===originalText?null:text;
-    if(editAnchor)preserveAnchor('se',editAnchor);
+    if(editAnchor)preserveLocal('se',editAnchor);
   };
   const beforeInput = event => {
     if(!activeEdit||composing||event.isComposing||!['insertText','insertParagraph','insertLineBreak'].includes(event.inputType))return;
@@ -140,7 +147,7 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     const text=readText().slice(0,textLimit),value=text.trim()?text:originalText;
     content=value===originalText?null:value;activeEdit=composing=false;
     editor.contentEditable='false';for(const key of ['role','aria-label','aria-multiline'])editor.removeAttribute(key);
-    renderContent();if(editAnchor)preserveAnchor('se',editAnchor);editAnchor=null;contain();
+    renderContent();if(editAnchor)preserveLocal('se',editAnchor);editAnchor=null;contain();
   };
   return Object.freeze({
     name,
@@ -169,6 +176,8 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
       },
     }),
     serialize() {const style=node.ownerDocument.defaultView.getComputedStyle(node);return {type:'text',layout:{left:node.offsetLeft,top:node.offsetTop,width:Math.ceil(parseFloat(style.width)*100)/100,height:node.offsetHeight,fontSize:parseFloat(style.fontSize),lineHeight:style.lineHeight==='normal'?'normal':parseFloat(style.lineHeight),fontWeight:Number(style.fontWeight)},text:content??originalText,state:{x,y,scale,angle,width:node.style.width,content:content??originalText,...(formatting&&hasTextStyle(typography)?{typography:{...typography}}:{})}};},
+    // Camera hosts call this after a zoom change: handle spacing and small-box checks depend on the drawn size.
+    cameraChanged() { if (node) apply(); },
     capture: () => ({ x, y, scale, angle, width:node.style.width, ...(freeResize?{height:node.style.height}:{}), content,...(formatting?{typography:{...typography}}:{}) }),
     restore(value) {
       if (!node) return;
@@ -182,11 +191,11 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     },
     beginEdit() {
       if(!editable||!node?.isConnected||activeEdit)return null;
-      editAnchor=anchor('se');activeEdit=true;composing=false;
+      editAnchor=localAnchor('se');activeEdit=true;composing=false;
       editor.textContent=content??originalText;editor.setAttribute('data-instance-plain-text','');
       try{editor.contentEditable='plaintext-only';}catch{editor.contentEditable='true';}
       editor.setAttribute('role','textbox');editor.setAttribute('aria-label','Edit '+name);editor.setAttribute('aria-multiline','true');
-      preserveAnchor('se',editAnchor);
+      preserveLocal('se',editAnchor);
       return {editor,finish:finishEditing,focus:()=>{editor.focus({preventScroll:true});caretAtEnd();}};
     },
     beginMove() {

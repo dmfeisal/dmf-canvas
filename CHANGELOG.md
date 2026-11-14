@@ -8,6 +8,7 @@ Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 2, [navigation](docs/p
 - Add `execute('camera')`, `execute('zoom')` (by or to, around a point), `execute('fit')` (Fit all) and `execute('zoom-to-selection')`. They work read-only and while editing, never enter history, change events or saved data, and announce zoom changes.
 - At any zoom, pointer drags follow the pointer and keyboard nudges move whole screen pixels. Snapping keeps its 6px screen distance and the 24px world grid, transform handles stay 24px, and the host's dotted background follows the camera.
 - On camera hosts the world is unbounded: dragging, transforms, Duplicate and paste never clamp objects to the host. Built-in owners convert screen-pixel deltas to world units inside a camera world.
+- Owners may implement `cameraChanged()`, called after each zoom change; built-in owners use it so handle spacing and small-box handle hiding follow the drawn size. Text editing anchors are kept in world coordinates, so panning or zooming while editing never moves the text.
 
 Migration: hosts without `camera` are unchanged. No board, clipboard, draft or portable format change.
 
