@@ -340,6 +340,11 @@ await check('F puts the whole chrome container into full screen, and the camera 
  assert(!(await page.evaluate(()=>document.fullscreenElement)),'F entered full screen while editing');
  await run('finish-edit');await page.evaluate(()=>window.cam.fullscreen.dispose());await focusHost();await page.keyboard.press('f');await page.waitForTimeout(200);
  assert(!(await page.evaluate(()=>document.fullscreenElement)),'F still worked after dispose');
+ // Disposing while entry is in flight must not leave the page in full screen.
+ await page.evaluate(async()=>{const {createCanvasFullscreen}=await import('/toolbar.js'),frame=document.getElementById('frame'),button=document.getElementById('enter-dispose');
+  button.onclick=()=>{const c=createCanvasFullscreen(frame);c.enter();c.dispose();};});
+ await page.click('#enter-dispose');await page.waitForTimeout(600);
+ assert(!(await page.evaluate(()=>document.fullscreenElement)),'Full screen left on after an in-flight dispose');
 });
 
 await check('destroy restores the world and the host background',async()=>{

@@ -16,7 +16,12 @@ export function createCanvasFullscreen(target,{canvas=null,onChange=()=>{}}={}){
   async function enter(){
     if(!alive||!supported||active()||pending)return false;
     pending=true;notify();
-    try{await target.requestFullscreen();return true;}catch{return false;}finally{pending=false;notify();}
+    try{
+      await target.requestFullscreen();
+      // Disposed while the request was in flight: undo it, since no controller is left to exit.
+      if(!alive){if(active())await doc.exitFullscreen().catch(()=>{});return false;}
+      return true;
+    }catch{return false;}finally{pending=false;notify();}
   }
   async function exit(){
     if(!alive||!active())return false;
