@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.6.0 (prepared 14 November 2026, private)
+## 0.7.0-alpha.1 (prepared 14 November 2026, private, experimental)
+
+Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 4, [styling and export](docs/prd/STYLING-EXPORT.md), with step 1: the typography record.
+
+- Add three Text properties: ink (`primary`, `blue` or `red`, from the Pencil inks), line height (`normal` or 0.8–3) and letter spacing (−0.08em to 0.3em). They apply to the owner, appear in the Text fieldset of the Selection inspector (a blank line height means Normal), and are reported by `getTextStyle()`.
+- Board, clipboard and portable writers use **schema 5** only when a record sets one of the three properties; records that keep the defaults are written exactly as before. Readers accept schema 5, and readers that stop at schema 4 reject it instead of dropping the styling.
+- Records saved before this release load with the defaults.
+
+Migration: no change for boards without the new properties. Boards that use them need a 0.7.0 reader (or any reader that accepts schema 5).
+
+## 0.6.0 (prepared 14 November 2026, private)## 0.6.0 (prepared 14 November 2026, private)
 
 Completes [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 3, [organisation](docs/prd/ORGANISATION.md). Promotes 0.6.0-alpha.1 with no runtime change; the alpha entries below hold the details.
 

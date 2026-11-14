@@ -10,7 +10,7 @@ await page.evaluate(()=>{
 });
 await check('Text inspector offers native font size weight alignment and wrapping controls',async()=>{
  await page.click('[data-preview=A] [data-original]');await page.click('[data-preview=A] button[aria-label="Selection inspector"]');
- assert(await page.evaluate(()=>{const p=document.querySelector('[data-preview=A] .canvas-embed-inspector');return p.querySelectorAll('[data-inspector-text]').length===5&&!p.querySelector('fieldset').hidden&&[...p.querySelectorAll('[data-inspector-text]')].every(i=>(s=>i.getBoundingClientRect().height+1>=parseFloat(s.fontSize)+parseFloat(s.paddingTop)+parseFloat(s.paddingBottom))(getComputedStyle(i)));}), 'Text controls missing');
+ assert(await page.evaluate(()=>{const p=document.querySelector('[data-preview=A] .canvas-embed-inspector');return p.querySelectorAll('[data-inspector-text]').length===8&&!p.querySelector('fieldset').hidden&&[...p.querySelectorAll('[data-inspector-text]')].every(i=>(s=>i.getBoundingClientRect().height+1>=parseFloat(s.fontSize)+parseFloat(s.paddingTop)+parseFloat(s.paddingBottom))(getComputedStyle(i)));}), 'Text controls missing');
 });
 await check('font and size preserve a rotated scaled top-left anchor and one-field history',async()=>{
  await page.press(input('size'),'Escape');

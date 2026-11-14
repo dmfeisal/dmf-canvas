@@ -7,6 +7,6 @@ test('page object clipboard isolates data subscribers and clears on last teardow
 });
 test('object transfer limits reject invalid envelopes before replacing clipboard',()=>{
  const clipboard=createObjectClipboard(),source=transfer();clipboard.write(source);
- for(const mutate of [p=>p.version=5,p=>p.objects=[],p=>p.objects=Array(51).fill(p.objects[0]),p=>p.objects[0].bounds.width=0,p=>p.objects[0].bounds.top=Infinity,p=>p.objects[0].bounds.left='4',p=>p.objects[0].data.padding='x'.repeat(131072)]){const bad=transfer();mutate(bad);assert.throws(()=>clipboard.write(bad));assert.deepEqual(clipboard.read(),source);}
+ for(const mutate of [p=>p.version=6,p=>p.objects=[],p=>p.objects=Array(51).fill(p.objects[0]),p=>p.objects[0].bounds.width=0,p=>p.objects[0].bounds.top=Infinity,p=>p.objects[0].bounds.left='4',p=>p.objects[0].data.padding='x'.repeat(131072)]){const bad=transfer();mutate(bad);assert.throws(()=>clipboard.write(bad));assert.deepEqual(clipboard.read(),source);}
  assert.throws(()=>validateTransfer(null));const listeners=Array.from({length:50},()=>clipboard.subscribe(()=>{}));assert.throws(()=>clipboard.subscribe(()=>{}));listeners.forEach(off=>off());assert.equal(clipboard.count,0);
 });

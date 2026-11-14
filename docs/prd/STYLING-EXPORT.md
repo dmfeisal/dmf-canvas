@@ -1,6 +1,6 @@
 ---
 title: "Styling and export"
-status: proposed
+status: accepted
 owner: product
 last_reviewed: 2026-11-14
 source_of_truth: true
@@ -44,15 +44,15 @@ Text has font, size, weight, alignment and wrapping in the typography record, wi
 - **Failures:** one export at a time, a 25-second timeout, and a clear status message on failure. Object URLs are revoked when the export is replaced or closed.
 - **Library:** the package has no runtime dependencies, so it can't use dmf-web's `html-to-image`.
 
-## Decisions to confirm
+## Decisions (accepted 14 November 2026)
 
-1. **Text ink, line height and letter spacing: a board schema change?** Recommended: **yes, schema 5**, with the same reader rules as earlier bumps. Readers accept 1–5 and reject higher versions. Records without the new fields are written exactly as before, so older boards and readers keep working for them. The alternative, leaving text styling out of boards, would mean dmf-web's text styling can't round-trip.
-2. **PNG export: host exporter or built-in capture?** Recommended: **a host-supplied exporter hook**, `createCanvasExport(canvas, {render})`, where the host brings its own renderer (for example `html-to-image`). The package provides the selection and visible-canvas bounds, the scale and size limits, and the cancellation and status. The alternative, a built-in SVG capture limited to the package's own owners, would keep the package dependency-free but could not export arbitrary host content.
-3. **Sticky colours: 16 swatches or 3?** Recommended: **adopt dmf-web's 16 swatches as package keys**, named semantically (for example `sunshine`, `paradise`), with the 3 existing keys kept as aliases so existing boards load unchanged. The alternative, keeping 3 built-in keys and letting hosts add more, moves the palette into every host and makes a shared board look different on each one.
+1. **Text ink, line height and letter spacing: a board schema change? Accepted: yes, schema 5**, with the same reader rules as earlier bumps. Readers accept 1–5 and reject higher versions. Records without the new fields are written exactly as before, so older boards and readers keep working for them. The alternative, leaving text styling out of boards, would mean dmf-web's text styling can't round-trip.
+2. **PNG export: host exporter or built-in capture? Accepted: a host-supplied exporter hook**, `createCanvasExport(canvas, {render})`, where the host brings its own renderer (for example `html-to-image`). The package provides the selection and visible-canvas bounds, the scale and size limits, and the cancellation and status. The alternative, a built-in SVG capture limited to the package's own owners, would keep the package dependency-free but could not export arbitrary host content.
+3. **Sticky colours: 16 swatches or 3? Accepted: adopt dmf-web's 16 swatches as package keys**, named semantically (for example `sunshine`, `paradise`), with the 3 existing keys kept as aliases so existing boards load unchanged. The alternative, keeping 3 built-in keys and letting hosts add more, moves the palette into every host and makes a shared board look different on each one.
 
 ## Delivery
 
-1. Typography record: ink, line height and letter spacing in the owners, the inspector and the schema-5 reader and writer, with the compatibility notes and changelog.
+1. Typography record: ink, line height and letter spacing in the owners, the inspector and the schema-5 reader and writer, with the compatibility notes and changelog. **Built in 0.7.0-alpha.1**: the record, owner, inspector fields, schema 5 writer and reader, and the clipboard. Unknown future versions are still refused.
 2. Sticky-note palette: the 16 keys with their aliases, the swatch control in the inspector, and the reader rules for unknown keys.
 3. S/M/L text-size presets and their Undo step.
 4. The PNG export hook: bounds, scale and size limits, cancellation and status, with a host renderer in the configurator and the shared custom host.

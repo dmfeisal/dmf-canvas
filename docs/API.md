@@ -33,6 +33,10 @@ Commands cover movement, editing, selection, locks, grouping, arrangement, layer
 
 Dispose optional draft/Pencil subscriptions before destroying the canvas, then dispose visual adapters. `destroy()` is idempotent and releases instance state; hosts still own their listeners, observers, pending frames, file reads, object URLs and framework lifecycle. Host resize handlers cancel active gestures then contain objects. Native fields and editing retain their own keyboard behavior. Use the tested framework recipes for lifecycle examples.
 
+## Text typography (0.7.0-alpha.1)
+
+`getTextStyle()` reports `ink` (`primary`, `blue` or `red`), `lineHeight` (`normal` or 0.8–3) and `letterSpacing` (em, −0.08 to 0.3) alongside font, size, weight, alignment and wrapping. Change them with `execute('text-style', {field, value})`, for example `{field: 'ink', value: 'blue'}`, `{field: 'lineHeight', value: 1.5}` or `{field: 'letterSpacing', value: 0.1}`. Values are validated and refused when out of range, and a change is one Undo step. Boards that set any of the three use schema 5; see [compatibility](COMPATIBILITY.md).
+
 ## Camera (0.5.0-alpha.1, experimental)
 
 Phase 2 of dmf-web parity ([navigation](prd/NAVIGATION.md)) adds an opt-in camera. Hosts without one are unchanged.
