@@ -22,9 +22,10 @@ Editor surfaces use **floating chrome**: four groups placed over the canvas stag
 
 | Group | Position | Orientation | Actions, in order |
 |---|---|---|---|
-| Tools | Top, inline start | Vertical rail | Select, Add text, Add note, Add image, Pencil, Highlighter, Stroke eraser, Shapes |
+| Tools | Top, inline start | Vertical rail | Select, Hand (camera hosts only), Add text, Add note, Add image, Pencil, Highlighter, Stroke eraser, Shapes |
 | Tool options | Top, beside the rail | Horizontal | Shapes only: the five kinds first. Then the armed tool's three inks and Thin, Medium, Bold (Pencil, Highlighter and Shapes). Shapes end with Fill (closed shapes) and Round corners (rectangles) |
-| History | Bottom, inline start | Horizontal | Undo, Redo |
+| Camera | Bottom, inline start | Horizontal | Camera hosts only: Zoom out, Zoom in, Fit all |
+| History | Bottom, inline start, after Camera | Horizontal | Undo, Redo |
 | Selection actions | Bottom, centre | Horizontal | Selection inspector, Duplicate, Delete, More |
 | Help | Bottom, inline end | Horizontal | Keyboard help |
 
@@ -44,6 +45,7 @@ All artwork is local [Lucide](https://lucide.dev) from `js/canvas-instance-toolb
 | Action id | Label | Lucide icon | Shortcut | Placement |
 |---|---|---|---|---|
 | `select` | Select | `mouse-pointer-2` | V | Tools |
+| `hand` | Hand (pressed when armed; Space held is a temporary Hand) | `hand` | H | Tools, camera hosts only |
 | `text` | Add text | `type` |  | Tools |
 | `sticky` | Add note | `sticky-note` |  | Tools |
 | `image` | Add image | `image` |  | Tools |
@@ -85,9 +87,14 @@ All artwork is local [Lucide](https://lucide.dev) from `js/canvas-instance-toolb
 | `snap-grid` | Snap to grid (checked when on) | `grid-2x2` |  | More › Snapping |
 | `save` | Save board | `download` |  | More › Board |
 | `open` | Open board | `folder-open` |  | More › Board |
+| `zoom-out` | Zoom out | `zoom-out` | − | Camera |
+| `zoom-in` | Zoom in | `zoom-in` | + | Camera |
+| `fit` | Fit all | `focus` | Shift 1 | Camera |
 | `help` | Keyboard help | `circle-question-mark` |  | Help |
 
 The sprite also carries `image-plus` and `layers` for hosts that need them. To add an action, pick a Lucide icon that is not already in this table, copy its path data from a pinned Lucide release (record the version in the sprite's header comment), add a row here, and keep the label identical to the accessible name.
+
+Camera hosts also answer `0` (100%) and Shift 2 (Zoom to selection) on the keyboard, and keyboard help lists them, with wheel pan and pinch or Ctrl/⌘ with the wheel to zoom. Zoom to selection has no button: no icon in the vendored set fits it without repeating another action's artwork.
 
 ## Sizes and states
 

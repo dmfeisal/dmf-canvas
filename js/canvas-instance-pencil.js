@@ -39,7 +39,7 @@ export function createPencil(canvas,host,onChange=()=>{}) {
     if(disposed)return false;
     const current=instance.getState();
     if(value&&(!current.mounted||current.settings.readOnly||!permitted(current)||current.editing))return false;
-    cancel();if(value){instance.execute('cancel');instance.setMultiple(false);if(tool!=='eraser'&&!instance.getState().canCreate)return false;}active=!!value;root.toggleAttribute('data-instance-pencil-active',active);if(active)root.dataset.instancePencilTool=tool;else delete root.dataset.instancePencilTool;notify();return true;
+    cancel();if(value){instance.execute('cancel');if(current.camera)instance.execute('hand',false);instance.setMultiple(false);if(tool!=='eraser'&&!instance.getState().canCreate)return false;}active=!!value;root.toggleAttribute('data-instance-pencil-active',active);if(active)root.dataset.instancePencilTool=tool;else delete root.dataset.instancePencilTool;notify();return true;
   };
   const addPoint=event=>{
     const s=stroke,raw=s.space.map(event.clientX,event.clientY),point=s.space.bounded?{x:Math.max(20,Math.min(s.width-20,raw.x)),y:Math.max(20,Math.min(s.height-44,raw.y))}:raw,last=s.points.at(-1);
@@ -84,6 +84,8 @@ export function createPencil(canvas,host,onChange=()=>{}) {
     setActive(false);return true;
   };
   const down=event=>{
+    // Hand (H, or Space held, on camera hosts) pans instead of drawing.
+    if(!busy()&&instance.getState().hand)return;
     if(busy()){if(event.pointerId!==(stroke??erasing??shaping).id)cancel();return;}
     if(active&&tool==='eraser'){
       if(event.button!==0||!event.isPrimary||event.pointerType==='touch'||event.target.closest(native))return;
@@ -164,7 +166,8 @@ export function createPencil(canvas,host,onChange=()=>{}) {
     if(event.defaultPrevented||event.isComposing||event.keyCode===229||event.target.closest(native))return;
     const name=event.key==='Escape'?event.key:event.key.toLowerCase(),plain=!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.repeat;
     if(plain&&(name==='p'||!event.shiftKey&&(['v','e','Escape'].includes(name)||Object.hasOwn(shapeKeys,name)))){
-      if(event.key==='Escape'&&!active&&!busy())return;
+      // Unarmed, Escape and V belong to the canvas (V also leaves a camera host's Hand tool).
+      if((event.key==='Escape'||name==='v')&&!active&&!busy())return;
       if(Object.hasOwn(shapeKeys,name)&&!permitted(instance.getState(),'shape'))return;
       event.preventDefault();event.stopImmediatePropagation();
       if(name==='v'||name==='Escape'){setActive(false);return;}
@@ -185,7 +188,7 @@ export function createPencil(canvas,host,onChange=()=>{}) {
   const unsubscribe=instance.subscribe(state=>{
     if(!state.mounted){dispose();return;}
     const next=JSON.stringify(state.camera);if(next!==camera){camera=next;if(busy())cancel();}
-    if((state.editing||state.settings.readOnly||!permitted(state))&&active)setActive(false);
+    if((state.editing||state.settings.readOnly||!permitted(state)||state.hand==='tool')&&active)setActive(false);
   });
   function dispose(){
     if(disposed)return;cancel();disposed=true;active=false;

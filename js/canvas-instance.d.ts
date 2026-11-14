@@ -69,6 +69,8 @@ export interface CanvasState {
   readonly settings:CanvasEmbedSettings;
   /** The current camera, or null on hosts without one. */
   readonly camera:CanvasCamera|null;
+  /** Camera hosts: 'tool' while Hand is armed (H), 'space' while Space is held, otherwise null. Always null without a camera. */
+  readonly hand:'tool'|'space'|null;
   readonly mounted: boolean;
   readonly focused: boolean;
   readonly objects: number;
@@ -117,6 +119,8 @@ export interface CanvasInstance {
   execute(command:'zoom',value:{by:number;to?:never;around?:{x:number;y:number}}|{to:number;by?:never;around?:{x:number;y:number}}):CommandResult;
   /** Camera hosts: Fit all (never past 100%) or Zoom to selection (never past maxScale); either may go below minScale so everything fits. */
   execute(command:'fit'|'zoom-to-selection'):CommandResult;
+  /** Camera hosts: arm (true) or disarm the Hand tool, which pans on drag and never moves objects. */
+  execute(command:'hand',value:boolean):CommandResult;
   /** Restyle every selected shape as one history step; needs the `shapes` tool. Fill skips lines and arrows, corners apply to rectangles. */
   execute(command:'shape-style',value:CanvasShapeStylePatch):CommandResult;
   getInspector():Readonly<{x:number;y:number;width:number;height:number;rotation:number;relativeRotation:boolean;editable:boolean}>|null;

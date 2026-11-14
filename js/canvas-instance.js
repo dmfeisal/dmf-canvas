@@ -5,7 +5,8 @@ import { validateTransfer } from './canvas-instance-clipboard.js';
 import {combinedGeometry,validGeometry,planInspector} from './canvas-instance-inspector-plan.js';
 import {defaultTextStyle,resolveTextStyle} from './canvas-instance-text-style.js';
 // Internal lifecycle spike. Production object owners still use DMFCanvasTools.
-// No document/window listeners, storage or owner geometry writes. The optional camera transforms one host-marked world element.
+// No document/window listeners, storage or owner geometry writes. The optional camera transforms one host-marked world element;
+// camera hosts add a host wheel listener, one pending frame and one zoom-announcement timer, all released on destroy().
 const mounted = new WeakMap(), registrations = new WeakMap();
 const nativeControl = 'input,textarea,select,button,a,[contenteditable]:not([contenteditable="false"]),dialog,[popover]';
 const result = (ok, reason = null) => Object.freeze({ ok, reason });
@@ -88,7 +89,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     entries.forEach((entry,index)=>{entry.layer=index;entry.element.style.setProperty('z-index',String(index+1));});
   }
   const arrangeEligible = count => alive&&!settings.readOnly&&settings.tools.arrange&&!editing&&!creation&&!gesture&&selection.size>=count&&[...selection].every(entry=>usable(entry)&&!entry.locked&&!entry.group&&typeof entry.adapter.beginMove==='function');
-  const state = () => Object.freeze({ mounted: alive, focused, settings, camera:world?Object.freeze({...cameraView}):null, ...changes.state(), objects: [...owners.values()].filter(entry=>entry.present).length, selection: selected?.id ?? null, selectionName:selection.size>1?`${selection.size} objects`:selected?.name??null,
+  const state = () => Object.freeze({ mounted: alive, focused, settings, camera:world?Object.freeze({...cameraView}):null,hand:world?(handTool?'tool':handSpace?'space':null):null, ...changes.state(), objects: [...owners.values()].filter(entry=>entry.present).length, selection: selected?.id ?? null, selectionName:selection.size>1?`${selection.size} objects`:selected?.name??null,
     selectionIds:Object.freeze([...selection].map(entry=>entry.id)), selectionCount:selection.size, multiple,
     imageDescription:selection.size===1&&usable(selected)?selected.adapter.description?.read()??null:null,
     canDescribeImage:alive&&!settings.readOnly&&settings.tools.image&&!editing&&!creation&&!gesture&&selection.size===1&&!selected?.locked&&usable(selected)&&!!selected.adapter.description,
@@ -166,7 +167,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const rect = world.getBoundingClientRect(), area = root.getBoundingClientRect();
     return { left: rect.left + cameraView.x * cameraView.scale, top: rect.top + cameraView.y * cameraView.scale, hostLeft: area.left + root.clientLeft, hostTop: area.top + root.clientTop };
   }
-  function setCamera(next, floor = false) {
+  function setCamera(next, floor = false, quiet = false) {
     const limits = settings.camera, scale = Math.min(limits.maxScale, Math.max(floor ? .05 : limits.minScale, next.scale));
     if (![next.x, next.y, scale].every(Number.isFinite)) return result(false, 'invalid-camera');
     const zoomed = scale !== cameraView.scale, moved = zoomed || next.x !== cameraView.x || next.y !== cameraView.y;
@@ -175,7 +176,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       applyCamera();
       // Owners size their handle spacing from the drawn size; style writes only, no layout reads.
       if (zoomed) for (const entry of owners.values()) if (usable(entry)) try { entry.adapter.cameraChanged?.(); } catch (error) { view.reportError(error); }
-      emit(); if (zoomed) status.textContent = `Zoom ${Math.round(scale * 100)}%.`;
+      emit(); if (zoomed) { if (quiet) announceZoom(scale); else status.textContent = `Zoom ${Math.round(scale * 100)}%.`; }
     }
     return result(true);
   }
@@ -184,6 +185,10 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if (!world) return result(false, 'unsupported');
     if (gesture) return result(false, 'busy');
     const { x, y, scale } = cameraView, frame = cameraFrame(), limits = settings.camera;
+    if (command === 'hand') {
+      if (typeof value !== 'boolean') return result(false, 'invalid-camera');
+      setHand(value); return result(true);
+    }
     if (command === 'camera') {
       if (!plain(value) || Object.keys(value).some(key => !['x', 'y', 'scale'].includes(key)) || Object.values(value).some(item => !Number.isFinite(item)) || value.scale <= 0) return result(false, 'invalid-camera');
       return setCamera({ x: value.x ?? x, y: value.y ?? y, scale: value.scale ?? scale });
@@ -209,6 +214,55 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const next = Math.max(.05, Math.min(command === 'fit' ? Math.min(1, limits.maxScale) : limits.maxScale, width / Math.max(1, right - left), height / Math.max(1, bottom - top)));
     const sx = frame.hostLeft + root.clientWidth / 2, sy = frame.hostTop + root.clientHeight / 2;
     return setCamera({ x: (left + right) / 2 - (sx - frame.left) / next, y: (top + bottom) / 2 - (sy - frame.top) / next, scale: next }, true);
+  }
+  // Camera input (docs/prd/NAVIGATION.md step 3): Hand (H, or Space held) drags pan, the wheel pans, pinch or Ctrl/Cmd
+  // with the wheel zooms around the pointer. Writes are coalesced into one animation frame, layout is read only there,
+  // and wheel or pinch zoom announces once it settles.
+  let handTool = false, handSpace = false, cameraQueue = null, wheel = null, cameraFrameId = null, zoomNotice = null;
+  function syncHand() { root?.toggleAttribute('data-canvas-instance-hand', !!world && (handTool || handSpace)); }
+  function setHand(value, quiet = false) {
+    if (!world || handTool === value) return;
+    handTool = value; syncHand(); emit();
+    if (!quiet) status.textContent = value ? 'Hand tool. Drag to pan; V returns to Select.' : 'Select tool.';
+  }
+  function scheduleCamera() {
+    if (cameraFrameId !== null || !alive) return;
+    cameraFrameId = view.requestAnimationFrame(() => {
+      cameraFrameId = null; if (!alive || !world) return;
+      if (cameraQueue) { const next = cameraQueue; cameraQueue = null; setCamera(next, false, true); }
+      if (wheel) {
+        const input = wheel; wheel = null;
+        const { x, y, scale } = cameraView, frame = cameraFrame(), limits = settings.camera;
+        let next = { x: x + input.dx / scale, y: y + input.dy / scale, scale };
+        if (input.factor !== 1) {
+          const target = Math.min(limits.maxScale, Math.max(limits.minScale, scale * input.factor));
+          const px = next.x + (input.x - frame.left) / scale, py = next.y + (input.y - frame.top) / scale;
+          next = { x: px - (input.x - frame.left) / target, y: py - (input.y - frame.top) / target, scale: target };
+        }
+        setCamera(next, false, true);
+      }
+    });
+  }
+  function onWheel(event) {
+    if (!world || native(event.target)) return;
+    // The canvas owns the wheel while the pointer is over it, so the page never scrolls as well.
+    event.preventDefault();
+    if (gesture && !gesture.pan) return;
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 400 : 1;
+    wheel ??= { dx: 0, dy: 0, factor: 1, x: event.clientX, y: event.clientY };
+    if (event.ctrlKey || event.metaKey) {
+      // Trackpad pinch arrives as Ctrl+wheel. Each step is capped so a mouse notch zooms by about 1.28x.
+      wheel.factor *= Math.exp(-Math.max(-25, Math.min(25, event.deltaY * unit)) * .01); wheel.x = event.clientX; wheel.y = event.clientY;
+    } else {
+      let dx = event.deltaX * unit, dy = event.deltaY * unit;
+      if (event.shiftKey && !dx) { dx = dy; dy = 0; }
+      wheel.dx += dx; wheel.dy += dy;
+    }
+    scheduleCamera();
+  }
+  function announceZoom(scale) {
+    if (zoomNotice !== null) view.clearTimeout(zoomNotice);
+    zoomNotice = view.setTimeout(() => { zoomNotice = null; if (alive && status) status.textContent = `Zoom ${Math.round(scale * 100)}%.`; }, 400);
   }
   function emit() {
     scheduleLabels();
@@ -291,6 +345,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const active = gesture; gesture = null;hideGuides();
     try {
       if(active.pending)return;
+      if(active.pan){root?.removeAttribute('data-canvas-instance-panning');return;}
       if(active.marquee){
         active.overlay?.remove();
         if(cancel)selectEntries(active.previous.filter(usable),active.primary);
@@ -509,7 +564,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   function onBlur(event) {
     focused = root.contains(event.relatedTarget);
     if(editing&&!editing.session.editor.contains(event.relatedTarget)&&event.relatedTarget!==done)finishEdit();
-    if (!focused) {cancelCreation();finish(gesture?.pointerId !== undefined);}
+    if (!focused) {cancelCreation();finish(gesture?.pointerId !== undefined);if(handSpace){handSpace=false;syncHand();}}
     emit();
   }
   function onPointer(event) {
@@ -521,6 +576,12 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     }
     if (event.button !== 0 || event.pointerType === 'touch' || !event.isPrimary || native(event.target)) return;
     finish(true);
+    // Hand pans even when the drag starts over an object, and never moves it.
+    if (world && (handTool || handSpace)) {
+      gesture = { pan: true, pointerId: event.pointerId, x: event.clientX, y: event.clientY, camera: { ...cameraView }, started: true };
+      try { root.setPointerCapture(event.pointerId); } catch { gesture = null; return; }
+      root.toggleAttribute('data-canvas-instance-panning', true); root.focus({ preventScroll: true }); event.preventDefault(); return;
+    }
     const entry = entryAt(event.target);
     if(entry&&!handleAt(event.target)&&(event.shiftKey||multiple)){
       toggle(entry);(selection.has(entry)?entry.element:root).focus({preventScroll:true});event.preventDefault();return;
@@ -552,6 +613,11 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   }
   function onMove(event) {
     if (!gesture || event.pointerId !== gesture.pointerId) return;
+    if (gesture.pan) {
+      const start = gesture.camera;
+      cameraQueue = { x: start.x - (event.clientX - gesture.x) / start.scale, y: start.y - (event.clientY - gesture.y) / start.scale, scale: start.scale };
+      scheduleCamera(); event.preventDefault(); return;
+    }
     if(gesture.marquee){
       const active=gesture,b=active.bounds;
       const x=Math.max(b.left,Math.min(b.right,event.clientX)),y=Math.max(b.top,Math.min(b.bottom,event.clientY));
@@ -613,6 +679,16 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if((event.ctrlKey||event.metaKey)&&!event.altKey&&!event.shiftKey&&event.key.toLowerCase()==='a'){
       event.preventDefault();if(!event.repeat)execute('select-all');return;
     }
+    // Camera keys on camera hosts: H Hand, V Select, + / - zoom by 1.2x, 0 returns to 100%, Shift+1 Fit all,
+    // Shift+2 Zoom to selection. Space held is a temporary Hand.
+    if(world&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!gesture){
+      const by=['+','='].includes(event.key)?1.2:['-','_'].includes(event.key)?1/1.2:null;
+      if(by){event.preventDefault();cameraCommand('zoom',{by});return;}
+      if(event.key==='0'&&!event.shiftKey){event.preventDefault();cameraCommand('zoom',{to:1});return;}
+      if(event.shiftKey&&['Digit1','Digit2'].includes(event.code)){event.preventDefault();if(!event.repeat)cameraCommand(event.code==='Digit1'?'fit':'zoom-to-selection');return;}
+      if(!event.shiftKey&&['h','v'].includes(event.key.toLowerCase())){event.preventDefault();if(!event.repeat)setHand(event.key.toLowerCase()==='h');return;}
+      if(event.key===' '){event.preventDefault();if(!handSpace){handSpace=true;syncHand();emit();}return;}
+    }
     // [ and ] select the previous or next object in reading order (docs/prd/EDITING-PRECISION.md).
     if(!event.ctrlKey&&!event.metaKey&&!event.altKey&&['[',']'].includes(event.key)){
       event.preventDefault();if(!event.repeat&&!gesture)stepSelection(event.key===']'?1:-1);return;
@@ -627,7 +703,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if(startEdit(entry))event.preventDefault();return;
     }
     if (event.key === 'Escape') {
-      if (gesture) finish(true); else {multiple=false;select(null);}
+      if (gesture) finish(true); else {multiple=false;select(null);setHand(false,true);}
       event.preventDefault();return;
     }
     if ((event.ctrlKey || event.metaKey) && !event.altKey && ['z','y'].includes(event.key.toLowerCase())) {
@@ -637,6 +713,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     }
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     const delta = { ArrowLeft: [-1,0], ArrowRight: [1,0], ArrowUp: [0,-1], ArrowDown: [0,1] }[event.key];
+    // With nothing selected, arrows pan a camera host by 50 screen pixels.
+    if (delta && world && !selected && !gesture) { event.preventDefault(); setCamera({ x: cameraView.x + delta[0] * 50 / cameraView.scale, y: cameraView.y + delta[1] * 50 / cameraView.scale, scale: cameraView.scale }); return; }
     if (!delta || !selected || gesture?.pointerId !== undefined || (entry&&!selection.has(entry))) return;
     const kind = handleAt(event.target)?.dataset.canvasInstanceHandle || null;
     if (gesture && (gesture.key !== event.key || gesture.kind !== kind || gesture.entry !== selected)) finish();
@@ -649,7 +727,10 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       move(gesture, gesture.dx, gesture.dy);
     }catch(error){finish(true);view.reportError(error);}
   }
-  function onKeyUp(event) { if (gesture?.key === event.key) finish(); }
+  function onKeyUp(event) {
+    if (event.key === ' ' && handSpace) { handSpace = false; syncHand(); emit(); }
+    if (gesture?.key === event.key) finish();
+  }
   function onContext() { cancelCreation();finish(true); }
   function onDoubleClick(event) {
     if(event.shiftKey||multiple)return;
@@ -696,7 +777,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if (command === 'cancel') { cancelCreation();finishEdit();finish(true);return result(true); }
     if (command === 'finish-edit') { finishEdit(true);return result(true); }
     // Viewing, not editing: camera commands work read-only and while editing, but not during a gesture.
-    if (['camera','zoom','fit','zoom-to-selection'].includes(command)) return cameraCommand(command, value);
+    if (['camera','zoom','fit','zoom-to-selection','hand'].includes(command)) return cameraCommand(command, value);
     if(settings.readOnly&&!['cancel','finish-edit','contain','select-all','copy'].includes(command))return result(false,'read-only');
     const feature=command==='erase'?'delete':['copy','paste'].includes(command)?'clipboard':['group','ungroup'].includes(command)?'group':command.startsWith('align-')||command.startsWith('distribute-')?'arrange':['bring-forward','bring-front','send-backward','send-back'].includes(command)?'layers':['undo','redo'].includes(command)?'history':command==='image-description'?'image':command==='paper-color'?'paperColor':command==='shape-style'?'shapes':command==='edit'?'text':['lock','delete','duplicate'].includes(command)?command:null;
     if(feature&&!settings.tools[feature])return result(false,'disabled');
@@ -1022,6 +1103,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   const listeners = { focusin: onFocus, focusout: onBlur, pointerdown: onPointer, pointermove: onMove,
     pointerup: onPointerEnd, pointercancel: onPointerEnd, lostpointercapture: onPointerEnd, keydown: onKey, keyup: onKeyUp, contextmenu: onContext, dblclick: onDoubleClick, click: onClick };
   for (const [type,listener] of Object.entries(listeners)) root.addEventListener(type,listener);
+  if (world) root.addEventListener('wheel', onWheel, { passive: false });
   applyCamera();
   emit();
   const instance = Object.freeze({
@@ -1155,6 +1237,9 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       alive = focused = false;
       undo.length = redo.length = 0;selected = null;selection.clear();multiple=false;
       for (const [type,listener] of Object.entries(listeners)) root.removeEventListener(type,listener);
+      root.removeEventListener('wheel', onWheel, { passive: false });
+      if (cameraFrameId !== null) view.cancelAnimationFrame(cameraFrameId); if (zoomNotice !== null) view.clearTimeout(zoomNotice); cameraFrameId = zoomNotice = null; cameraQueue = wheel = null;
+      handTool = handSpace = false; root.removeAttribute('data-canvas-instance-hand'); root.removeAttribute('data-canvas-instance-panning');
       if(world){
         const original=cameraOriginal;world.style.transform=original.transform;world.style.transformOrigin=original.origin;world.toggleAttribute('data-canvas-instance-world',original.marked);
         if(original.inverse)world.style.setProperty('--canvas-instance-camera-inverse',original.inverse);else world.style.removeProperty('--canvas-instance-camera-inverse');
