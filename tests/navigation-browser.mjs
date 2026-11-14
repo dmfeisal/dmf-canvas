@@ -641,4 +641,46 @@ await check('the shared custom host opens Layers and its context menu, and dispo
  assert(seen.added.panels===0&&seen.added.menus===0,'Dispose left a panel or menu behind: '+JSON.stringify(seen));
 });
 
+// Organisation step 6: row order after moves and layer changes, and the Layers panel and context menu in RTL.
+await check('Layers rows keep the canvas order after moves and layer changes',async()=>{
+ await page.goto(navigationTest.base+'/tests/fixtures/camera.html');await page.waitForFunction(()=>!!window.cam);
+ await run('camera',{x:0,y:0,scale:1});
+ const order=()=>page.evaluate(()=>window.cam.canvas.getLayers().map(i=>i.id));
+ const rowsOrder=()=>page.evaluate(()=>[...document.querySelectorAll('.canvas-embed-layers__row')].map(b=>+b.dataset.layerId));
+ await page.evaluate(()=>window.cam.canvas.select(null));await openLayers();
+ const start=await order();
+ assert(JSON.stringify(await rowsOrder())===JSON.stringify(start),'Rows differ before any change');
+ const r=await rect('#host [data-canvas-instance-shape]');
+ await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));
+ await drag({x:r.cx,y:r.cy},{x:r.cx+60,y:r.cy+30});await frame();
+ assert(JSON.stringify(await order())===JSON.stringify(start),'A move changed the layer order');
+ assert(JSON.stringify(await rowsOrder())===JSON.stringify(start),'A move changed the rows');
+ const target=start[0];
+ await page.evaluate(id=>{const c=window.cam.canvas,item=c.getLayers().find(i=>i.id===id);c.select(item.element);c.execute('send-back');},target);await frame();
+ const after=await order();
+ assert(after[after.length-1]===target,'send-back did not move the object to the back: '+JSON.stringify(after));
+ assert(JSON.stringify(await rowsOrder())===JSON.stringify(after),'Rows did not follow send-back');
+ const z=await page.evaluate(()=>window.cam.canvas.getLayers().map(i=>Number.parseInt(getComputedStyle(i.element).zIndex,10)||0));
+ assert(z.every((value,index)=>index===0||z[index-1]>=value),'Rows and z-index disagree: '+JSON.stringify(z));
+ await page.evaluate(()=>window.cam.canvas.execute('bring-front'));
+ await page.evaluate(()=>window.cam.canvas.execute('undo'));
+});
+
+await check('the Layers panel and the context menu stay on screen in right-to-left layout',async()=>{
+ await page.cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
+ await page.evaluate(()=>{document.documentElement.dir='rtl';window.cam.canvas.select(window.cam.rect);});
+ // The fixture's 800px host is wider than this screen already; the panel and menu must not widen the page further.
+ const widthBefore=await page.evaluate(()=>document.documentElement.scrollWidth);
+ await openLayers();
+ const panel=await page.evaluate(()=>{const p=document.querySelector('.canvas-embed-layers').getBoundingClientRect();return {left:p.left,right:p.right,top:p.top,bottom:p.bottom,vw:innerWidth,vh:innerHeight,open:document.querySelector('.canvas-embed-layers').matches(':popover-open')};});
+ assert(panel.open&&panel.left>=-.5&&panel.right<=panel.vw+.5&&panel.top>=-.5&&panel.bottom<=panel.vh+.5,'Layers panel off screen in RTL: '+JSON.stringify(panel));
+ await page.keyboard.press('Escape');await frame();
+ await page.focus('[data-canvas-instance-selected]');await page.keyboard.press('Shift+F10');await frame();
+ const menu=await page.evaluate(()=>{const m=document.querySelector('.canvas-embed-context');const b=m.getBoundingClientRect();return {open:m.matches(':popover-open'),left:b.left,right:b.right,top:b.top,bottom:b.bottom,vw:innerWidth,vh:innerHeight,items:m.querySelectorAll('[role=menuitem]').length};});
+ assert(menu.open&&menu.items>=3&&menu.left>=-.5&&menu.right<=menu.vw+.5&&menu.top>=-.5&&menu.bottom<=menu.vh+.5,'Context menu off screen in RTL: '+JSON.stringify(menu));
+ assert((await page.evaluate(()=>document.documentElement.scrollWidth))<=widthBefore,'The Layers panel or menu widened the page in RTL');
+ await page.keyboard.press('Escape');await frame();
+ await page.evaluate(()=>{document.documentElement.dir='';});await page.cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+});
+
 console.log(`PASS navigation: ${passed} checks`);

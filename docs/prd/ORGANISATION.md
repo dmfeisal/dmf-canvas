@@ -57,7 +57,7 @@ Layer order (bring to front, send to back, forward and backward), locks, groups,
 3. Reset object and Reset canvas edits, as Undo steps built on the existing snapshots. **Built in 0.6.0-alpha.1**: each object keeps its start state from registration, and a reset is one history action. It changes the board, because it changes owner state and removes objects; the proposal's note that it is visit-local applies to layer names only.
 4. Context menu on right-click and Shift+F10, reusing the toolbar's dispatcher.
 5. Hosts: the configurator and the shared custom host get a Layers action and the context menu. Glossary, API, toolbar standard, changelog. **Built in 0.6.0-alpha.1**: both hosts, with teardown tied to the canvas.
-6. A browser suite covering: row order against the canvas after moves and layer changes, rename and its Undo, search, Reset object and Reset canvas edits with Undo, the context menu's actions and keys, and RTL.
+6. A browser suite covering: row order against the canvas after moves and layer changes, rename and its Undo, search, Reset object and Reset canvas edits with Undo, the context menu's actions and keys, and RTL. **Built in 0.6.0-alpha.1**: the navigation suite has 57 checks, covering each of these.
 
 It lands as `0.6.0-alpha.n` and is promoted to `0.6.0` when the suite passes in CI and dmf-web can move one surface onto it.
 
