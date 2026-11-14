@@ -14,7 +14,7 @@ Unreleased inspector work uses native Popover and the existing owners' untransfo
 
 ## Camera (0.5.0-alpha.1, experimental)
 
-The opt-in camera changes no data format. Its position and zoom are host view state: they are never written to board, clipboard, draft or portable files, never enter history and never trigger change events. Hosts without `camera` behave exactly as in 0.4.0. On camera hosts, objects live in world coordinates inside the host-marked world element and are not clamped to the host, so a board saved from a camera host can hold positions outside the host's visible area; opening it on a bounded host clamps them as before. On camera hosts, the inspector reports world units.
+The opt-in camera changes no data format. Its position and zoom are host view state: they are never written to board, clipboard, draft or portable files, never enter history and never trigger change events. Hosts without `camera` behave exactly as in 0.4.0. On camera hosts, objects live in world coordinates inside the host-marked world element and are not clamped to the host, so a board saved from a camera host can hold positions outside the host's visible area, always within the ±100,000 layout and translation range readers accept; opening it on a bounded host clamps them as before. On camera hosts, the inspector reports world units.
 
 ## Shapes (schema 4)
 

@@ -21,7 +21,9 @@ export function createPencil(canvas,host,onChange=()=>{}) {
   const worldOf=()=>root.querySelector(':scope > [data-canvas-instance-world]');
   const space=()=>{
     const world=worldOf(),camera=instance.getState().camera;
-    if(world&&camera){const rect=world.getBoundingClientRect(),scale=camera.scale;return {target:world,bounded:false,map:(x,y)=>({x:(x-rect.left)/scale-world.clientLeft,y:(y-rect.top)/scale-world.clientTop})};}
+    // World points stay well inside the +/-100000 range saved boards accept, padding included.
+    const keep=value=>Math.max(-99000,Math.min(99000,value));
+    if(world&&camera){const rect=world.getBoundingClientRect(),scale=camera.scale;return {target:world,bounded:false,map:(x,y)=>({x:keep((x-rect.left)/scale-world.clientLeft),y:keep((y-rect.top)/scale-world.clientTop)})};}
     const rect=root.getBoundingClientRect();return {target:root,bounded:true,map:(x,y)=>({x:x-rect.left-root.clientLeft,y:y-rect.top-root.clientTop})};
   };
   const cleanup=()=>{
@@ -74,6 +76,7 @@ export function createPencil(canvas,host,onChange=()=>{}) {
   const commitShape=(reservation,{layout,points},place=space())=>{
     // Keep the box inside the containment area; the owner contains anything still too large. Camera worlds are unbounded.
     if(place.bounded){const a=area();layout={...layout,left:Math.max(a.left,Math.min(a.right-layout.width,layout.left)),top:Math.max(a.top,Math.min(a.bottom-layout.height,layout.top))};}
+    else layout={...layout,left:Math.max(-100000,Math.min(100000-layout.width,layout.left)),top:Math.max(-100000,Math.min(100000-layout.height,layout.top))};
     let item;
     try{
       item=createShape(place.target,shapeStyle(points),layout);

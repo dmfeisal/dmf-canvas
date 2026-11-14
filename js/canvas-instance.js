@@ -170,6 +170,10 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   function setCamera(next, floor = false, quiet = false) {
     const limits = settings.camera, scale = Math.min(limits.maxScale, Math.max(floor ? .05 : limits.minScale, next.scale));
     if (![next.x, next.y, scale].every(Number.isFinite)) return result(false, 'invalid-camera');
+    // The visible centre stays within +/-100000 world units, the range saved boards accept, so new objects and
+    // pastes placed there can always be saved.
+    const halfX = root.clientWidth / 2 / scale, halfY = root.clientHeight / 2 / scale, keep = (value, half) => Math.max(-100000, Math.min(100000, value + half)) - half;
+    next = { x: keep(next.x, halfX), y: keep(next.y, halfY) };
     const zoomed = scale !== cameraView.scale, moved = zoomed || next.x !== cameraView.x || next.y !== cameraView.y;
     cameraView = { x: next.x, y: next.y, scale };
     if (moved) {
@@ -964,7 +968,10 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if(entry.group&&!groups.has(entry.group))groups.set(entry.group,groups.size+1);
       const data={...documents.validate(clone(entry.adapter.serialize())),locked:false,layer:index,...(entry.group?{group:groups.get(entry.group)}:{})};
       if(!entry.group)delete data.group;
-      const r=entry.element.getBoundingClientRect();return {data,bounds:{left:r.left-area.left-root.clientLeft,top:r.top-area.top-root.clientTop,width:r.width,height:r.height}};
+      const r=entry.element.getBoundingClientRect();
+      // Camera hosts record world units, kept inside the clipboard's range; their paste recentres and ignores them.
+      if(world){const w=world.getBoundingClientRect(),k=cameraView.scale,keep=value=>Math.max(-100000,Math.min(100000,value));return {data,bounds:{left:keep((r.left-w.left)/k),top:keep((r.top-w.top)/k),width:Math.min(100000,Math.max(.01,r.width/k)),height:Math.min(100000,Math.max(.01,r.height/k))}};}
+      return {data,bounds:{left:r.left-area.left-root.clientLeft,top:r.top-area.top-root.clientTop,width:r.width,height:r.height}};
     });
     clipboard.write(validateTransfer({format:'dmf-canvas-clipboard',version:objects.some(item=>item.data.type==='shape')?4:objects.some(item=>item.data.tool==='highlighter')?3:objects.some(item=>item.data.state.typography||item.data.layout.fontSize>200)?2:1,objects}));
     status.textContent=`${objects.length} object${objects.length===1?'':'s'} copied for this page.`;return result(true);

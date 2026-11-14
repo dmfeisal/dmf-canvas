@@ -263,6 +263,16 @@ await check('+, -, 0, Shift+1, Shift+2 and arrows drive the camera from the keyb
  const t=await rect('#text'),h=await host();assert(near(t.cx,h.x+h.width/2,1),'Shift+2 did not frame the selection');
 });
 
+await check('far pans, new objects, pastes and drags stay within the range saved boards accept',async()=>{
+ await run('camera',{x:5e6,y:-5e6,scale:1});const c=await cam(),h=await host();
+ assert(near(c.x+h.width/2,1e5,.01)&&near(c.y+h.height/2,-1e5,.01),'Visible centre not kept in range: '+JSON.stringify(c));
+ assert(await page.evaluate(()=>!!window.cam.addNote()),'Note not created far out');
+ await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));await run('copy');await run('paste');
+ const n=await selectedRect();await drag({x:n.cx,y:n.cy},{x:n.cx+300,y:n.cy-200});
+ const saved=await page.evaluate(()=>{try{return {ok:true,count:window.cam.canvas.saveDocument().objects.length};}catch(error){return {ok:false,error:error.message};}});
+ assert(saved.ok,'Board could not be saved: '+JSON.stringify(saved));
+});
+
 await check('destroy restores the world and the host background',async()=>{
  const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length+(h.hasAttribute('data-canvas-instance-hand')||h.hasAttribute('data-canvas-instance-panning')?1:0)};});
  assert(left.style===null&&!left.marked&&left.size===''&&left.position===''&&left.overlays===0,'Left behind: '+JSON.stringify(left));
