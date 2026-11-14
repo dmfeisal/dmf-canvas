@@ -1,6 +1,6 @@
 ---
 title: "Organisation"
-status: proposed
+status: accepted
 owner: product
 last_reviewed: 2026-11-14
 source_of_truth: true
@@ -44,11 +44,11 @@ Layer order (bring to front, send to back, forward and backward), locks, groups,
 - **Content:** the same actions as the More menu for the current selection, reusing the toolbar's dispatcher, availability rules, icons and history. It adds no commands of its own.
 - **Behaviour:** one reusable top-layer popover with controlled dismissal. Rows are sized from their content and padding, not a fixed minimum, as AGENTS.md requires. Keyboard navigation follows the More menu. Right-click on a camera host (see [navigation](NAVIGATION.md)) uses the same rules.
 
-## Decisions to confirm
+## Decisions (accepted 14 November 2026)
 
-1. **Are custom layer names saved in board files?** Recommended: **no**, matching dmf-web. Names stay visit-local, so board, clipboard and draft formats don't change. The cost is that a named layer loses its name on reload, which dmf-web also does today. The alternative is an optional name field on each record, which means a schema bump, reader rules for older versions and a changelog entry.
-2. **Where does the Layers panel live?** Recommended: **the toolbar entry point** (`dmf-canvas/toolbar`), the same as the inspector and full screen. Core doesn't mount UI.
-3. **Does Reset canvas edits remove copies made during the visit?** Recommended: **yes**. It removes only visit-local copies. Authored originals are restored to their starting state, which matches dmf-web's rule.
+1. **Are custom layer names saved in board files? Accepted: no**, matching dmf-web. Names stay visit-local, so board, clipboard and draft formats don't change. The cost is that a named layer loses its name on reload, which dmf-web also does today. The alternative is an optional name field on each record, which means a schema bump, reader rules for older versions and a changelog entry.
+2. **Where does the Layers panel live? Accepted: the toolbar entry point** (`dmf-canvas/toolbar`), the same as the inspector and full screen. Core doesn't mount UI.
+3. **Does Reset canvas edits remove copies made during the visit? Accepted: yes**. It removes only visit-local copies. Authored originals are restored to their starting state, which matches dmf-web's rule.
 
 ## Delivery
 
