@@ -474,6 +474,47 @@ await check('Reset canvas edits removes visit-local objects, keeps locked ones, 
  assert((await page.evaluate(()=>window.cam.canvas.execute('undo'))).ok&&await count()===withNote,'Undo did not restore the removed object');
 });
 
+// Organisation step 4: the context menu (docs/prd/ORGANISATION.md) lists the toolbar's own actions.
+const menuState=()=>page.evaluate(()=>{const m=document.querySelector('.canvas-embed-context');return {open:m?.matches(':popover-open')??false,items:[...(m?.querySelectorAll('[role=menuitem]')??[])].map(b=>({id:b.dataset.contextAction,disabled:b.disabled,label:b.textContent.trim()}))};});
+
+await check('right-click opens the toolbar\'s actions at the pointer, with their availability, and suppresses the native menu',async()=>{
+ await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));
+ const h=await host();
+ const defaultPrevented=await page.evaluate(([x,y])=>{const e=new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:x,clientY:y});window.cam.host.dispatchEvent(e);return e.defaultPrevented;},[h.x+200,h.y+150]);
+ assert(defaultPrevented,'The native context menu was not suppressed');
+ const state=await menuState();
+ assert(state.open&&state.items.length===4,'Menu not open with the toolbar actions: '+JSON.stringify(state));
+ // The menu must report exactly the toolbar's availability, whatever it is at this moment.
+ const bar=await page.evaluate(()=>[...document.querySelectorAll('#bar [data-toolbar-action]')].map(b=>({id:b.dataset.toolbarAction,disabled:b.disabled})));
+ assert(state.items.length===bar.length&&state.items.every(item=>{const b=bar.find(x=>x.id===item.id);return b&&b.disabled===item.disabled;}),'Menu availability differs from the toolbar: '+JSON.stringify({state,bar}));
+ await page.keyboard.press('Escape');await frame();
+ assert(!(await menuState()).open,'Escape did not close the menu');
+});
+
+await check('a menu item runs the same action as the toolbar, and a disabled item cannot run',async()=>{
+ await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));
+ const h=await host();
+ await page.evaluate(([x,y])=>window.cam.host.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:x,clientY:y})),[h.x+200,h.y+150]);
+ await page.click('.canvas-embed-context [data-context-action="lock"]');await frame();
+ assert(await page.evaluate(()=>window.cam.canvas.getLayers().find(i=>i.element===window.cam.rect).locked),'Lock from the menu did not lock the object');
+ assert(!(await menuState()).open,'Choosing an item did not close the menu');
+ await page.evaluate(()=>window.cam.canvas.execute('lock',false));
+ // A disabled or unknown action never runs: activate() refuses, as a disabled button's click does.
+ const refused=await page.evaluate(()=>{window.cam.bar.update('duplicate',{disabled:true});const off=window.cam.bar.activate('duplicate'),unknown=window.cam.bar.activate('no-such-action');window.cam.bar.update('duplicate',{disabled:false});return {off,unknown};});
+ assert(refused.off===false&&refused.unknown===false,'A disabled or unknown action ran: '+JSON.stringify(refused));
+});
+
+await check('Shift+F10 on a focused object opens the menu beside it, and Escape returns focus to the canvas',async()=>{
+ await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));
+ await page.evaluate(()=>window.cam.rect.focus());
+ await page.keyboard.press('Shift+F10');await frame();
+ const state=await menuState();assert(state.open&&state.items.length===4,'Shift+F10 did not open the menu: '+JSON.stringify(state));
+ const near=await page.evaluate(()=>{const m=document.querySelector('.canvas-embed-context').getBoundingClientRect(),r=window.cam.rect.getBoundingClientRect();return {x:m.left-r.left,y:m.top-r.top};});
+ assert(Number.isFinite(near.x)&&near.x>-400&&near.x<400,'Menu not beside the object: '+JSON.stringify(near));
+ await page.keyboard.press('ArrowDown');await page.keyboard.press('Escape');await frame();
+ assert(!(await menuState()).open,'Escape did not close the menu after Shift+F10');
+});
+
 await check('destroy restores the world and the host background',async()=>{
  const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length+(h.hasAttribute('data-canvas-instance-hand')||h.hasAttribute('data-canvas-instance-panning')?1:0)};});
  assert(left.style===null&&!left.marked&&left.size===''&&left.position===''&&left.overlays===0,'Left behind: '+JSON.stringify(left));

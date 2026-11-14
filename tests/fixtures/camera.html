@@ -11,14 +11,14 @@
   #text { position: absolute; left: 100px; top: 100px; margin: 0; }
 </style>
 <!-- Navigation browser suite fixture (docs/prd/NAVIGATION.md): a camera host with one Text and one Rectangle. -->
-<div id="frame"><button id="inspect" type="button">Inspect</button><button id="enter-dispose" type="button">Enter then dispose</button><button id="layers" type="button">Layers</button>
+<div id="frame"><button id="inspect" type="button">Inspect</button><button id="enter-dispose" type="button">Enter then dispose</button><button id="layers" type="button">Layers</button><div id="bar"></div>
 <div id="host" aria-label="Camera canvas"><div id="world"><p id="text">Camera text</p></div></div></div>
 <script type="module">
   import {createCanvas} from '/index.js';
   import {createTextOwner,createShape,createStickyNote,canvasDocuments} from '/owners.js';
   import {createObjectClipboard} from '/clipboard.js';
   import {createPencil} from '/pencil.js';
-  import {createCanvasInspector,createCanvasFullscreen,createCanvasLayers} from '/toolbar.js';
+  import {createCanvasInspector,createCanvasFullscreen,createCanvasLayers,createCanvasToolbar,createCanvasContextMenu} from '/toolbar.js';
   const host = document.getElementById('host'), world = document.getElementById('world'), text = document.getElementById('text');
   const canvas = createCanvas(host, {documents: canvasDocuments, clipboard: createObjectClipboard(), camera: {world}});
   canvas.register(text, createTextOwner(text, world));
@@ -31,6 +31,15 @@
   const fullStates = [];
   const fullscreen = createCanvasFullscreen(document.getElementById('frame'), {canvas, onChange: state => fullStates.push(state.active)});
   const layers = createCanvasLayers(document.getElementById('frame'), {canvas, trigger: document.getElementById('layers')});
-  window.cam = {canvas, host, world, text, rect: rect.element, pencil, inspector, addNote, fullscreen, fullStates, layers};
+  // A toolbar with the same actions the context menu lists: they dispatch through the canvas, as a host's buttons do.
+  const bar = createCanvasToolbar(document.getElementById('bar'), {label: 'Canvas actions', actions: [
+    {id: 'undo', label: 'Undo', icon: 'undo-2', shortcut: 'Z', run: () => canvas.execute('undo')},
+    {id: 'duplicate', label: 'Duplicate', icon: 'copy-plus', shortcut: 'D', run: () => canvas.execute('duplicate')},
+    {id: 'lock', label: 'Lock', icon: 'lock-keyhole', run: () => canvas.execute('lock', true)},
+    {id: 'reset-object', label: 'Reset selected', icon: 'sliders-horizontal', run: () => canvas.execute('reset-object')},
+  ]});
+  canvas.subscribe(state => {bar.update('undo', {disabled: !state.canUndo}); bar.update('duplicate', {disabled: !state.canDuplicate}); bar.update('reset-object', {disabled: !state.selectionCount});});
+  const context = createCanvasContextMenu(host, {canvas, toolbar: bar});
+  window.cam = {canvas, host, world, text, rect: rect.element, pencil, inspector, addNote, fullscreen, fullStates, layers, bar, context};
 </script>
 </html>

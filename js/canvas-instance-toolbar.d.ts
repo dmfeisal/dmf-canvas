@@ -21,5 +21,9 @@ export function createCanvasToolbar(container:HTMLElement,options?:{
 }):Readonly<{
   render():void;
   update(id:string,patch:{label?:string;disabled?:boolean;hidden?:boolean;pressed?:boolean|'mixed'}):void;
+  /** Visible actions with their labels, shortcuts and availability (what a context menu lists). */
+  entries():readonly Readonly<{id:string;label:string;key:string;enabled:boolean}>[];
+  /** Runs an enabled action exactly as a click does; false when it is unknown, hidden or disabled. */
+  activate(id:string):boolean;
   dispose():void;
 }>;
