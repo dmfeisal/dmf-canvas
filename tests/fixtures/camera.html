@@ -11,14 +11,14 @@
   #text { position: absolute; left: 100px; top: 100px; margin: 0; }
 </style>
 <!-- Navigation browser suite fixture (docs/prd/NAVIGATION.md): a camera host with one Text and one Rectangle. -->
-<div id="frame"><button id="inspect" type="button">Inspect</button><button id="enter-dispose" type="button">Enter then dispose</button>
+<div id="frame"><button id="inspect" type="button">Inspect</button><button id="enter-dispose" type="button">Enter then dispose</button><button id="layers" type="button">Layers</button>
 <div id="host" aria-label="Camera canvas"><div id="world"><p id="text">Camera text</p></div></div></div>
 <script type="module">
   import {createCanvas} from '/index.js';
   import {createTextOwner,createShape,createStickyNote,canvasDocuments} from '/owners.js';
   import {createObjectClipboard} from '/clipboard.js';
   import {createPencil} from '/pencil.js';
-  import {createCanvasInspector,createCanvasFullscreen} from '/toolbar.js';
+  import {createCanvasInspector,createCanvasFullscreen,createCanvasLayers} from '/toolbar.js';
   const host = document.getElementById('host'), world = document.getElementById('world'), text = document.getElementById('text');
   const canvas = createCanvas(host, {documents: canvasDocuments, clipboard: createObjectClipboard(), camera: {world}});
   canvas.register(text, createTextOwner(text, world));
@@ -30,6 +30,7 @@
   const addNote = () => { const reservation = canvas.beginCreation(() => {}, 'sticky'); const note = createStickyNote(world); return reservation.commit(note.element, note.owner) ? note.element : null; };
   const fullStates = [];
   const fullscreen = createCanvasFullscreen(document.getElementById('frame'), {canvas, onChange: state => fullStates.push(state.active)});
-  window.cam = {canvas, host, world, text, rect: rect.element, pencil, inspector, addNote, fullscreen, fullStates};
+  const layers = createCanvasLayers(document.getElementById('frame'), {canvas, trigger: document.getElementById('layers')});
+  window.cam = {canvas, host, world, text, rect: rect.element, pencil, inspector, addNote, fullscreen, fullStates, layers};
 </script>
 </html>

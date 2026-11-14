@@ -367,6 +367,113 @@ await check('F puts the whole chrome container into full screen, and the camera 
  assert(!(await page.evaluate(()=>document.fullscreenElement)),'Full screen left on after an in-flight dispose');
 });
 
+// Organisation step 1: the Layers panel (docs/prd/ORGANISATION.md) against the canvas's own order.
+const layerRows=()=>page.evaluate(()=>[...document.querySelectorAll('.canvas-embed-layers__row')].map(b=>({id:+b.dataset.layerId,name:b.querySelector('span').textContent,pressed:b.getAttribute('aria-pressed')})));
+const openLayers=async()=>{await page.evaluate(()=>{if(!document.querySelector('.canvas-embed-layers').matches(':popover-open'))document.getElementById('layers').click();});await frame();};
+const zOrder=()=>page.evaluate(()=>{const items=window.cam.canvas.getLayers();return items.map(item=>({id:item.id,z:Number.parseInt(getComputedStyle(item.element).zIndex,10)||0}));});
+
+await check('the Layers panel lists objects front to back, in the same order as the canvas stacks them',async()=>{
+ await page.evaluate(()=>window.cam.canvas.select(null));await openLayers();
+ const rows=await layerRows(),layers=await page.evaluate(()=>window.cam.canvas.getLayers().map(item=>item.id));
+ assert(rows.length>=2&&rows.map(row=>row.id).join()===layers.join(),'Rows do not match getLayers: '+JSON.stringify({rows,layers}));
+ const z=await zOrder();const zs=z.map(item=>item.z);
+ assert(zs.every((value,index)=>index===0||zs[index-1]>=value),'Front-to-back order wrong against z-index: '+JSON.stringify(z));
+ assert(rows.every(row=>row.name.length>0&&row.name!=='undefined'),'Missing type names: '+JSON.stringify(rows));
+});
+
+await check('the Layers order follows bring-front and send-back, and a row selects its object',async()=>{
+ const rect=await page.evaluate(()=>window.cam.canvas.getLayers().find(item=>item.element===window.cam.rect)?.id??null);
+ assert(rect!==null,'No rectangle layer');
+ await page.evaluate(()=>{const c=window.cam.canvas;c.select(window.cam.rect);c.execute('send-back');});
+ const sent=(await layerRows()).map(row=>row.id);
+ assert(sent[sent.length-1]===rect,'send-back did not move the rectangle to the back: '+JSON.stringify(sent));
+ await page.click(`.canvas-embed-layers__row[data-layer-id="${rect}"]`);
+ const selected=await page.evaluate(()=>window.cam.canvas.getState().selectionName);
+ assert(selected==='Rectangle','Row did not select its object: '+selected);
+ assert((await layerRows()).find(row=>row.id===rect).pressed==='true','Selected row not pressed');
+ await page.evaluate(()=>window.cam.canvas.execute('bring-front'));
+});
+
+await check('the Layers panel follows new objects while open, and Escape closes it and returns focus',async()=>{
+ await openLayers();const before=(await layerRows()).length;
+ await page.evaluate(()=>window.cam.addNote());await frame();
+ assert((await layerRows()).length===before+1,'New note not listed while open');
+ await page.keyboard.press('Escape');await frame();
+ const state=await page.evaluate(()=>({open:document.querySelector('.canvas-embed-layers').matches(':popover-open'),expanded:document.getElementById('layers').getAttribute('aria-expanded'),focus:document.activeElement?.id}));
+ assert(!state.open&&state.expanded==='false'&&state.focus==='layers','Escape did not close or return focus: '+JSON.stringify(state));
+});
+
+// Organisation step 2: rename (visit-local, one Undo step, never dirties the board) and search.
+await check('rename from the Layers panel is visit-local, one Undo step, and leaves the board clean',async()=>{
+ await page.evaluate(()=>window.cam.canvas.select(null));await openLayers();
+ const rows=await layerRows(),target=rows.find(row=>row.name==='Rectangle');
+ const before=await page.evaluate(()=>window.cam.canvas.getState().revision);
+ await page.click(`.canvas-embed-layers__row[data-layer-id="${target.id}"] + .canvas-embed-layers__rename-button`);
+ await page.fill('.canvas-embed-layers__rename input[type=text]','  Hero   box\u0001 ');await page.keyboard.press('Enter');await frame();
+ const after=await layerRows(),renamed=after.find(row=>row.id===target.id);
+ assert(renamed.name==='Hero box','Name not normalised: '+JSON.stringify(renamed));
+ assert(await page.evaluate(()=>window.cam.canvas.getState().revision)===before,'Rename dirtied the board');
+ assert(await page.evaluate(()=>window.cam.canvas.getState().canUndo),'Rename is not in history');
+ assert(await page.evaluate(()=>window.cam.canvas.execute('undo').ok)&&(await layerRows()).find(row=>row.id===target.id).name==='Rectangle','Undo did not restore the type name');
+ assert(await page.evaluate(()=>window.cam.canvas.execute('redo').ok)&&(await layerRows()).find(row=>row.id===target.id).name==='Hero box','Redo did not restore the name');
+ await page.evaluate(()=>window.cam.canvas.execute('undo'));
+});
+
+await check('search filters rows by name and type without changing order or selection',async()=>{
+ await openLayers();const all=await layerRows();
+ await page.fill('.canvas-embed-layers__search','sticky');await frame();
+ const shown=await page.evaluate(()=>[...document.querySelectorAll('.canvas-embed-layers__list li')].filter(li=>!li.hidden).map(li=>li.querySelector('[data-layer-id]').dataset.layerId));
+ const expected=all.filter(row=>/sticky/i.test(row.name)).map(row=>String(row.id));
+ assert(shown.join()===expected.join()&&shown.length>0,'Search wrong: '+JSON.stringify({shown,expected}));
+ await page.fill('.canvas-embed-layers__search','zzz-no-match');await frame();
+ assert(await page.evaluate(()=>!document.querySelector('.canvas-embed-layers p:not([hidden])')?.textContent.includes('No objects')&&!!document.querySelector('.canvas-embed-layers p:not([hidden])')),'No-match message missing');
+ await page.fill('.canvas-embed-layers__search','');await frame();
+});
+
+await check('F2 on a focused row starts a rename; Escape cancels it without closing the panel; a locked layer cannot be renamed',async()=>{
+ await openLayers();const rows=await layerRows(),row=rows[0];
+ await page.focus(`.canvas-embed-layers__row[data-layer-id="${row.id}"]`);await page.keyboard.press('F2');
+ assert(await page.evaluate(()=>!!document.querySelector('.canvas-embed-layers__rename input')),'F2 did not start a rename');
+ await page.keyboard.press('Escape');await frame();
+ const state=await page.evaluate(()=>({open:document.querySelector('.canvas-embed-layers').matches(':popover-open'),form:!!document.querySelector('.canvas-embed-layers__rename')}));
+ assert(state.open&&!state.form,'Escape in the rename field did not cancel only the rename: '+JSON.stringify(state));
+ await page.evaluate(()=>window.cam.canvas.execute('lock',true));await frame();
+ const locked=await page.evaluate(()=>{const b=[...document.querySelectorAll('.canvas-embed-layers__rename-button')];return b.some(x=>x.disabled);});
+ assert(locked,'A locked layer offered Rename');
+ await page.evaluate(()=>window.cam.canvas.execute('lock',false));await frame();
+ await page.keyboard.press('Escape');await frame();
+});
+
+// Organisation step 3: Reset object and Reset canvas edits (one Undo step each, board-changing).
+await check('Reset object returns the selection to its start state, and Undo restores it',async()=>{
+ await placeRect(300,200);await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));
+ await page.evaluate(()=>window.cam.canvas.execute('rename',{id:window.cam.canvas.getLayers().find(i=>i.element===window.cam.rect).id,name:'Moved box'}));
+ await run('inspect',{field:'x',value:420});await page.evaluate(()=>window.cam.canvas.execute('lock',true));
+ const moved=await page.evaluate(()=>window.cam.canvas.getLayers().find(i=>i.element===window.cam.rect).name);
+ assert(moved==='Moved box','Setup rename failed');
+ assert((await page.evaluate(()=>window.cam.canvas.execute('reset-object'))).ok,'Reset object refused');
+ const after=await page.evaluate(()=>{const i=window.cam.canvas.getLayers().find(x=>x.element===window.cam.rect);return {name:i.name,locked:i.locked};});
+ assert(after.name==='Rectangle'&&after.locked===false,'Reset object did not clear the name and lock: '+JSON.stringify(after));
+ assert((await page.evaluate(()=>window.cam.canvas.execute('undo'))).ok,'Undo refused');
+ const undone=await page.evaluate(()=>window.cam.canvas.getLayers().find(x=>x.element===window.cam.rect).name);
+ assert(undone==='Moved box','Undo did not restore the name: '+undone);
+});
+
+await check('Reset canvas edits removes visit-local objects, keeps locked ones, restores originals, and is one Undo step',async()=>{
+ await page.evaluate(()=>window.cam.canvas.execute('move',{dx:40,dy:0}));
+ const count=()=>page.evaluate(()=>window.cam.canvas.getState().objects);
+ await page.evaluate(()=>window.cam.addNote());await page.evaluate(()=>window.cam.canvas.select(null));
+ const withNote=await count(),board=await page.evaluate(()=>window.cam.canvas.getState().revision);
+ assert((await page.evaluate(()=>window.cam.canvas.execute('reset-canvas'))).ok,'Reset canvas edits refused');
+ const after=await count();
+ assert(after<withNote,'Visit-local note was not removed: '+withNote+' -> '+after);
+ assert(await page.evaluate(()=>!!window.cam.text.isConnected&&window.cam.canvas.getLayers().some(i=>i.element===window.cam.text)),'The authored original was removed');
+ const [x=0,y=0]=(await page.evaluate(()=>window.cam.text.style.translate)||'0px 0px').split(' ').map(v=>parseFloat(v)||0);const now=[x,y];
+ assert(JSON.stringify([x,y])==='[0,0]','The original was not restored to its registration position: '+now);
+ assert(await page.evaluate(()=>window.cam.canvas.getState().revision)>board,'Reset did not change the board');
+ assert((await page.evaluate(()=>window.cam.canvas.execute('undo'))).ok&&await count()===withNote,'Undo did not restore the removed object');
+});
+
 await check('destroy restores the world and the host background',async()=>{
  const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length+(h.hasAttribute('data-canvas-instance-hand')||h.hasAttribute('data-canvas-instance-panning')?1:0)};});
  assert(left.style===null&&!left.marked&&left.size===''&&left.position===''&&left.overlays===0,'Left behind: '+JSON.stringify(left));

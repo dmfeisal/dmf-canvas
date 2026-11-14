@@ -57,7 +57,7 @@ Why second: it is the largest architectural change. A transformed world affects 
 
 Layers panel (type names, rename, search), Reset canvas edits / Reset object, and the context menu.
 
-Needs a decision: whether custom layer names are saved in board files. Saving them is a new optional record field and a schema bump; keeping them visit-local matches dmf-web today.
+Proposed as [organisation](ORGANISATION.md). Needs a decision: whether custom layer names are saved in board files; the proposal recommends visit-local, which needs no format change. Saving them is a new optional record field and a schema bump; keeping them visit-local matches dmf-web today.
 
 ### Phase 4 — styling and export (0.7.0)
 

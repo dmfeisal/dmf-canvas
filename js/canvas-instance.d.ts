@@ -58,7 +58,7 @@ export interface CanvasCameraOptions extends Partial<CanvasCameraLimits> { world
 export interface CanvasCamera { readonly x:number; readonly y:number; readonly scale:number; }
 export interface CanvasEmbedSettings { readonly readOnly:boolean; readonly tools:Readonly<Record<CanvasTool,boolean>>; readonly snapping:CanvasSnapping; /** Name and size labels around the selection (default true). */ readonly labels:boolean; /** Zoom limits, or false on hosts without a camera (the default). */ readonly camera:CanvasCameraLimits|false; }
 export interface CanvasSettingsPatch { readOnly?:boolean; tools?:Partial<Record<CanvasTool,boolean>>; snapping?:Partial<CanvasSnapping>; labels?:boolean; /** Camera hosts only: change the zoom limits. The world, and whether there is a camera, are fixed at creation (false is accepted only where there is none). */ camera?:Partial<CanvasCameraLimits>|false; }
-export type CanvasChangeSource = 'text' | 'text-style' | 'move' | 'transform' | 'create' | 'duplicate' | 'delete' | 'erase' | 'paste' | 'lock' | 'paper-color' | 'shape-style' | 'image-description' | 'group' | 'ungroup' | 'bring-forward' | 'bring-front' | 'send-backward' | 'send-back' | 'align-left' | 'align-center' | 'align-right' | 'align-top' | 'align-middle' | 'align-bottom' | 'distribute-horizontal' | 'distribute-vertical' | 'undo' | 'redo' | 'open';
+export type CanvasChangeSource = 'text' | 'text-style' | 'move' | 'transform' | 'reset' | 'create' | 'duplicate' | 'delete' | 'erase' | 'paste' | 'lock' | 'paper-color' | 'shape-style' | 'image-description' | 'group' | 'ungroup' | 'bring-forward' | 'bring-front' | 'send-backward' | 'send-back' | 'align-left' | 'align-center' | 'align-right' | 'align-top' | 'align-middle' | 'align-bottom' | 'distribute-horizontal' | 'distribute-vertical' | 'undo' | 'redo' | 'open';
 export interface CanvasChange { readonly revision:number; readonly dirty:boolean; readonly source:CanvasChangeSource; }
 export interface CanvasState {
   readonly imageDescription:string|null;
@@ -124,6 +124,14 @@ export interface CanvasInstance {
   /** Restyle every selected shape as one history step; needs the `shapes` tool. Fill skips lines and arrows, corners apply to rectangles. */
   execute(command:'shape-style',value:CanvasShapeStylePatch):CommandResult;
   getInspector():Readonly<{x:number;y:number;width:number;height:number;rotation:number;relativeRotation:boolean;editable:boolean}>|null;
+  /** Layers, front to back. `element` is the object to pass to select(); visit-local and never saved. */
+  getLayers():readonly Readonly<{id:number;name:string;typeName:string;renamed:boolean;locked:boolean;group:number|null;selected:boolean;element:HTMLElement}>[];
+  /** Visit-local display name for one layer (from getLayers id). A null or empty name restores the type name. Never saved, never dirties the board; one Undo step. */
+  execute(command:'rename',value:{id:number;name:string|null}):CommandResult;
+  /** Reset the selection to its start state (owner content, lock, layer, visit-local name). One Undo step; it changes the board. */
+  execute(command:'reset-object'):CommandResult;
+  /** Remove visit-local objects that are not locked, and return the rest to their start states. One Undo step; it changes the board. */
+  execute(command:'reset-canvas'):CommandResult;
   execute(command:'inspect',value:{field:'x'|'y'|'width'|'height'|'rotation';value:number}):CommandResult;
   /** One provisional creation at a time; cancellation owns preview cleanup. */
   beginCreation(cancel: () => void, kind?: 'text' | 'sticky' | 'image' | 'pencil' | 'shapes'): Readonly<{ cancel(): void; commit<T extends JsonValue>(element: HTMLElement, owner: CanvasOwner<T>): Readonly<{ dispose(): void }> | null }> | null;
