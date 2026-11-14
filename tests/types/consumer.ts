@@ -83,6 +83,7 @@ canvas.execute('text-style',{field:'font',value:'url(unsafe)'});
 canvas.execute('text-style',{field:'size',value:'32'});
 
 import {validatePortableDocument,migrateLegacyDocument,importExcalidraw} from 'dmf-canvas/documents';
+import {createCanvasExport,planExport,exportLimits} from 'dmf-canvas/export';
 const portable=canvas.savePortableDocument();canvas.loadPortableDocument(validatePortableDocument(portable));
 const imported=importExcalidraw('{}');const reason:string=imported.report[0].reasons[0];void reason;
 migrateLegacyDocument(canvas.saveDocument());
@@ -101,3 +102,5 @@ canvas.execute('erase','all');
 {const full=createCanvasFullscreen(host,{canvas,onChange:state=>{const on:boolean=state.active&&state.supported;void on;}});void full.toggle().then((changed:boolean)=>changed);full.dispose();}
 // @ts-expect-error onChange must be a function
 createCanvasFullscreen(host,{onChange:true});
+{const exporter=createCanvasExport(canvas,{host,render:req=>new Blob([],{type:'image/png'})});void exporter.exportPng({scope:'visible',scale:2}).then(result=>{const size:number=result.width;void size;});const busy:boolean=exporter.isBusy();void busy;// @ts-expect-error export scope is selection or visible
+exporter.exportPng({scope:'pdf'});exporter.dispose();const plan=planExport({width:100,height:50,scale:2});const reduced:boolean=plan.reduced;void reduced;const maxSide:number=exportLimits.maxSide;void maxSide;}

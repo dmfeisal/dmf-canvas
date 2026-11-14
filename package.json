@@ -1,6 +1,6 @@
 {
   "name": "dmf-canvas",
-  "version": "0.7.0-alpha.1",
+  "version": "0.7.0-alpha.2",
   "private": true,
   "type": "module",
   "engines": {
@@ -49,6 +49,10 @@
     "./documents": {
       "types": "./documents.d.ts",
       "import": "./documents.js"
+    },
+    "./export": {
+      "types": "./export.d.ts",
+      "import": "./export.js"
     }
   },
   "files": [
@@ -81,7 +85,9 @@
     "docs/TEXT-FORMATTING.md",
     "docs/design/TOOLBAR.md",
     "documents.js",
-    "documents.d.ts"
+    "documents.d.ts",
+    "export.js",
+    "export.d.ts"
   ],
   "scripts": {
     "start": "node server.mjs",
