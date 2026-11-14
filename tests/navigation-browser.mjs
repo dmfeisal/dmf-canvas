@@ -252,6 +252,13 @@ await check('Ctrl+wheel (pinch) zooms around the pointer and announces once it s
  await page.waitForTimeout(500);assert(/^Zoom \d+%\.$/.test((await state()).status),'No settled zoom announcement: '+(await state()).status);
 });
 
+await check('a keyboard zoom right after a wheel zoom announces the new scale, not the old one',async()=>{
+ const h=await host();await run('camera',{x:0,y:0,scale:1});await focusHost();
+ await page.mouse.move(h.x+200,h.y+200);await page.keyboard.down('Control');await page.mouse.wheel(0,-100);await page.keyboard.up('Control');await frame();
+ await page.keyboard.press('0');await page.waitForTimeout(550);
+ const s=await state();assert(s.camera.scale===1&&s.status==='Zoom 100%.','Stale announcement: '+JSON.stringify(s));
+});
+
 await check('+, -, 0, Shift+1, Shift+2 and arrows drive the camera from the keyboard',async()=>{
  await run('camera',{x:300,y:200,scale:1});await focusHost();
  await page.keyboard.press('+');assert(near((await cam()).scale,1.2,1e-9),'+ did not zoom in');
