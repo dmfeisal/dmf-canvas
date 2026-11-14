@@ -32,6 +32,7 @@ Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 2, [navigation](docs/p
   - the shared custom host takes `mountConsumer(parent, name, {camera: true})`;
   - the toolbar swaps the Full screen icon (Maximize and Minimize) like Lock;
   - the homepage playground keeps zoom and pan off, so the wheel still scrolls the page.
+- Navigation step 7, coverage: the navigation suite grows to 42 checks, adding snapping at 0.5× and 2×, the world grid at 2×, mobile RTL camera controls and camera teardown in the configurator. A physical-device checklist is in `docs/prd/NAVIGATION-DEVICE-CHECK.md`.
 - Keep camera worlds within the ±100,000 world-unit range board files accept: the visible centre, owner positions, new objects, pastes and drawings stay inside it, so a far pan never makes a board unsaveable. On camera hosts, copy records clipboard bounds in world units.
 
 Migration: hosts without `camera` are unchanged. No board, clipboard, draft or portable format change.
