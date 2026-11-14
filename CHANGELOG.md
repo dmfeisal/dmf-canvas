@@ -2,7 +2,7 @@
 
 ## 0.6.0-alpha.1 (prepared 14 November 2026, private, experimental)
 
-Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 3, [organisation](docs/prd/ORGANISATION.md), with steps 1–5: the Layers panel, rename and search, reset, the context menu, then the host examples.
+Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 3, [organisation](docs/prd/ORGANISATION.md), with steps 1–6: the Layers panel, rename and search, reset, the context menu, the host examples, then browser coverage.
 
 - Add `getLayers()`: every present object, front to back, with its id, type name, lock and group state, selection, and the element to pass to `select()`. It is visit-local and never saved or in history.
 - Add `createCanvasLayers(container, {canvas, trigger})` in `dmf-canvas/toolbar`: a native popover, opened from a contained button, that lists objects front to back with their type icon and name. Choosing a row selects that object. It follows changes while open. Escape closes it and returns focus to the button.
