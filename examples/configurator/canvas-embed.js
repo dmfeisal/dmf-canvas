@@ -3,6 +3,8 @@ import {createTextOwner,createStickyNote,canvasDocuments} from 'dmf-canvas/owner
 import {createPencil,drawingPalettes} from 'dmf-canvas/pencil';
 import {createObjectClipboard} from 'dmf-canvas/clipboard';
 import {createCanvasToolbar,createCanvasInspector,createCanvasFullscreen,createCanvasLayers,createCanvasContextMenu} from 'dmf-canvas/toolbar';
+import {createCanvasExport} from 'dmf-canvas/export';
+import {createHostRenderer} from './canvas-export-renderer.js';
 import {createCanvasTheme} from 'dmf-canvas/theme';
 import {createImageControls} from './image-controls.js';
 const clipboard=createObjectClipboard();
@@ -28,7 +30,7 @@ export function mountEmbed(parent,initial={}){
   parent.append(root);const cleanup=[];current={root,canvas:null,dispose(){for(const release of cleanup.reverse())try{release();}catch(error){root.ownerDocument.defaultView.reportError?.(error);}root.remove();}};const host=root.querySelector('[data-host]'),world=host.querySelector('[data-world]'),place=world??host;host.style.height=config.height+'px';root.style.maxWidth=config.width+'px';
   const theme=createCanvasTheme(root,{mode:config.theme});cleanup.push(()=>theme.dispose());const canvas=createCanvas(host,{documents:canvasDocuments,clipboard,readOnly:config.readOnly,tools:config.tools,...(world?{camera:{world}}:{})});cleanup.push(()=>canvas.destroy());
   canvas.register(host.querySelector('[data-original]'),createTextOwner(host.querySelector('[data-original]'),place));
-  let pencil,images,inspector,full=null,layers=null,contextMenu=null,frame=null,url=null,timer=null,generation=0,lastSize=host.clientWidth+'x'+host.clientHeight;const bars={};
+  let pencil,images,inspector,full=null,exporter=null,layers=null,contextMenu=null,frame=null,url=null,timer=null,generation=0,lastSize=host.clientWidth+'x'+host.clientHeight;const bars={};
   const message=root.querySelector('[data-document-message]'),help=root.querySelector('[data-help]'),slot=name=>root.querySelector(`[data-chrome-slot="${name}"]`);
   const execute=command=>{pencil.setActive(false);const result=canvas.execute(command);if(!result.ok)message.textContent='This action is unavailable for the current selection.';};
   const addNote=()=>{const s=canvas.getState();if(!s.canCreate||!s.settings.tools.sticky)return;pencil.setActive(false);const item=createStickyNote(place);try{canvas.register(item.element,item.owner,{created:true});}catch(error){item.owner.dispose();throw error;}canvas.select(item.element);item.element.focus({preventScroll:true});};
@@ -70,6 +72,7 @@ export function mountEmbed(parent,initial={}){
     // Snapping: checked rows that toggle the canvas's own settings; Alt/Option bypasses snapping during a drag.
     {id:'snap-align',label:'Align to objects',icon:'magnet',menu:true,group:'Snapping',pressed:true,run:()=>toggleSnap('align')},
     {id:'snap-grid',label:'Snap to grid',icon:'grid-2x2',menu:true,group:'Snapping',pressed:false,run:()=>toggleSnap('grid')},
+    {id:'export',label:'Export PNG',icon:'image',menu:true,group:'Board',run:()=>exportPng()},
     {id:'save',label:'Save board',icon:'download',menu:true,group:'Board',run:()=>save()},{id:'open',label:'Open board',icon:'folder-open',menu:true,group:'Board',run:()=>root.querySelector('[data-board-file]').click()}],
    help:[{id:'help',label:'Keyboard help',icon:'circle-question-mark',pressed:false,run:()=>toggleHelp()}],
   };
@@ -96,6 +99,8 @@ export function mountEmbed(parent,initial={}){
    ['thin','medium','bold'].forEach((size,index)=>{const width=palette?.widths[index];bars.options.update('width-'+size,{pressed:!!palette&&ink.width===width,label:`${size[0].toUpperCase()+size.slice(1)}${width?` · ${width}px`:''}`});});bars.tools.update('select',{pressed:!drawing&&s.hand!=='tool'});bars.tools.update('hand',{pressed:s.hand==='tool'});bars.history.update('fullscreen',{pressed:!!fullState?.active,label:fullState?.active?'Exit full screen':'Full screen'});bars.selection.update('lock',{label:s.selectionLocked?'Unlock':'Lock',pressed:s.selectionLocked===true});bars.selection.update('snap-align',{pressed:s.settings.snapping.align,disabled:ro});bars.selection.update('snap-grid',{pressed:s.settings.snapping.grid,disabled:ro});images?.render();
   }
   pencil=createPencil(canvas,host,render);cleanup.push(()=>pencil.dispose());
+  // PNG export (docs/prd/STYLING-EXPORT.md): the package picks the area and limits; the example renderer draws the host.
+  exporter=createCanvasExport(canvas,{host,render:createHostRenderer(host)});cleanup.push(()=>exporter.dispose());
   // Full screen takes the whole chrome, so toolbars, menus, the inspector and help stay visible.
   if(world){full=createCanvasFullscreen(root.querySelector('[data-stage]'),{canvas,onChange:render});cleanup.push(()=>full.dispose());}
   bars.tools=createCanvasToolbar(slot('tools'),{actions:actions.tools,label:'Tools',orientation:'vertical'});bars.history=createCanvasToolbar(slot('history'),{actions:actions.history,label:'History'});bars.selection=createCanvasToolbar(slot('selection'),{actions:actions.selection,label:'Selection actions',moreLabel:'More actions'});bars.help=createCanvasToolbar(slot('help'),{actions:actions.help,label:'Help'});bars.options=createCanvasToolbar(slot('options'),{actions:actions.options,label:'Tool options'});
@@ -107,12 +112,23 @@ export function mountEmbed(parent,initial={}){
   const everyBar={entries:()=>Object.values(bars).flatMap(bar=>bar.entries()),activate:id=>Object.values(bars).some(bar=>bar.activate(id))};
   contextMenu=createCanvasContextMenu(host,{canvas,toolbar:everyBar});cleanup.push(()=>contextMenu.dispose());inspector=createCanvasInspector(root,{canvas,trigger:root.querySelector('[aria-label="Selection inspector"]')});cleanup.push(()=>inspector.dispose());images=createImageControls(root,()=>canvas,()=>pencil.setActive(false));cleanup.push(()=>images.dispose());const off=canvas.subscribe(render);cleanup.push(off);
   const release=()=>{clearTimeout(timer);timer=null;if(url)URL.revokeObjectURL(url);url=null;};
+  const exportPng=async()=>{
+    const scope=canvas.getState().selectionCount?'selection':'visible';
+    message.textContent='Exporting PNG…';
+    try{
+      const result=await exporter.exportPng({scope,scale:2});
+      const url=URL.createObjectURL(result.blob),link=root.ownerDocument.createElement('a');
+      link.href=url;link.download='canvas.png';link.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      message.textContent=`PNG exported: ${result.width} × ${result.height}${result.reduced?', reduced to fit the export limits':''}.`;
+    }catch(error){message.textContent=error.message;}
+  };
   const save=()=>{try{if(!canvas.getState().canSave)return;release();const revision=canvas.getState().revision;url=URL.createObjectURL(new Blob([JSON.stringify(canvas.saveDocument())],{type:'application/json'}));const a=root.ownerDocument.createElement('a');a.href=url;a.download='canvas-board.json';a.click();canvas.markSaved(revision);timer=setTimeout(release,1000);message.textContent='Board saved locally.';}catch(error){message.textContent=error.message;}};
   const open=async()=>{const input=root.querySelector('[data-board-file]'),file=input.files[0],id=++generation;input.value='';if(!file||!canvas.getState().canSave||canvas.getState().settings.readOnly)return;try{if(file.size>1048576)throw new Error('Choose a board file smaller than 1 MiB.');const data=JSON.parse(await file.text());if(!alive||!root.isConnected||id!==generation)return;if(!canvas.loadDocument(data).ok)throw new Error('This board cannot be opened here.');message.textContent='Board opened.';}catch(error){if(id===generation)message.textContent=error.message;}};
   const events=[[root.querySelector('[data-board-file]'),'change',open],[root.querySelector('[data-help-close]'),'click',closeHelp],[help,'keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeHelp();}}]];
   for(const [element,type,listener]of events)element.addEventListener(type,listener);
   const observer=new ResizeObserver(()=>{const size=host.clientWidth+'x'+host.clientHeight;if(size===lastSize)return;lastSize=size;if(frame!==null)cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{frame=null;pencil.cancel();canvas.execute('cancel');canvas.execute('contain');});});observer.observe(host);
-  current={root,canvas,update(next){generation++;const importing=!root.querySelector('[data-image-progress]').hidden;inspector.close();images.cancel();if(importing)message.textContent='Image import cancelled.';pencil.cancel();canvas.configure({readOnly:next.readOnly,tools:next.tools});theme.configure({mode:next.theme});root.style.maxWidth=next.width+'px';host.style.height=next.height+'px';render();},dispose(){generation++;observer.disconnect();if(frame!==null)cancelAnimationFrame(frame);release();off();images.dispose();inspector.dispose();layers?.dispose();contextMenu?.dispose();full?.dispose();pencil.dispose();canvas.destroy();for(const bar of Object.values(bars))bar.dispose();theme.dispose();for(const [element,type,listener]of events)element.removeEventListener(type,listener);root.remove();}};render();
+  current={root,canvas,update(next){generation++;const importing=!root.querySelector('[data-image-progress]').hidden;inspector.close();images.cancel();if(importing)message.textContent='Image import cancelled.';pencil.cancel();canvas.configure({readOnly:next.readOnly,tools:next.tools});theme.configure({mode:next.theme});root.style.maxWidth=next.width+'px';host.style.height=next.height+'px';render();},dispose(){generation++;observer.disconnect();if(frame!==null)cancelAnimationFrame(frame);release();off();images.dispose();exporter?.dispose();inspector.dispose();layers?.dispose();contextMenu?.dispose();full?.dispose();pencil.dispose();canvas.destroy();for(const bar of Object.values(bars))bar.dispose();theme.dispose();for(const [element,type,listener]of events)element.removeEventListener(type,listener);root.remove();}};render();
  };
  const stop=()=>{current?.dispose();current=null;};
  const api=Object.freeze({get root(){return current?.root??null;},get canvas(){return current?.canvas??null;},getConfig:()=>config,update(value){if(!alive)return false;const next=normalizeConfig(value);
