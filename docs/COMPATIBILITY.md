@@ -16,6 +16,10 @@ Unreleased inspector work uses native Popover and the existing owners' untransfo
 
 The opt-in camera changes no data format. Its position and zoom are host view state: they are never written to board, clipboard, draft or portable files, never enter history and never trigger change events. Hosts without `camera` behave exactly as in 0.4.0. On camera hosts, objects live in world coordinates inside the host-marked world element and are not clamped to the host, so a board saved from a camera host can hold positions outside the host's visible area, always within the ±100,000 layout and translation range readers accept; opening it on a bounded host clamps them as before. On camera hosts, the inspector reports world units.
 
+## Text ink, line height and letter spacing (schema 5)
+
+0.7.0-alpha.1 adds three Text properties to the typography record: `ink` (`primary`, `blue` or `red`, the Pencil inks), `lineHeight` (`normal` or 0.8–3) and `letterSpacing` (−0.08 to 0.3, in em). Board, clipboard and draft writers use schema 5 only when a record sets one of them; records that keep the defaults are written exactly as before. Readers accept boards and clipboard transfers at versions 1–5, and older readers reject version 5 rather than dropping the styling. Records saved before this release load with the defaults.
+
 ## Shapes (schema 4)
 
 Board files and clipboard transfers that contain a shape use **schema 4**; portable documents use **version 3**. Content without shapes is written exactly as before (schema 1–3, portable 1–2). Readers accept schemas 1–4 and portable versions 1–3, and reject a lower version that claims a shape. Draft envelopes stay version 1 and carry the board's own schema.

@@ -14,10 +14,16 @@ export function createCanvasInspector(container,{canvas,trigger}){
  }
  const message=doc.createElement('output');message.id=id+'-message';message.setAttribute('aria-live','polite');
  const textSection=doc.createElement('fieldset');textSection.className='canvas-embed-inspector__text';const legend=doc.createElement('legend');legend.textContent='Text';textSection.append(legend);const textGrid=doc.createElement('div');textGrid.className='canvas-embed-inspector__fields';const textFields=new Map();
- for(const [key,title,options]of [['font','Font',[['original','Original'],['sans','Sans-serif'],['serif','Serif'],['mono','Monospace']]],['size','Text size (px)',null],['weight','Weight',[[400,'Regular (400)'],[500,'Medium (500)'],[600,'Semi bold (600)'],[700,'Bold (700)']]],['align','Alignment',[['original','Original'],['left','Left'],['center','Center'],['right','Right']]],['wrap','Wrapping',[['auto','Auto width'],['fixed','Fixed width']]]]){
+ for(const [key,title,options]of [['font','Font',[['original','Original'],['sans','Sans-serif'],['serif','Serif'],['mono','Monospace']]],['size','Text size (px)',null],['weight','Weight',[[400,'Regular (400)'],[500,'Medium (500)'],[600,'Semi bold (600)'],[700,'Bold (700)']]],['align','Alignment',[['original','Original'],['left','Left'],['center','Center'],['right','Right']]],['wrap','Wrapping',[['auto','Auto width'],['fixed','Fixed width']]],['ink','Ink',[['primary','Primary ink'],['blue','Blue ink'],['red','Red ink']]],['lineHeight','Line height',null],['letterSpacing','Letter spacing (em)',null]]){
   const label=doc.createElement('label'),span=doc.createElement('span'),input=doc.createElement(options?'select':'input');span.textContent=title;input.dataset.inspectorText=key;input.setAttribute('aria-describedby',message.id);
   if(options){const mixed=doc.createElement('option');mixed.value='';mixed.textContent='Mixed';mixed.disabled=true;input.append(mixed);for(const [value,text]of options){const option=doc.createElement('option');option.value=String(value);option.textContent=text;input.append(option);}}
-  else{input.type='number';input.min='8';input.max='320';input.step='any';input.required=true;input.placeholder='Mixed';}
+  else{
+    input.type='number';input.step='any';input.required=true;input.placeholder='Mixed';
+    // Ranges match the record's (docs/prd/STYLING-EXPORT.md). A blank line height means Normal.
+    const range={size:[8,320],lineHeight:[.8,3],letterSpacing:[-.08,.3]}[key];input.min=String(range[0]);input.max=String(range[1]);
+    if(key==='lineHeight'){input.required=false;input.placeholder='Normal';input.step='.05';}
+    if(key==='letterSpacing')input.step='.01';
+  }
   label.append(span,input);textGrid.append(label);textFields.set(key,input);
  }
  const reset=doc.createElement('button');reset.type='button';reset.textContent='Reset text styles';reset.dataset.inspectorTextReset='';textSection.append(textGrid,reset);
@@ -36,12 +42,12 @@ export function createCanvasInspector(container,{canvas,trigger}){
   for(const [field,input]of fields){input.disabled=!values.editable;if(force||doc.activeElement!==input){input.value=String(Math.round(values[field]*100)/100);input.removeAttribute('aria-invalid');dirty.delete(input);}}
   fields.get('rotation').parentElement.firstChild.textContent=values.relativeRotation?'Turn selection (degrees)':'Rotation (degrees)';
   const text=canvas.getTextStyle();textSection.hidden=!text;
-  for(const [key,input]of textFields){input.disabled=!text?.editable;if(force||doc.activeElement!==input){const value=text?.[key]??'';if(key==='weight'){for(const option of [...input.options])if(option.dataset.originalWeight)option.remove();if(value!==''&&![...input.options].some(option=>option.value===String(value))){const option=doc.createElement('option');option.value=String(value);option.textContent=value+' (original)';option.disabled=true;option.dataset.originalWeight='';input.append(option);}for(const option of input.options)if(option.value&&!option.dataset.originalWeight)option.disabled=!text?.weights.includes(Number(option.value));}input.value=String(value);input.removeAttribute('aria-invalid');dirty.delete(input);}}
+  for(const [key,input]of textFields){input.disabled=!text?.editable;if(force||doc.activeElement!==input){const value=text?.[key]??'';if(key==='weight'){for(const option of [...input.options])if(option.dataset.originalWeight)option.remove();if(value!==''&&![...input.options].some(option=>option.value===String(value))){const option=doc.createElement('option');option.value=String(value);option.textContent=value+' (original)';option.disabled=true;option.dataset.originalWeight='';input.append(option);}for(const option of input.options)if(option.value&&!option.dataset.originalWeight)option.disabled=!text?.weights.includes(Number(option.value));}input.value=key==='lineHeight'&&value==='normal'?'':String(value);input.removeAttribute('aria-invalid');dirty.delete(input);}}
   reset.disabled=!text?.editable;
  }
  function commit(input){
-  if(committing||!isOpen()||input.disabled||!dirty.has(input))return;const text=!!input.dataset.inspectorText,field=text?input.dataset.inspectorText:input.dataset.inspectorField,value=text&&!['size','weight'].includes(field)?input.value:input.type==='number'?input.valueAsNumber:Number(input.value);
-  if(!input.value.trim()||typeof value==='number'&&!Number.isFinite(value)||!input.checkValidity()){
+  if(committing||!isOpen()||input.disabled||!dirty.has(input))return;const text=!!input.dataset.inspectorText,field=text?input.dataset.inspectorText:input.dataset.inspectorField,value=text&&field==='lineHeight'&&!input.value.trim()?'normal':text&&!['size','weight','lineHeight','letterSpacing'].includes(field)?input.value:input.type==='number'?input.valueAsNumber:Number(input.value);
+  if((!input.value.trim()&&!(field==='lineHeight'&&text))||typeof value==='number'&&!Number.isFinite(value)||!input.checkValidity()){
    input.setAttribute('aria-invalid','true');message.textContent=text?'Choose a value. Text size must be from 8 to 320 px.':'Enter a valid number. Size must be greater than zero.';return;
   }
   committing=true;

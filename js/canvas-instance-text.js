@@ -1,6 +1,7 @@
 // Bounded text geometry owner for the isolation specimen. No automatic discovery,
 // storage or dependency on the production document-global coordinator.
 import {defaultTextStyle,validateTextStyle,resolveTextStyle,textFonts,textWeights,hasTextStyle} from './canvas-instance-text-style.js';
+import {inks} from './canvas-instance-stroke.js';
 // Keeps a new box's top-left inside the +/-100000 range saved boards accept (camera worlds only; bounded hosts are
 // far smaller).
 export const savedPosition = (value, size) => Math.max(-100000, Math.min(100000 - Math.max(0, size), value));
@@ -38,7 +39,7 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     editor.append(...originalNodes);element.append(editor);
   }
   const hadStyle = element.hasAttribute('style');
-  const original = Object.fromEntries(['translate','scale','rotate','width',...(freeResize?['height']:[]),'transformOrigin',...(formatting?['fontFamily','fontSize','fontWeight','textAlign']:[])].map(key=>[key,element.style[key]]));
+  const original = Object.fromEntries(['translate','scale','rotate','width',...(freeResize?['height']:[]),'transformOrigin',...(formatting?['fontFamily','fontSize','fontWeight','textAlign','color','lineHeight','letterSpacing']:[])].map(key=>[key,element.style[key]]));
   let typography=defaultTextStyle;
   const inverse = element.style.getPropertyValue('--canvas-instance-inverse'), inversePriority = element.style.getPropertyPriority('--canvas-instance-inverse');
   const gaps = ['--canvas-instance-gap-x','--canvas-instance-gap-y'].map(key=>({key,value:element.style.getPropertyValue(key),priority:element.style.getPropertyPriority(key)}));
@@ -116,6 +117,10 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     node.style.fontSize=next.size===null?original.fontSize:next.size+'px';
     node.style.fontWeight=next.weight===null?original.fontWeight:String(next.weight);
     node.style.textAlign=next.align==='original'?original.textAlign:next.align;
+    // Schema 5 keys: the default ink and line height leave the page's own values alone; only a choice is written.
+    node.style.color=next.ink==='primary'?original.color:inks[next.ink];
+    node.style.lineHeight=next.lineHeight==='normal'?original.lineHeight:String(next.lineHeight);
+    node.style.letterSpacing=next.letterSpacing===0?original.letterSpacing:next.letterSpacing+'em';
     node.style.width=width;
   };
   const readText = () => (editor.innerText ?? editor.textContent).replace(/\r\n?/g,'\n').replace(/\0/g,'');
@@ -169,7 +174,7 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
   return Object.freeze({
     name,
     ...(formatting?{textStyle:Object.freeze({
-      read(){if(!node?.isConnected||activeEdit)return null;const style=node.ownerDocument.defaultView.getComputedStyle(node),alignment=style.textAlign==='start'?(style.direction==='rtl'?'right':'left'):style.textAlign==='end'?(style.direction==='rtl'?'left':'right'):style.textAlign;return {font:typography.font,family:style.fontFamily,size:parseFloat(style.fontSize),weight:Number(style.fontWeight),align:['left','center','right'].includes(alignment)?alignment:'original',wrap:['','fit-content'].includes(node.style.width)?'auto':'fixed',weights:[...textWeights]};},
+      read(){if(!node?.isConnected||activeEdit)return null;const style=node.ownerDocument.defaultView.getComputedStyle(node),alignment=style.textAlign==='start'?(style.direction==='rtl'?'right':'left'):style.textAlign==='end'?(style.direction==='rtl'?'left':'right'):style.textAlign;return {font:typography.font,family:style.fontFamily,size:parseFloat(style.fontSize),weight:Number(style.fontWeight),align:['left','center','right'].includes(alignment)?alignment:'original',wrap:['','fit-content'].includes(node.style.width)?'auto':'fixed',ink:typography.ink,lineHeight:typography.lineHeight,letterSpacing:typography.letterSpacing,weights:[...textWeights]};},
       prepare(field,value){
         if(!node?.isConnected||activeEdit)return null;
         const next=resolveTextStyle(typography,field,value),fixed=anchor('se'),style=node.ownerDocument.defaultView.getComputedStyle(node);

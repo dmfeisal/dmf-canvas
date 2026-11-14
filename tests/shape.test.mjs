@@ -36,7 +36,7 @@ test('shape validation rejects resolved values, mismatched options and bad point
 test('only schema 4 boards, transfers, drafts and migrations carry shapes',()=>{
   const transfer=version=>({format:'dmf-canvas-clipboard',version,objects:[{data:shape(),bounds:{left:10,top:10,width:120,height:80}}]});
   assert.equal(validateTransfer(transfer(4)).version,4);
-  for(const version of [1,2,3,5])assert.throws(()=>validateTransfer(transfer(version)),TypeError);
+  for(const version of [1,2,3,6])assert.throws(()=>validateTransfer(transfer(version)),TypeError);
   const board=version=>({format:'dmf-canvas',version,originals:[],objects:[shape(),line({shape:'arrow'})]});
   const migrated=migrateLegacyDocument(board(4));assert.equal(migrated.version,3);assert.deepEqual(migrated.nodes.map(node=>node.data.shape),['rectangle','arrow']);
   for(const version of [1,2,3,5])assert.throws(()=>migrateLegacyDocument(board(version)),TypeError);

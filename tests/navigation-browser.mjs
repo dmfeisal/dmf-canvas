@@ -683,4 +683,31 @@ await check('the Layers panel and the context menu stay on screen in right-to-le
  await page.evaluate(()=>{document.documentElement.dir='';});await page.cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
 });
 
+// Styling phase 4, step 1: ink, line height and letter spacing (docs/prd/STYLING-EXPORT.md), schema 5.
+await check('Text ink, line height and letter spacing apply, save as schema 5 only when set, and round-trip',async()=>{
+ await page.goto(navigationTest.base+'/tests/fixtures/camera.html');await page.waitForFunction(()=>!!window.cam);
+ const text=async()=>page.evaluate(()=>{const s=window.cam.canvas.getTextStyle();return {ink:s?.ink,lineHeight:s?.lineHeight,letterSpacing:s?.letterSpacing,color:getComputedStyle(window.cam.text).color,inline:[window.cam.text.style.lineHeight,window.cam.text.style.letterSpacing]};});
+ await page.evaluate(()=>{window.cam.canvas.select(window.cam.text);});
+ const plain=await page.evaluate(()=>window.cam.canvas.saveDocument().version);
+ assert(plain<5,'A default Text saved as schema '+plain);
+ assert((await page.evaluate(()=>window.cam.canvas.execute('text-style',{field:'ink',value:'blue'}))).ok,'Ink refused');
+ const blue=await text();assert(blue.ink==='blue'&&/rgb\(22, 119, 255\)/.test(blue.color),'Blue ink not applied: '+JSON.stringify(blue));
+ assert((await page.evaluate(()=>window.cam.canvas.execute('text-style',{field:'lineHeight',value:1.5}))).ok,'Line height refused');
+ assert((await text()).inline[0]==='1.5','Line height not applied: '+JSON.stringify(await text()));
+ assert((await page.evaluate(()=>window.cam.canvas.execute('text-style',{field:'letterSpacing',value:.1}))).ok,'Letter spacing refused');
+ assert((await text()).inline[1]==='0.1em','Letter spacing not applied: '+JSON.stringify(await text()));
+ assert(!(await page.evaluate(()=>window.cam.canvas.execute('text-style',{field:'lineHeight',value:3.5}))).ok,'Out-of-range line height accepted');
+ const saved=await page.evaluate(()=>window.cam.canvas.saveDocument());
+ assert(saved.version===5,'Styled Text saved as schema '+saved.version);
+ const trip=await page.evaluate(doc=>{const json=JSON.parse(JSON.stringify(doc));return json;},saved);
+ await page.evaluate(()=>window.cam.canvas.execute('text-style',{field:'reset'}));
+ const reset=await page.evaluate(()=>window.cam.canvas.saveDocument().version);
+ assert(reset<5,'Reset Text still saved as schema '+reset);
+ const loaded=await page.evaluate(doc=>window.cam.canvas.loadDocument(doc),trip);
+ assert(loaded.ok,'Schema 5 board did not load: '+JSON.stringify(loaded));
+ // Loading clears the selection; the Text style summary needs a selected object, so select the reloaded original first.
+ await page.evaluate(()=>window.cam.canvas.select(window.cam.text));
+ const back=await text();assert(back.ink==='blue'&&back.inline[0]==='1.5','Round trip lost styling: '+JSON.stringify(back));
+});
+
 console.log(`PASS navigation: ${passed} checks`);

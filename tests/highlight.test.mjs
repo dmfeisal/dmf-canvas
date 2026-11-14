@@ -21,7 +21,7 @@ test('highlight records keep semantic tool, ink and width and reject pencil-only
 test('only schema 3 boards, transfers, drafts and migrations carry highlights',()=>{
   const transfer=version=>({format:'dmf-canvas-clipboard',version,objects:[{data:highlight(),bounds:{left:10,top:10,width:60,height:40}}]});
   assert.equal(validateTransfer(transfer(3)).version,3);
-  for(const version of [1,2,5])assert.throws(()=>validateTransfer(transfer(version)),TypeError);
+  for(const version of [1,2,6])assert.throws(()=>validateTransfer(transfer(version)),TypeError);
   assert.equal(validateTransfer(transfer(4)).version,4,'Newer readers accept any version that can carry the content');
   const board=version=>({format:'dmf-canvas',version,originals:[],objects:[highlight()]});
   assert.equal(migrateLegacyDocument(board(3)).nodes[0].data.tool,'highlighter');

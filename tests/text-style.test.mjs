@@ -17,3 +17,18 @@ test('styled text records preserve plain whitelisted data and reject non-Text fo
  const transfer={format:'dmf-canvas-clipboard',version:2,objects:[{data:record,bounds:{left:20,top:20,width:200,height:40}}]};assert.equal(validateTransfer(transfer).version,2);assert.throws(()=>validateTransfer({...transfer,version:1}));
  const draft={format:'dmf-canvas-draft',version:1,savedAt:1,document:{format:'dmf-canvas',version:2,originals:[],objects:[record]}};assert.equal(parseLocalDraft(JSON.stringify(draft)).document.version,2);
 });
+
+test('schema 5 typography: old records take defaults, ranges and inks are bounded, and only changed records need schema 5',async()=>{
+ const {validateTextStyle,hasSchema5Style,defaultTextStyle}=await import('../js/canvas-instance-text-style.js');
+ const old={font:'original',size:null,weight:null,align:'original',wrap:'original'};
+ const parsed=validateTextStyle(old);
+ assert.equal(parsed.ink,'primary');assert.equal(parsed.lineHeight,'normal');assert.equal(parsed.letterSpacing,0);
+ assert.equal(hasSchema5Style(parsed),false,'Default styling must stay schema 4 or lower');
+ assert.equal(validateTextStyle({...old,ink:'blue',lineHeight:1.5,letterSpacing:.1}).ink,'blue');
+ assert.equal(hasSchema5Style(validateTextStyle({...old,ink:'blue'})),true);
+ assert.equal(hasSchema5Style(validateTextStyle({...old,lineHeight:.8})),true);
+ assert.equal(hasSchema5Style(validateTextStyle({...old,letterSpacing:-.08})),true);
+ for(const bad of [{ink:'orange'},{lineHeight:.7},{lineHeight:3.1},{lineHeight:'tall'},{letterSpacing:-.09},{letterSpacing:.31},{letterSpacing:'.1em'},{unknown:1}])
+  assert.throws(()=>validateTextStyle({...old,...bad}),TypeError,JSON.stringify(bad));
+ assert.deepEqual({...defaultTextStyle},{font:'original',size:null,weight:null,align:'original',wrap:'original',ink:'primary',lineHeight:'normal',letterSpacing:0});
+});

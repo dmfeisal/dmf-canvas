@@ -3,7 +3,7 @@ import { createChangeTracker } from './canvas-instance-changes.js';
 import { resolveSettings } from './canvas-instance-settings.js';
 import { validateTransfer } from './canvas-instance-clipboard.js';
 import {combinedGeometry,validGeometry,planInspector} from './canvas-instance-inspector-plan.js';
-import {defaultTextStyle,resolveTextStyle} from './canvas-instance-text-style.js';
+import {defaultTextStyle,resolveTextStyle,hasSchema5Style} from './canvas-instance-text-style.js';
 // Internal lifecycle spike. Production object owners still use DMFCanvasTools.
 // No document/window listeners, storage or owner geometry writes. The optional camera transforms one host-marked world element;
 // camera hosts add a host wheel listener, one pending frame and one zoom-announcement timer, all released on destroy().
@@ -1107,7 +1107,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if(world){const w=world.getBoundingClientRect(),k=cameraView.scale,keep=value=>Math.max(-100000,Math.min(100000,value));return {data,bounds:{left:keep((r.left-w.left)/k),top:keep((r.top-w.top)/k),width:Math.min(100000,Math.max(.01,r.width/k)),height:Math.min(100000,Math.max(.01,r.height/k))}};}
       return {data,bounds:{left:r.left-area.left-root.clientLeft,top:r.top-area.top-root.clientTop,width:r.width,height:r.height}};
     });
-    clipboard.write(validateTransfer({format:'dmf-canvas-clipboard',version:objects.some(item=>item.data.type==='shape')?4:objects.some(item=>item.data.tool==='highlighter')?3:objects.some(item=>item.data.state.typography||item.data.layout.fontSize>200)?2:1,objects}));
+    clipboard.write(validateTransfer({format:'dmf-canvas-clipboard',version:objects.some(item=>item.data.state.typography&&hasSchema5Style(item.data.state.typography))?5:objects.some(item=>item.data.type==='shape')?4:objects.some(item=>item.data.tool==='highlighter')?3:objects.some(item=>item.data.state.typography||item.data.layout.fontSize>200)?2:1,objects}));
     status.textContent=`${objects.length} object${objects.length===1?'':'s'} copied for this page.`;return result(true);
   }
   function pasteSelection() {
@@ -1182,7 +1182,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     }
     const records=[...document.originals.map(item=>item.data),...document.objects];
     // Schema 2 carries typography; schema 3 adds Highlighter strokes. Older readers reject newer versions.
-    if(records.some(item=>item.type==='shape'))document.version=4;else if(records.some(item=>item.tool==='highlighter'))document.version=3;else if(records.some(item=>item.state.typography||item.layout.fontSize>200))document.version=2;
+    if(records.some(item=>item.state.typography&&hasSchema5Style(item.state.typography)))document.version=5;else if(records.some(item=>item.type==='shape'))document.version=4;else if(records.some(item=>item.tool==='highlighter'))document.version=3;else if(records.some(item=>item.state.typography||item.layout.fontSize>200))document.version=2;
     const json=JSON.stringify(document);if(new TextEncoder().encode(json).byteLength>1048576)throw new RangeError('Board file exceeds 1 MiB.');
     return JSON.parse(json);
   }
@@ -1211,7 +1211,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     // Validate the complete envelope before allocating or changing live owners.
     const json=JSON.stringify(document);if(!json||new TextEncoder().encode(json).byteLength>1048576)throw new RangeError('Board file exceeds 1 MiB.');
     const value=JSON.parse(json),originals=[...owners.values()].filter(entry=>!entry.created);
-    if(value?.format!=='dmf-canvas'||![1,2,3,4].includes(value.version)||!Array.isArray(value.originals)||!Array.isArray(value.objects)||value.originals.length!==originals.length||value.objects.length+originals.length>50||value.version===1&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.state?.typography||item?.layout?.fontSize>200)||value.version<3&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.tool==='highlighter')||value.version<4&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.type==='shape'))throw new TypeError('Unsupported board file.');
+    if(value?.format!=='dmf-canvas'||![1,2,3,4,5].includes(value.version)||!Array.isArray(value.originals)||!Array.isArray(value.objects)||value.originals.length!==originals.length||value.objects.length+originals.length>50||value.version===1&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.state?.typography||item?.layout?.fontSize>200)||value.version<3&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.tool==='highlighter')||value.version<4&&[...value.originals.map(item=>item?.data),...value.objects].some(item=>item?.type==='shape'))throw new TypeError('Unsupported board file.');
     const ids=new Set();
     const plans=value.originals.map(item=>{
       const entry=originals.find(entry=>entry.id===item.id);if(!entry||ids.has(item.id))throw new TypeError('Board originals do not match this canvas.');ids.add(item.id);
@@ -1253,7 +1253,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if(!alive||editing||creation||gesture||!selection.size)return null;
       const entries=[...selection];if(entries.some(entry=>!usable(entry)||!entry.adapter.textStyle))return null;
       const styles=entries.map(entry=>entry.adapter.textStyle.read());if(styles.some(style=>!style))return null;
-      return Object.freeze({...Object.fromEntries(['font','size','weight','align','wrap'].map(key=>[key,styles.every(style=>style[key]===styles[0][key]&&(key!=='font'||style.font!=='original'||style.family===styles[0].family))?styles[0][key]:null])),weights:Object.freeze(styles[0].weights.filter(weight=>styles.every(style=>style.weights.includes(weight)))),editable:!settings.readOnly&&settings.tools.text&&entries.every(entry=>!entry.locked)});
+      return Object.freeze({...Object.fromEntries(['font','size','weight','align','wrap','ink','lineHeight','letterSpacing'].map(key=>[key,styles.every(style=>style[key]===styles[0][key]&&(key!=='font'||style.font!=='original'||style.family===styles[0].family))?styles[0][key]:null])),weights:Object.freeze(styles[0].weights.filter(weight=>styles.every(style=>style.weights.includes(weight)))),editable:!settings.readOnly&&settings.tools.text&&entries.every(entry=>!entry.locked)});
     },
     // Layers (docs/prd/ORGANISATION.md): every present object, front to back, with the type name hosts show and the
     // element to select. Visit-local: never saved, never in history.
