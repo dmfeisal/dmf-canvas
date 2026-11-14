@@ -8,7 +8,7 @@ import {normalizeConfig} from '../examples/configurator/canvas-embed.js';
 import {prepareFramework} from './test-frameworks.mjs';
 import {prepareAstro} from './test-astro.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url)),npm=process.platform==='win32'?'npm.cmd':'npm';
-const sources=Object.fromEntries(await Promise.all(['canvas-embed.js','canvas-embed.css','image-controls.js'].map(async name=>[name,await readFile(join(root,'examples/configurator',name),'utf8')])));
+const sources=Object.fromEntries(await Promise.all(['canvas-embed.js','canvas-embed.css','image-controls.js','canvas-export-renderer.js'].map(async name=>[name,await readFile(join(root,'examples/configurator',name),'utf8')])));
 const run=(args,cwd)=>execFileSync(npm,args,{cwd,encoding:'utf8',maxBuffer:8*1024*1024,stdio:['ignore','pipe','pipe']});
 export async function prepareGenerated(){
  const targets=[];

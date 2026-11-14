@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script type="importmap">{"imports": {"dmf-canvas": "/index.js", "dmf-canvas/owners": "/owners.js", "dmf-canvas/theme": "/theme.js"}}</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Canvas Viewer Prototype</title>
+  <link rel="stylesheet" href="../../css/canvas-instance.css">
+  <style>
+    :root { color-scheme: light dark; font: 87.5%/1.5 system-ui,sans-serif; --dmf-color-text:CanvasText; --dmf-color-paper-canvas:Canvas; --dmf-color-line:GrayText; --dmf-color-canvas-selection:transparent; }
+    body { margin:0; padding:0; overflow:hidden; background:Canvas; color:CanvasText; }
+    #viewer-host { position:relative; width:100vw; height:100vh; background-image:radial-gradient(circle,color-mix(in srgb,CanvasText 10%,transparent) 1px,transparent 1px); background-size:24px 24px; cursor:default; }
+    .ui-overlay { position:absolute; inset-block-start:12px; inset-inline-start:12px; z-index:10; display:flex; gap:8px; pointer-events:none; }
+    .ui-overlay * { pointer-events:auto; }
+    .status-pill { padding:4px 12px; background:color-mix(in srgb,CanvasText 10%,transparent); border:1px solid GrayText; border-radius:16px; font-size:12px; display:flex; align-items:center; gap:6px; }
+    .status-pill::before { content:''; display:block; width:8px; height:8px; border-radius:50%; background:gray; }
+    .status-pill[data-ready]::before { background:#22c55e; }
+    input[type="file"] { font-size:12px; }
+    .text { position:absolute; user-select:none; cursor:default; }
+  </style>
+</head>
+<body>
+  <div class="ui-overlay">
+    <div class="status-pill" id="status">Loading...</div>
+    <input type="file" id="file-input" accept=".json,application/json">
+  </div>
+  <div id="viewer-host" role="img" aria-label="Canvas Viewer"></div>
+
+  <script type="module">
+    import { createCanvas } from 'dmf-canvas';
+    import { canvasDocuments } from 'dmf-canvas/owners';
+
+    const host = document.getElementById('viewer-host');
+    const status = document.getElementById('status');
+    const fileInput = document.getElementById('file-input');
+
+    // Initialize as a read-only, original-free viewer
+    const canvas = createCanvas(host, {
+      documents: canvasDocuments,
+      readOnly: true,
+      settings: {
+        tools: { files: false, history: false, clipboard: false, pencil: false }
+      }
+    });
+
+    const updateStatus = (text, ready = false) => {
+      status.textContent = text;
+      status.dataset.ready = ready;
+    };
+
+    const loadFile = async (file) => {
+      try {
+        const text = await file.text();
+        const json = JSON.parse(text);
+        const result = canvas.loadPortableDocument(json);
+        if (result.ok) {
+          updateStatus('Document Loaded', true);
+        } else {
+          updateStatus('Error: ' + result.reason);
+        }
+      } catch (e) {
+        updateStatus('Invalid JSON');
+      }
+    };
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) loadFile(file);
+    });
+
+    updateStatus('Ready. Load a portable file.');
+  </script>
+</body>
+</html>

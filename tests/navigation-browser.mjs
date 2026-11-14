@@ -790,4 +790,17 @@ await check('a second PNG export waits behind the first; cancelling and timing o
  assert(outcome.busyAfter===false,'Export left busy after rejection');
 });
 
+// PNG export in the configurator: More > Export PNG downloads a real PNG of preview A.
+await check('the configurator exports preview A as a PNG download from More',async()=>{
+ await page.goto(navigationTest.base+'/examples/configurator/');
+ await page.evaluate(()=>document.querySelector('main').configurator.previews.A.canvas.select(null));
+ await page.click('[data-preview=A] [data-toolbar-action="more"]');
+ const [download]=await Promise.all([page.waitForEvent('download',{timeout:15000}),page.click('[data-preview=A] [data-toolbar-action="export"]')]);
+ assert(download.suggestedFilename()==='canvas.png','Unexpected file name: '+download.suggestedFilename());
+ const path=await download.path();const bytes=(await import('node:fs/promises')).readFile(path);
+ const head=(await bytes).subarray(0,8);
+ assert(head.toString('hex')==='89504e470d0a1a0a','Download is not a PNG: '+head.toString('hex'));
+ assert(/PNG exported/.test(await page.textContent('[data-preview=A] [data-document-message]')),'No export status');
+});
+
 console.log(`PASS navigation: ${passed} checks`);
