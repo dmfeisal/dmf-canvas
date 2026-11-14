@@ -14,6 +14,13 @@ Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 2, [navigation](docs/p
   - the inspector reports and applies world units, and its panel closes on any pan or zoom;
   - new Sticky Notes and images go to the visible centre, and paste centres the copies there;
   - Pencil, Highlighter, Eraser and Shapes map input into the world, draw previews there, commit world coordinates without containment, and cancel unfinished input when the camera changes.
+- Navigation step 3, camera input on camera hosts:
+  - Hand (H, `execute('hand')`, `getState().hand`) and Space held pan on drag without moving objects, and Hand and Pencil disarm each other;
+  - the wheel pans, and pinch or Ctrl/⌘ with the wheel zooms around the pointer;
+  - keys: `+`/`-` zoom, `0` returns to 100%, Shift+1 is Fit all, Shift+2 is Zoom to selection, and arrows pan with nothing selected;
+  - writes are coalesced per animation frame, and wheel zoom announces once it settles;
+  - the toolbar standard adds Hand and a Camera group (Zoom out, Zoom in, Fit all), with Lucide `hand`, `zoom-in`, `zoom-out` and `focus`.
+- Keep camera worlds within the ±100,000 world-unit range board files accept: the visible centre, owner positions, new objects, pastes and drawings stay inside it, so a far pan never makes a board unsaveable. On camera hosts, copy records clipboard bounds in world units.
 
 Migration: hosts without `camera` are unchanged. No board, clipboard, draft or portable format change.
 

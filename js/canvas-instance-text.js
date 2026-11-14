@@ -1,6 +1,9 @@
 // Bounded text geometry owner for the isolation specimen. No automatic discovery,
 // storage or dependency on the production document-global coordinator.
 import {defaultTextStyle,validateTextStyle,resolveTextStyle,textFonts,textWeights,hasTextStyle} from './canvas-instance-text-style.js';
+// Keeps a new box's top-left inside the +/-100000 range saved boards accept (camera worlds only; bounded hosts are
+// far smaller).
+export const savedPosition = (value, size) => Math.max(-100000, Math.min(100000 - Math.max(0, size), value));
 // The centre of what the host currently shows, in the coordinates objects placed on `host` use: the host's own
 // pixels, or world units when `host` is a camera world (docs/prd/NAVIGATION.md). Reads the camera from the world's
 // inline custom properties, and returns null when the host is hidden.
@@ -52,6 +55,8 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
     element.append(button);handles.push(button);
   }
   const apply = () => {
+    // A camera world is unbounded on screen but saved boards accept translations within +/-100000 world units.
+    if(unbounded()){x=Math.max(-worldLimit,Math.min(worldLimit,x));y=Math.max(-worldLimit,Math.min(worldLimit,y));}
     node.style.translate = `${x}px ${y}px`;node.style.scale=String(scale);node.style.rotate=`${angle}deg`;
     node.style.transformOrigin='center';node.style.setProperty('--canvas-instance-inverse',String(1/scale));
     // Keep 24px targets apart when the object is drawn shorter/narrower, counting the camera zoom. The zoom is read
@@ -66,6 +71,7 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
   // Camera worlds (docs/prd/NAVIGATION.md): inside a world element the owner keeps world units in its state and
   // converts the screen-space deltas core gives it by the world's measured scale. Worlds are unbounded.
   const unbounded = () => !!root?.hasAttribute('data-canvas-instance-world');
+  const worldLimit = 100000;
   const worldScale = () => {
     if (!unbounded()) return 1;
     const width = root.getBoundingClientRect().width;
@@ -216,7 +222,7 @@ export function createTextOwner(element, host, { name = 'Text', widthHandles = t
       if (!node?.isConnected) return null;
       const startX = x, startY = y, k = worldScale();
       // Limits and deltas are screen pixels; a camera world has no limits.
-      if (unbounded()) return { limits: { left: -Infinity, right: Infinity, top: -Infinity, bottom: Infinity }, move(dx,dy) { x = startX + dx / k;y = startY + dy / k;apply(); }, finish: contain };
+      if (unbounded()) return { limits: { left: (-worldLimit - startX) * k, right: (worldLimit - startX) * k, top: (-worldLimit - startY) * k, bottom: (worldLimit - startY) * k }, move(dx,dy) { x = startX + dx / k;y = startY + dy / k;apply(); }, finish: contain };
       const rect = node.getBoundingClientRect(), area = root.getBoundingClientRect();
       const left = area.left + root.clientLeft + 8 - rect.left, right = area.left + root.clientLeft + root.clientWidth - 8 - rect.right;
       const top = area.top + root.clientTop + 8 - rect.top, bottom = area.top + root.clientTop + root.clientHeight - 32 - rect.bottom;

@@ -1,4 +1,4 @@
-import { createTextOwner, visibleCenter } from './canvas-instance-text.js';
+import { createTextOwner, visibleCenter, savedPosition } from './canvas-instance-text.js';
 
 // Paper-specific ownership stays outside core and shares the bounded editor/math.
 export const stickyColors=Object.freeze(['yellow','blue','pink']);
@@ -12,7 +12,7 @@ export function createStickyNote(host) {
   if(host.getAttribute('aria-describedby'))node.setAttribute('aria-describedby',host.getAttribute('aria-describedby'));
   // New notes go to the middle of what the host shows: in a camera world, the visible centre in world units.
   const size=Math.min(240,host.clientWidth-64,host.clientHeight-80),center=visibleCenter(host)??{x:host.clientWidth/2,y:host.clientHeight/2};
-  Object.assign(node.style,{width:size+'px',height:size+'px',left:center.x-size/2+'px',top:center.y-(size+32)/2+'px'});
+  Object.assign(node.style,{width:size+'px',height:size+'px',left:savedPosition(center.x-size/2,size)+'px',top:savedPosition(center.y-(size+32)/2,size)+'px'});
   root.append(node);
   let base;
   try{base=createTextOwner(node,root,{name:'Sticky Note',widthHandles:false});}catch(error){node.remove();throw error;}

@@ -68,6 +68,10 @@
 [data-canvas-instance-world] > [data-canvas-instance-preview] { overflow:visible; }
 [data-instance-pencil-active], [data-instance-pencil-active] :is(.canvas-instance-editor,.canvas-instance-note,.canvas-instance-drawing,.canvas-instance-shape) { cursor:url('../assets/cursors/pencil.svg') 3 29, crosshair; }
 [data-instance-pencil-active] .canvas-instance-handle { visibility:hidden; }
+/* Camera Hand (H or Space held): grab everywhere in the host, grabbing while panning; handles stay out of the way. */
+[data-canvas-instance-hand], [data-canvas-instance-hand] * { cursor:grab !important; }
+[data-canvas-instance-panning], [data-canvas-instance-panning] * { cursor:grabbing !important; }
+[data-canvas-instance-hand] .canvas-instance-handle { visibility:hidden; }
 /* Stroke eraser: strokes, not their boxes, are hit targets; touched strokes preview as faded until release. */
 [data-instance-pencil-tool=eraser], [data-instance-pencil-tool=eraser] :is(.canvas-instance-editor,.canvas-instance-note,.canvas-instance-drawing,.canvas-instance-shape) { cursor:cell; }
 [data-instance-pencil-tool=shape], [data-instance-pencil-tool=shape] :is(.canvas-instance-editor,.canvas-instance-note,.canvas-instance-drawing,.canvas-instance-shape) { cursor:crosshair; }

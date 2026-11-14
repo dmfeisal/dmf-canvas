@@ -8,7 +8,7 @@ await page.goto(navigationTest.base+'/tests/fixtures/camera.html');await page.wa
 await page.evaluate(()=>{window.camErrors=[];window.addEventListener('error',e=>window.camErrors.push(e.message));window.addEventListener('unhandledrejection',e=>window.camErrors.push(String(e.reason)));
  window.camChanges=0;window.cam.canvas.subscribeChanges(()=>window.camChanges++);});
 const run=(command,value)=>page.evaluate(([command,value])=>window.cam.canvas.execute(command,value),[command,value]);
-const state=()=>page.evaluate(()=>{const s=window.cam.canvas.getState();return {camera:s.camera,limits:s.settings.camera,canUndo:s.canUndo,status:document.querySelector('#host [data-canvas-instance-status]').textContent};});
+const state=()=>page.evaluate(()=>{const s=window.cam.canvas.getState();return {camera:s.camera,hand:s.hand,limits:s.settings.camera,canUndo:s.canUndo,status:document.querySelector('#host [data-canvas-instance-status]').textContent};});
 const rect=selector=>page.evaluate(selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height,cx:r.left+r.width/2,cy:r.top+r.height/2};},selector);
 const host=()=>page.evaluate(()=>{const h=window.cam.host,r=h.getBoundingClientRect();return {x:r.left+h.clientLeft,y:r.top+h.clientTop,width:h.clientWidth,height:h.clientHeight};});
 async function drag(from,to){await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move((from.x+to.x)/2,(from.y+to.y)/2,{steps:4});await page.mouse.move(to.x,to.y,{steps:4});await page.mouse.up();}
@@ -201,8 +201,80 @@ await check('the Shapes tool at 2x draws world-unit shapes under the pointer',as
  assert(near(layout.width,50,.1)&&near(layout.height,30,.1),'Shape not in world units: '+JSON.stringify(layout));
 });
 
+// Step 3: Hand, wheel, pinch and keys.
+const cam=async()=>(await state()).camera;
+const focusHost=()=>page.evaluate(()=>{window.cam.canvas.select(null);window.cam.canvas.focus();});
+const frame=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+
+await check('H arms Hand, which pans on drag without moving objects, and V returns to Select',async()=>{
+ await page.evaluate(()=>window.cam.canvas.configure({camera:{maxScale:4}}));await run('camera',{x:300,y:200,scale:2});await focusHost();
+ await page.keyboard.press('h');let s=await state();
+ assert(s.hand==='tool'&&await page.evaluate(()=>window.cam.host.hasAttribute('data-canvas-instance-hand')),'H did not arm Hand: '+JSON.stringify(s));
+ const before=await rect('#host [data-canvas-instance-shape]'),saved=await page.evaluate(()=>JSON.stringify(window.cam.canvas.saveDocument()));
+ const h=await host();await drag({x:h.x+300,y:h.y+200},{x:h.x+380,y:h.y+240});await frame();
+ s=await state();assert(near(s.camera.x,300-40,.01)&&near(s.camera.y,200-20,.01),'Hand did not pan by screen/scale: '+JSON.stringify(s.camera));
+ const after=await rect('#host [data-canvas-instance-shape]');assert(near(after.left-before.left,80,.6)&&near(after.top-before.top,40,.6),'The view did not follow the drag');
+ assert(await page.evaluate(()=>JSON.stringify(window.cam.canvas.saveDocument()))===saved,'Hand moved an object');
+ await page.keyboard.press('v');assert((await state()).hand===null,'V did not return to Select');
+});
+
+await check('Space held is a temporary Hand, and arming Pencil or Hand releases the other',async()=>{
+ await focusHost();const h=await host(),start=await cam();
+ await page.keyboard.down('Space');assert((await state()).hand==='space','Space did not arm a temporary Hand');
+ await drag({x:h.x+300,y:h.y+300},{x:h.x+250,y:h.y+300});await page.keyboard.up('Space');await frame();
+ const s=await state();assert(s.hand===null&&near(s.camera.x,start.x+50/start.scale,.01),'Space pan wrong: '+JSON.stringify(s));
+ await page.evaluate(()=>{window.cam.pencil.setTool('pencil');window.cam.pencil.setActive(true);});await page.keyboard.press('h');
+ assert((await state()).hand==='tool'&&!(await page.evaluate(()=>window.cam.pencil.getState().active)),'Hand did not disarm Pencil');
+ assert(await page.evaluate(()=>window.cam.pencil.setActive(true)),'Pencil did not arm');
+ assert((await state()).hand===null,'Pencil did not disarm Hand');
+ const count=()=>page.evaluate(()=>window.cam.world.querySelectorAll('.canvas-instance-drawing').length),drawings=await count();
+ await page.keyboard.down('Space');await drag({x:h.x+300,y:h.y+260},{x:h.x+360,y:h.y+280});await page.keyboard.up('Space');
+ assert(await count()===drawings,'Space with Pencil armed drew instead of panning');
+ await page.evaluate(()=>window.cam.pencil.setActive(false));
+});
+
+await check('the wheel pans the camera and never scrolls the page',async()=>{
+ const h=await host(),start=await cam(),scroll=await page.evaluate(()=>scrollY);
+ await page.mouse.move(h.x+200,h.y+200);await page.mouse.wheel(0,120);await page.mouse.wheel(60,0);await frame();
+ const c=await cam();assert(near(c.y,start.y+120/start.scale,.01)&&near(c.x,start.x+60/start.scale,.01),'Wheel pan wrong: '+JSON.stringify({start,c}));
+ assert(await page.evaluate(()=>scrollY)===scroll,'The page scrolled');
+});
+
+await check('Ctrl+wheel (pinch) zooms around the pointer and announces once it settles',async()=>{
+ const h=await host(),point={x:h.x+260,y:h.y+180},start=await cam();
+ // World-local point under the pointer: (screen - drawn world origin) / scale.
+ const under=()=>page.evaluate(([x,y])=>{const c=window.cam.canvas.getState().camera,w=window.cam.world.getBoundingClientRect();return {x:(x-w.left)/c.scale,y:(y-w.top)/c.scale};},[point.x,point.y]);
+ const before=await under();
+ await page.mouse.move(point.x,point.y);await page.keyboard.down('Control');await page.mouse.wheel(0,-100);await page.mouse.wheel(0,-100);await page.keyboard.up('Control');await frame();
+ const c=await cam(),after=await under();
+ assert(c.scale>start.scale*1.5&&c.scale<=4,'Pinch zoom scale '+c.scale);
+ assert(near(after.x,before.x,.05)&&near(after.y,before.y,.05),'The world point under the pointer moved: '+JSON.stringify({before,after}));
+ await page.waitForTimeout(500);assert(/^Zoom \d+%\.$/.test((await state()).status),'No settled zoom announcement: '+(await state()).status);
+});
+
+await check('+, -, 0, Shift+1, Shift+2 and arrows drive the camera from the keyboard',async()=>{
+ await run('camera',{x:300,y:200,scale:1});await focusHost();
+ await page.keyboard.press('+');assert(near((await cam()).scale,1.2,1e-9),'+ did not zoom in');
+ await page.keyboard.press('-');await page.keyboard.press('-');assert(near((await cam()).scale,1/1.2,1e-9),'- did not zoom out');
+ await page.keyboard.press('0');assert((await cam()).scale===1,'0 did not return to 100%');
+ const x=(await cam()).x;await page.keyboard.press('ArrowRight');assert(near((await cam()).x,x+50,1e-9),'Arrow did not pan 50px');
+ await page.keyboard.press('Shift+Digit1');const fitted=await cam();assert(fitted.scale<=1,'Shift+1 did not fit');
+ await page.evaluate(()=>{window.cam.canvas.select(window.cam.text);window.cam.text.focus();});await page.keyboard.press('Shift+Digit2');
+ const t=await rect('#text'),h=await host();assert(near(t.cx,h.x+h.width/2,1),'Shift+2 did not frame the selection');
+});
+
+await check('far pans, new objects, pastes and drags stay within the range saved boards accept',async()=>{
+ await run('camera',{x:5e6,y:-5e6,scale:1});const c=await cam(),h=await host();
+ assert(near(c.x+h.width/2,1e5,.01)&&near(c.y+h.height/2,-1e5,.01),'Visible centre not kept in range: '+JSON.stringify(c));
+ assert(await page.evaluate(()=>!!window.cam.addNote()),'Note not created far out');
+ await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));await run('copy');await run('paste');
+ const n=await selectedRect();await drag({x:n.cx,y:n.cy},{x:n.cx+300,y:n.cy-200});
+ const saved=await page.evaluate(()=>{try{return {ok:true,count:window.cam.canvas.saveDocument().objects.length};}catch(error){return {ok:false,error:error.message};}});
+ assert(saved.ok,'Board could not be saved: '+JSON.stringify(saved));
+});
+
 await check('destroy restores the world and the host background',async()=>{
- const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length};});
+ const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length+(h.hasAttribute('data-canvas-instance-hand')||h.hasAttribute('data-canvas-instance-panning')?1:0)};});
  assert(left.style===null&&!left.marked&&left.size===''&&left.position===''&&left.overlays===0,'Left behind: '+JSON.stringify(left));
  const errors=await page.evaluate(()=>window.camErrors);assert(!errors.length,'Page errors: '+errors.join('; '));
 });

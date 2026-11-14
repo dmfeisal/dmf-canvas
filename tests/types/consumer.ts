@@ -40,7 +40,7 @@ canvas.configure({snapping:{grid:true}});canvas.configure({labels:false});{const
 // @ts-expect-error snapping keys are align and grid
 canvas.configure({snapping:{magnet:true}});
 const camera=createCanvas(host,{camera:{world:element,maxScale:2}});
-camera.execute('zoom',{by:1.2,around:{x:10,y:20}});camera.execute('zoom',{to:1});camera.execute('fit');camera.execute('zoom-to-selection');camera.execute('camera',{x:0,y:0});camera.configure({camera:{minScale:.5}});
+camera.execute('zoom',{by:1.2,around:{x:10,y:20}});camera.execute('zoom',{to:1});camera.execute('fit');camera.execute('zoom-to-selection');camera.execute('camera',{x:0,y:0});camera.configure({camera:{minScale:.5}});camera.execute('hand',true);{const hand:'tool'|'space'|null=camera.getState().hand;void hand;}
 {const view=camera.getState().camera;if(view){const zoom:number=view.scale;void zoom;}const limits=camera.getState().settings.camera;if(limits){const max:number=limits.maxScale;void max;}}
 // @ts-expect-error zoom takes by or to, not both
 camera.execute('zoom',{by:2,to:1});

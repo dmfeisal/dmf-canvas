@@ -50,12 +50,18 @@ Phase 2 of dmf-web parity ([navigation](prd/NAVIGATION.md)) adds an opt-in camer
   - The snap distance stays 6 screen pixels, and grid snapping uses the 24px world lattice.
   - Transform handles stay 24 screen pixels.
   - The host's dotted background follows the camera (inline `background-size` and `background-position`, restored on `destroy()`).
-- **Unbounded world:** on camera hosts, dragging, transforms, Duplicate and paste never clamp objects to the host, and `contain` leaves them where they are. Duplicate and paste offset copies by 24 world units.
+- **Unbounded world:** on camera hosts, dragging, transforms, Duplicate and paste never clamp objects to the host, and `contain` leaves them where they are. Duplicate offsets copies by 24 world units. The world stops at ±100,000 world units, the range board files accept. The camera keeps the visible centre inside it, owners keep their position inside it (drags stop at the edge), and new objects, pastes and drawings are placed inside it, so a camera host can always be saved.
 - **Owners:** built-in owners keep world units in their state and convert the screen-pixel deltas core gives them. Custom owners inside a camera world must do the same: movement limits and deltas stay in screen pixels. Owners may implement `cameraChanged()`, which core calls after each zoom change (style writes only); built-in owners use it to keep handle spacing and small-box handle hiding right at the drawn size. Text editing anchors are kept in world coordinates, so panning or zooming while editing never moves the text.
 - **Inspector:** on camera hosts, `getInspector()` and `execute('inspect')` use world units, and the Selection inspector panel says so. Any pan or zoom closes the panel.
 - **New objects and paste:** `createStickyNote` and `createImageObject` (without a layout) place new objects at the centre of what the host shows, in world units. Paste centres the copies there and keeps their arrangement. The camera does not move. Owner factories read the camera from the world's inline `--canvas-instance-camera-x`, `-y` and `-scale` properties.
 - **Drawing:** Pencil, Highlighter, Eraser and Shapes map pointer input into the world. They sample at least 0.5 world units apart, draw the preview inside the world, commit world coordinates with no containment, and cancel an unfinished stroke, shape or erase when the camera changes. `createDrawing` accepts world points in any direction on a camera world.
-- **Not in alpha.1 yet:** Hand, wheel, pinch and keyboard zoom, two-finger touch and full screen. These follow in the next steps of the proposal.
+- **Hand and input** (mouse and pen):
+  - H arms the Hand tool, and V or Escape returns to Select. `execute('hand', true|false)` does the same, and `getState().hand` reports `'tool'`, `'space'` (Space held) or `null`.
+  - Hand drags pan even when they start over an object, and never move it. Pencil and Hand disarm each other, and Space held over an armed Pencil pans instead of drawing.
+  - The wheel pans (Shift for horizontal on a plain wheel). Pinch, or Ctrl/⌘ with the wheel, zooms around the pointer, about 1.28× per wheel notch. The canvas consumes the wheel only over a camera host, so the page never scrolls as well.
+  - Canvas keys: `+`/`=` and `-` zoom by 1.2×, `0` returns to 100%, Shift+1 is Fit all and Shift+2 is Zoom to selection. Arrow keys with nothing selected pan by 50 screen pixels.
+  - Camera writes are coalesced into one animation frame, and layout is read only there. Wheel and pinch zoom announce "Zoom N%" once they settle (after 400ms).
+- **Not in alpha.1 yet:** two-finger touch and full screen. These follow in the next steps of the proposal.
 
 ## Compatibility changes
 
