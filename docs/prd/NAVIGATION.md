@@ -15,7 +15,7 @@ related:
 
 # Navigation
 
-Phase 2 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.5.0: a camera (Hand, pan, zoom, Fit all, Zoom to selection), two-finger touch and full screen. The reference design is the Sticky Notes gallery and Guestbook board on feisal.id (dmf-web `docs/CANVAS.md`, "Camera pan/zoom and dotted-grid behavior" and "Select and Hand tools", and `canvas-touch.js`), adapted to the package's host, owner and settings model. All seven steps are built in 0.5.0-alpha.1; the device check and promotion are pending. The five decisions below were accepted on 14 November 2026 with the recommended answers.
+Phase 2 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.5.0: a camera (Hand, pan, zoom, Fit all, Zoom to selection), two-finger touch and full screen. The reference design is the Sticky Notes gallery and Guestbook board on feisal.id (dmf-web `docs/CANVAS.md`, "Camera pan/zoom and dotted-grid behavior" and "Select and Hand tools", and `canvas-touch.js`), adapted to the package's host, owner and settings model. All seven steps are built and released in 0.5.0. The device check was skipped for this release at the owner's request; that is recorded here rather than marked passed. The five decisions below were accepted on 14 November 2026 with the recommended answers.
 
 This is the largest change on the roadmap. Today every owner positions itself in the host's untransformed coordinates, and containment, the inspector, snapping, guides, labels, drawing input and Duplicate all assume one screen pixel is one canvas pixel. A camera breaks that assumption everywhere at once, so this proposal settles the model before code.
 
