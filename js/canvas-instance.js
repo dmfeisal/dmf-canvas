@@ -4,6 +4,7 @@ import { resolveSettings } from './canvas-instance-settings.js';
 import { validateTransfer } from './canvas-instance-clipboard.js';
 import {combinedGeometry,validGeometry,planInspector} from './canvas-instance-inspector-plan.js';
 import {defaultTextStyle,resolveTextStyle,hasSchema5Style} from './canvas-instance-text-style.js';
+import {legacyStickyColors} from './canvas-instance-sticky.js';
 // Internal lifecycle spike. Production object owners still use DMFCanvasTools.
 // No document/window listeners, storage or owner geometry writes. The optional camera transforms one host-marked world element;
 // camera hosts add a host wheel listener, one pending frame and one zoom-announcement timer, all released on destroy().
@@ -1107,7 +1108,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if(world){const w=world.getBoundingClientRect(),k=cameraView.scale,keep=value=>Math.max(-100000,Math.min(100000,value));return {data,bounds:{left:keep((r.left-w.left)/k),top:keep((r.top-w.top)/k),width:Math.min(100000,Math.max(.01,r.width/k)),height:Math.min(100000,Math.max(.01,r.height/k))}};}
       return {data,bounds:{left:r.left-area.left-root.clientLeft,top:r.top-area.top-root.clientTop,width:r.width,height:r.height}};
     });
-    clipboard.write(validateTransfer({format:'dmf-canvas-clipboard',version:objects.some(item=>item.data.state.typography&&hasSchema5Style(item.data.state.typography))?5:objects.some(item=>item.data.type==='shape')?4:objects.some(item=>item.data.tool==='highlighter')?3:objects.some(item=>item.data.state.typography||item.data.layout.fontSize>200)?2:1,objects}));
+    clipboard.write(validateTransfer({format:'dmf-canvas-clipboard',version:objects.some(item=>item.data.state.typography&&hasSchema5Style(item.data.state.typography))||objects.some(item=>item.data.type==='sticky'&&!legacyStickyColors.includes(item.data.state.paperColor))?5:objects.some(item=>item.data.type==='shape')?4:objects.some(item=>item.data.tool==='highlighter')?3:objects.some(item=>item.data.state.typography||item.data.layout.fontSize>200)?2:1,objects}));
     status.textContent=`${objects.length} object${objects.length===1?'':'s'} copied for this page.`;return result(true);
   }
   function pasteSelection() {
@@ -1182,7 +1183,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     }
     const records=[...document.originals.map(item=>item.data),...document.objects];
     // Schema 2 carries typography; schema 3 adds Highlighter strokes. Older readers reject newer versions.
-    if(records.some(item=>item.state.typography&&hasSchema5Style(item.state.typography)))document.version=5;else if(records.some(item=>item.type==='shape'))document.version=4;else if(records.some(item=>item.tool==='highlighter'))document.version=3;else if(records.some(item=>item.state.typography||item.layout.fontSize>200))document.version=2;
+    if(records.some(item=>item.state.typography&&hasSchema5Style(item.state.typography))||records.some(item=>item.type==='sticky'&&!legacyStickyColors.includes(item.state.paperColor)))document.version=5;else if(records.some(item=>item.type==='shape'))document.version=4;else if(records.some(item=>item.tool==='highlighter'))document.version=3;else if(records.some(item=>item.state.typography||item.layout.fontSize>200))document.version=2;
     const json=JSON.stringify(document);if(new TextEncoder().encode(json).byteLength>1048576)throw new RangeError('Board file exceeds 1 MiB.');
     return JSON.parse(json);
   }

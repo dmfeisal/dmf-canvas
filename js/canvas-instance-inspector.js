@@ -1,3 +1,6 @@
+import {stickyColors} from './canvas-instance-sticky.js';
+// Labels for the sixteen paper keys (docs/prd/STYLING-EXPORT.md). Keys are hues; labels are plain colour names.
+const paperLabels={red:'Red',orange:'Orange',yellow:'Yellow',green:'Green',blue:'Blue',iris:'Iris',pink:'Pink',blush:'Blush',lilac:'Lilac',denim:'Denim',mint:'Mint',gray:'Gray',aqua:'Aqua',lime:'Lime',guava:'Guava',magenta:'Magenta'};
 let serial=0;const mounted=new WeakSet();
 export function createCanvasInspector(container,{canvas,trigger}){
  const doc=container?.ownerDocument,view=doc?.defaultView;
@@ -29,6 +32,13 @@ export function createCanvasInspector(container,{canvas,trigger}){
  const reset=doc.createElement('button');reset.type='button';reset.textContent='Reset text styles';reset.dataset.inspectorTextReset='';textSection.append(textGrid,reset);
  const closeButton=doc.createElement('button');closeButton.type='button';closeButton.textContent='Close inspector';panel.append(grid,message,closeButton);container.append(panel);
  panel.insertBefore(textSection,message);closeButton.className='canvas-embed-inspector__close';
+ // Note colour (docs/prd/STYLING-EXPORT.md): one select of the sixteen paper keys, shown only for a Sticky Note.
+ const noteSection=doc.createElement('fieldset');noteSection.className='canvas-embed-inspector__note';noteSection.hidden=true;
+ const noteLegend=doc.createElement('legend');noteLegend.textContent='Note';noteSection.append(noteLegend);
+ const noteLabel=doc.createElement('label'),noteSpan=doc.createElement('span'),paperSelect=doc.createElement('select');
+ noteSpan.textContent='Colour';paperSelect.dataset.inspectorPaper='';paperSelect.setAttribute('aria-describedby',message.id);
+ for(const key of stickyColors){const option=doc.createElement('option');option.value=key;option.textContent=paperLabels[key];paperSelect.append(option);}
+ noteLabel.append(noteSpan,paperSelect);noteSection.append(noteLabel);panel.insertBefore(noteSection,message);
  let alive=true,committing=false,selectionKey='',values=null,cameraKey=null;const dirty=new Set();
  const isOpen=()=>panel.matches(':popover-open');
  function close(focus=false){if(!alive)return;if(isOpen())panel.hidePopover();trigger.setAttribute('aria-expanded','false');if(focus&&!trigger.disabled)trigger.focus({preventScroll:true});}
@@ -42,6 +52,8 @@ export function createCanvasInspector(container,{canvas,trigger}){
   for(const [field,input]of fields){input.disabled=!values.editable;if(force||doc.activeElement!==input){input.value=String(Math.round(values[field]*100)/100);input.removeAttribute('aria-invalid');dirty.delete(input);}}
   fields.get('rotation').parentElement.firstChild.textContent=values.relativeRotation?'Turn selection (degrees)':'Rotation (degrees)';
   const text=canvas.getTextStyle();textSection.hidden=!text;
+  const paper=state.paperColor;noteSection.hidden=paper===null||paper===undefined;
+  if(!noteSection.hidden&&(force||doc.activeElement!==paperSelect)){paperSelect.value=paper;paperSelect.disabled=!values.editable;}
   for(const [key,input]of textFields){input.disabled=!text?.editable;if(force||doc.activeElement!==input){const value=text?.[key]??'';if(key==='weight'){for(const option of [...input.options])if(option.dataset.originalWeight)option.remove();if(value!==''&&![...input.options].some(option=>option.value===String(value))){const option=doc.createElement('option');option.value=String(value);option.textContent=value+' (original)';option.disabled=true;option.dataset.originalWeight='';input.append(option);}for(const option of input.options)if(option.value&&!option.dataset.originalWeight)option.disabled=!text?.weights.includes(Number(option.value));}input.value=key==='lineHeight'&&value==='normal'?'':String(value);input.removeAttribute('aria-invalid');dirty.delete(input);}}
   reset.disabled=!text?.editable;
  }
@@ -82,6 +94,7 @@ export function createCanvasInspector(container,{canvas,trigger}){
   close();
  };
  const onClose=()=>close(true);
+ paperSelect.addEventListener('change',()=>{if(!isOpen()||committing)return;committing=true;try{const result=canvas.execute('paper-color',paperSelect.value);refresh(true);message.textContent=result.ok?'Note colour applied.':'This selection cannot change colour.';}catch{refresh(true);message.textContent='Could not change the note colour.';}finally{committing=false;}});
  panel.addEventListener('input',onInput);panel.addEventListener('focusout',onBlur);panel.addEventListener('change',onChange);reset.addEventListener('click',onReset);panel.addEventListener('keydown',onKey);panel.addEventListener('toggle',onToggle);closeButton.addEventListener('click',onClose);
  const listeners=[[view,'resize',dismiss],[view,'pagehide',dismiss],[doc,'fullscreenchange',dismiss],[doc,'scroll',dismiss,true]];
  if(view.visualViewport)listeners.push([view.visualViewport,'resize',dismiss],[view.visualViewport,'scroll',dismiss]);

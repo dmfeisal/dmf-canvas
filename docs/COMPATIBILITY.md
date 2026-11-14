@@ -18,7 +18,7 @@ The opt-in camera changes no data format. Its position and zoom are host view st
 
 ## Text ink, line height and letter spacing (schema 5)
 
-0.7.0-alpha.1 adds three Text properties to the typography record: `ink` (`primary`, `blue` or `red`, the Pencil inks), `lineHeight` (`normal` or 0.8–3) and `letterSpacing` (−0.08 to 0.3, in em). Board, clipboard and draft writers use schema 5 only when a record sets one of them; records that keep the defaults are written exactly as before. Readers accept boards and clipboard transfers at versions 1–5, and older readers reject version 5 rather than dropping the styling. Records saved before this release load with the defaults.
+0.7.0-alpha.1 adds three Text properties to the typography record: `ink` (`primary`, `blue` or `red`, the Pencil inks), `lineHeight` (`normal` or 0.8–3) and `letterSpacing` (−0.08 to 0.3, in em). Board, clipboard and draft writers use schema 5 only when a record sets one of them; records that keep the defaults are written exactly as before. Readers accept boards and clipboard transfers at versions 1–5, and older readers reject version 5 rather than dropping the styling. Records saved before this release load with the defaults. Sticky notes may also use sixteen paper keys (`red` to `magenta`, as well as the original `yellow`, `blue` and `pink`); a note with a new key is written as schema 5, and older readers reject it.
 
 ## Shapes (schema 4)
 

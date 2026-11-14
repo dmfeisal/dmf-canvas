@@ -710,4 +710,24 @@ await check('Text ink, line height and letter spacing apply, save as schema 5 on
  const back=await text();assert(back.ink==='blue'&&back.inline[0]==='1.5','Round trip lost styling: '+JSON.stringify(back));
 });
 
+// Styling step 2: sixteen note colours in the inspector, saved as schema 5 when they are new, and undone as one step.
+await check('a note takes one of sixteen colours from the inspector; a new colour saves as schema 5 and Undo restores it',async()=>{
+ await page.goto(navigationTest.base+'/tests/fixtures/camera.html');await page.waitForFunction(()=>!!window.cam);
+ // addNote() only creates the note; select it, since the colour is read for a single selected note.
+ await page.evaluate(()=>{const note=window.cam.addNote();window.cam.canvas.select(note);});
+ const paper=()=>page.evaluate(()=>window.cam.canvas.getState().paperColor);
+ assert((await paper())==='yellow','New note not yellow: '+await paper());
+ assert((await page.evaluate(()=>window.cam.canvas.saveDocument().version))<5,'Default note saved as schema 5');
+ await page.evaluate(()=>{window.cam.inspector.toggle();});await frame();
+ const options=await page.evaluate(()=>{const sel=document.querySelector('.canvas-embed-inspector select[data-inspector-paper]');return {count:sel.options.length,visible:!sel.closest('fieldset').hidden};});
+ assert(options.count===16&&options.visible,'Inspector Note colour wrong: '+JSON.stringify(options));
+ await page.selectOption('.canvas-embed-inspector select[data-inspector-paper]','magenta');await frame();
+ assert((await paper())==='magenta','Inspector did not change the colour: '+await paper());
+ const saved=await page.evaluate(()=>window.cam.canvas.saveDocument().version);
+ assert(saved===5,'A new colour did not save as schema 5: '+saved);
+ await page.evaluate(()=>window.cam.canvas.execute('undo'));
+ assert((await paper())==='yellow','Undo did not restore the colour: '+await paper());
+ await page.keyboard.press('Escape');await frame();
+});
+
 console.log(`PASS navigation: ${passed} checks`);
