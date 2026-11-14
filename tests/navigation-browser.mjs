@@ -603,4 +603,42 @@ await check('the shared custom host takes camera: true and shows Hand and the Ca
  assert(seen.plainHand===true&&seen.plainCamera===null,'Default consumer gained a camera: '+JSON.stringify(seen));
 });
 
+// Organisation step 5: the Layers action and the context menu in the configurator and the shared custom host.
+await check('the configurator preview opens Layers from its History group, and right-click lists every bar\'s actions',async()=>{
+ await page.goto(navigationTest.base+'/examples/configurator/');await page.waitForFunction(()=>!document.getElementById('copy').disabled);
+ await page.evaluate(()=>{document.querySelector('main').configurator.previews.A.canvas.select(null);});
+ await page.click(`${A} [data-toolbar-action="layers"]`);await frame();
+ const layersOpen=await page.evaluate(sel=>{const p=document.querySelector(sel+' .canvas-embed-layers');return {open:p.matches(':popover-open'),rows:p.querySelectorAll('.canvas-embed-layers__row').length};},A);
+ assert(layersOpen.open&&layersOpen.rows>=1,'Layers did not open with rows: '+JSON.stringify(layersOpen));
+ await page.keyboard.press('Escape');await frame();
+ const h=await page.evaluate(()=>{const e=document.querySelector('[data-preview=A] [data-host]');e.scrollIntoView({block:'center'});const r=e.getBoundingClientRect();return {x:r.left+e.clientLeft,y:r.top+e.clientTop};});
+ await page.evaluate(([x,y])=>document.querySelector('[data-preview=A] [data-host]').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:x,clientY:y})),[h.x+200,h.y+150]);
+ const menu=await page.evaluate(()=>[...document.querySelectorAll('.canvas-embed-context [role=menuitem]')].map(b=>b.dataset.contextAction));
+ assert(menu.includes('select')&&menu.includes('undo')&&menu.includes('inspect'),'Menu lacks actions from more than one bar: '+JSON.stringify(menu));
+ await page.keyboard.press('Escape');await frame();
+});
+
+await check('the shared custom host opens Layers and its context menu, and disposing it leaves no panel or menu behind',async()=>{
+ await page.goto(navigationTest.base+'/');await page.waitForFunction(()=>!!document.querySelector('[data-consumer]'));
+ const seen=await page.evaluate(async()=>{
+  const {mountConsumer}=await import('/consumer.js'),parent=document.createElement('div');document.body.append(parent);
+  // The homepage already hosts its own playground, so count what this mount adds and removes, not the page's total.
+  const count=()=>({panels:document.querySelectorAll('.canvas-embed-layers').length,menus:document.querySelectorAll('.canvas-embed-context').length});const baseline=count();
+  const item=mountConsumer(parent,'Lay');
+  item.root.querySelector('[data-toolbar-action="layers"]').click();
+  const open=item.root.querySelector('.canvas-embed-layers').matches(':popover-open');
+  item.root.querySelector('[data-toolbar-action="layers"]').click();
+  const h=item.host.getBoundingClientRect();
+  item.host.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:h.left+40,clientY:h.top+40}));
+  const menu=document.querySelectorAll('.canvas-embed-context [role=menuitem]').length;
+  document.querySelectorAll('.canvas-embed-context').forEach(m=>m.hidePopover?.());
+  item.dispose();
+  const left=count();
+  parent.remove();
+  return {open,menu,added:{panels:left.panels-baseline.panels,menus:left.menus-baseline.menus}};
+ });
+ assert(seen.open&&seen.menu>=3,'Custom host Layers or menu failed: '+JSON.stringify(seen));
+ assert(seen.added.panels===0&&seen.added.menus===0,'Dispose left a panel or menu behind: '+JSON.stringify(seen));
+});
+
 console.log(`PASS navigation: ${passed} checks`);

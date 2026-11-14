@@ -25,7 +25,7 @@ Editor surfaces use **floating chrome**: four groups placed over the canvas stag
 | Tools | Top, inline start | Vertical rail | Select, Hand (camera hosts only), Add text, Add note, Add image, Pencil, Highlighter, Stroke eraser, Shapes |
 | Tool options | Top, beside the rail | Horizontal | Shapes only: the five kinds first. Then the armed tool's three inks and Thin, Medium, Bold (Pencil, Highlighter and Shapes). Shapes end with Fill (closed shapes) and Round corners (rectangles) |
 | Camera | Bottom, inline start | Horizontal | Camera hosts only: Zoom out, Zoom in, Fit all, Full screen (where supported) |
-| History | Bottom, inline start, after Camera | Horizontal | Undo, Redo |
+| History | Bottom, inline start, after Camera | Horizontal | Undo, Redo, Layers |
 | Selection actions | Bottom, centre | Horizontal | Selection inspector, Duplicate, Delete, More |
 | Help | Bottom, inline end | Horizontal | Keyboard help |
 
@@ -63,6 +63,7 @@ All artwork is local [Lucide](https://lucide.dev) from `js/canvas-instance-toolb
 | `multiple` | Select multiple | `lasso-select` |  | Tools (authored specimen) |
 | `undo` | Undo | `undo-2` | ⌘/Ctrl Z | History |
 | `redo` | Redo | `redo-2` | ⌘/Ctrl Shift Z | History |
+| `layers` | Layers (a popover with search, rename and reset; see the Layers panel) | `layers` | | History |
 | `inspect` | Selection inspector | `sliders-horizontal` |  | Selection |
 | `duplicate` | Duplicate | `copy-plus` | ⌘/Ctrl D | Selection |
 | `delete` | Delete | `trash` | Delete | Selection |
@@ -94,6 +95,8 @@ All artwork is local [Lucide](https://lucide.dev) from `js/canvas-instance-toolb
 | `help` | Keyboard help | `circle-question-mark` |  | Help |
 
 The sprite also carries `image-plus` and `layers` for hosts that need them. To add an action, pick a Lucide icon that is not already in this table, copy its path data from a pinned Lucide release (record the version in the sprite's header comment), add a row here, and keep the label identical to the accessible name.
+
+Right-click on a canvas, or Shift+F10 or the Context Menu key on a focused object, opens a context menu that lists the same visible actions as the toolbars, with their shortcuts and availability. It dispatches through the toolbar, so it cannot run a disabled action.
 
 Camera hosts also answer `0` (100%) and Shift 2 (Zoom to selection) on the keyboard, and keyboard help lists them, with wheel pan and pinch or Ctrl/⌘ with the wheel to zoom. Zoom to selection has no button: no icon in the vendored set fits it without repeating another action's artwork.
 
