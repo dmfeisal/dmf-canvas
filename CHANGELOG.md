@@ -1,6 +1,18 @@
 # Changelog
 
-## 0.7.0-alpha.2 (prepared 14 November 2026, private, experimental)
+## 0.7.0 (prepared 14 November 2026, private)
+
+Completes [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 4, [styling and export](docs/prd/STYLING-EXPORT.md). Promotes 0.7.0-alpha.2 with no runtime change; the alpha entries below hold the details.
+
+- **Text styling:** ink (`primary`, `blue`, `red`), line height (`normal` or 0.8–3) and letter spacing (−0.08 to 0.3em) in the inspector and `execute('text-style')`.
+- **Sticky notes:** sixteen paper colours, with `yellow`, `blue` and `pink` unchanged, and an inspector Note colour select.
+- **Text size presets:** S (14px), M (18px), L (24px) and Original in the inspector.
+- **PNG export:** `createCanvasExport()` in `dmf-canvas/export` exports the selection or visible canvas through a host renderer, within 2×, 4096px per side and 12 megapixels.
+- **Schema 5:** boards, clipboard and portable documents use schema 5 only when a record sets new text styling or a new paper colour. Readers accept versions 1–5.
+
+Migration from 0.6.0: default boards are written exactly as before. Boards that use the new styling need a 0.7.0 reader, because 0.6.0 readers reject schema 5 instead of dropping styling. The configurator and custom host have no export button yet; hosts supply their own renderer.
+
+## 0.7.0-alpha.2 (prepared 14 November 2026, private, experimental)## 0.7.0-alpha.2 (prepared 14 November 2026, private, experimental)
 
 Completes the export part of [styling and export](docs/prd/STYLING-EXPORT.md) (phase 4) with step 4: PNG export.
 
