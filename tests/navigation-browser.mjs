@@ -730,4 +730,23 @@ await check('a note takes one of sixteen colours from the inspector; a new colou
  await page.keyboard.press('Escape');await frame();
 });
 
+// Styling step 3: S/M/L text size presets and Original, one Undo step each.
+await check('text size presets set S, M, L and Original, and each is one Undo step',async()=>{
+ await page.goto(navigationTest.base+'/tests/fixtures/camera.html');await page.waitForFunction(()=>!!window.cam);
+ const size=()=>page.evaluate(()=>parseFloat(getComputedStyle(window.cam.text).fontSize));
+ const authored=await size();
+ await page.evaluate(()=>window.cam.canvas.select(window.cam.text));
+ await page.evaluate(()=>window.cam.inspector.toggle());await frame();
+ await page.selectOption('.canvas-embed-inspector select[data-inspector-preset]','24');await frame();
+ assert((await size())===24,'L did not set 24px: '+await size());
+ assert((await page.evaluate(()=>window.cam.canvas.execute('undo'))).ok&&(await size())===authored,'Undo did not restore the authored size');
+ await page.selectOption('.canvas-embed-inspector select[data-inspector-preset]','14');await frame();
+ assert((await size())===14,'S did not set 14px: '+await size());
+ await page.selectOption('.canvas-embed-inspector select[data-inspector-preset]','18');await frame();
+ assert((await size())===18,'M did not set 18px: '+await size());
+ await page.selectOption('.canvas-embed-inspector select[data-inspector-preset]','original');await frame();
+ assert((await size())===authored,'Original did not restore the authored size: '+await size()+' vs '+authored);
+ await page.keyboard.press('Escape');await frame();
+});
+
 console.log(`PASS navigation: ${passed} checks`);
