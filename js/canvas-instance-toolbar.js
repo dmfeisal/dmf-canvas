@@ -105,7 +105,20 @@ export function createCanvasToolbar(container,{actions=null,label='Canvas editin
   const click=event=>{const row=rows.find(item=>item.button===event.target.closest?.('button'));hide();if(!row?.run||row.button.disabled||row.button.hidden)return;if(row.menu)closeMenu();row.run();};
   const scroll=()=>{closeMenu(false);const button=tipTarget;if(button&&doc.activeElement===button){hide();show(button);}else hide();};
   const listeners={keydown,pointerover:over,pointerout:out,focusin:focus,focusout:hide,click};for(const [type,fn]of Object.entries(listeners))container.addEventListener(type,fn);bar.addEventListener('scroll',scroll);menu?.addEventListener('toggle',toggled);const observer=new view.ResizeObserver(()=>{hide();placeMenu();});observer.observe(bar);render();
-  return Object.freeze({render,update(rowId,patch){if(!alive)return;const row=rows.find(item=>item.id===rowId&&item.button!==more);if(!row)return;const b=row.button,focused=doc.activeElement===b;
+  // Context menus (docs/prd/ORGANISATION.md step 4) read these: the same rows, labels, shortcuts and availability as the
+  // toolbar, and activate() dispatches the row's own run(), exactly as a click does.
+  return Object.freeze({render,
+    entries(){
+      if(!alive)return Object.freeze([]);
+      return Object.freeze(rows.filter(row=>row.button!==more&&row.run&&!row.button.closest('[hidden]')&&!row.button.hidden).map(row=>Object.freeze({id:row.id,label:row.label,key:row.key||'',enabled:!row.button.disabled})));
+    },
+    activate(rowId){
+      if(!alive)return false;
+      const row=rows.find(item=>item.id===rowId&&item.button!==more&&item.run);
+      if(!row||!usable(row))return false;
+      hide();if(row.menu)closeMenu();row.run();return true;
+    },
+    update(rowId,patch){if(!alive)return;const row=rows.find(item=>item.id===rowId&&item.button!==more);if(!row)return;const b=row.button,focused=doc.activeElement===b;
     if(patch.label!==undefined){row.label=String(patch.label);b.querySelector(row.menu?'.canvas-embed-menu__label':'.canvas-embed-toolbar__label').textContent=row.label;}
     for(const name of ['disabled','hidden'])if(patch[name]!==undefined&&b[name]!==!!patch[name])b[name]=!!patch[name];
     if(patch.pressed!==undefined){const attr=row.menu?'aria-checked':'aria-pressed',value=row.menu?String(patch.pressed===true):String(patch.pressed);if(row.menu&&b.getAttribute('role')!=='menuitemcheckbox')b.setAttribute('role','menuitemcheckbox');if(b.getAttribute(attr)!==value)b.setAttribute(attr,value);if(row.id==='lock')b.querySelector('svg').innerHTML=toolbarIcons[patch.pressed?'lock-keyhole-open':'lock-keyhole'];if(row.id==='fullscreen')b.querySelector('svg').innerHTML=toolbarIcons[patch.pressed?'minimize':'maximize'];}
