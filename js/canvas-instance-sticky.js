@@ -1,8 +1,17 @@
 import { createTextOwner, visibleCenter, savedPosition } from './canvas-instance-text.js';
 
 // Paper-specific ownership stays outside core and shares the bounded editor/math.
-export const stickyColors=Object.freeze(['yellow','blue','pink']);
-const paper={yellow:'var(--dmf-note-sunnyside, #ffcf34)',blue:'var(--dmf-note-blue-paradise, #68d4f8)',pink:'var(--dmf-note-positively-pink, #ffbbd4)'};
+// Sixteen paper colours (docs/prd/STYLING-EXPORT.md). Keys are hues, not third-party collection names. yellow, blue and
+// pink are the original three and keep their values. Each colour reads its host token first, then the hex fallback.
+export const legacyStickyColors=Object.freeze(['yellow','blue','pink']);
+const paperDefs=[
+  ['red','var(--dmf-note-candy-apple-red, #f05366)'],['orange','var(--dmf-note-vital-orange, #ffae5f)'],['yellow','var(--dmf-note-sunnyside, #ffcf34)'],['green','var(--dmf-note-lucky-green, #63c787)'],
+  ['blue','var(--dmf-note-blue-paradise, #68d4f8)'],['iris','var(--dmf-note-iris-infusion, #c29bd4)'],['pink','var(--dmf-note-positively-pink, #ffbbd4)'],['blush','var(--dmf-note-pink-salt, #f2d4e0)'],
+  ['lilac','var(--dmf-note-orchid-frost, #e5dcef)'],['denim','var(--dmf-note-washed-denim, #9cc7fc)'],['mint','var(--dmf-note-fresh-mint, #b5e2df)'],['gray','var(--dmf-note-pebble-gray, #bfb6b7)'],
+  ['aqua','var(--dmf-note-aqua-splash, #6bd9e6)'],['lime','var(--dmf-note-acid-lime, #e4ee59)'],['guava','var(--dmf-note-guava, #ff8b98)'],['magenta','var(--dmf-note-tropical-pink, #f9a6ea)'],
+];
+export const stickyColors=Object.freeze(paperDefs.map(([key])=>key));
+const paper=Object.freeze(Object.fromEntries(paperDefs));
 
 export function createStickyNote(host) {
   if(!host?.isConnected||host.clientWidth<80||host.clientHeight<100)throw new TypeError('Sticky Note needs a visible sized host.');

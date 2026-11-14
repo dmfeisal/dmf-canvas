@@ -6,6 +6,7 @@ import { createDrawing } from './canvas-instance-drawing.js';
 import { createShape, validShape, styleOf } from './canvas-instance-shape.js';
 import {validateTextStyle,textFonts} from './canvas-instance-text-style.js';
 import {validStroke} from './canvas-instance-stroke.js';
+import {stickyColors} from './canvas-instance-sticky.js';
 
 const finite=(value,min,max)=>typeof value==='number'&&Number.isFinite(value)&&value>=min&&value<=max;
 // Whitelist data only. Files never contain HTML, SVG markup, remote URLs or CSS rules. Images use bounded raster data.
@@ -45,7 +46,7 @@ export function validateObject(input) {
   if(typeof input.text!=='string'||input.text.length>10000||input.text.includes('\0')||typeof s.content!=='string'||s.content!==input.text)throw new TypeError('Invalid object text.');
   state.content=input.text;
   if(type==='sticky'){
-    if(input.text.length>240||!['yellow','blue','pink'].includes(s.paperColor))throw new TypeError('Invalid sticky note.');
+    if(input.text.length>240||!stickyColors.includes(s.paperColor))throw new TypeError('Invalid sticky note.');
     state.paperColor=s.paperColor;
   }
   return {type,layout,state,locked,...(layer===undefined?{}:{layer}),...(group===undefined?{}:{group}),text:input.text};

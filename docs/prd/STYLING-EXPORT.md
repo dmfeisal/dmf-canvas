@@ -53,7 +53,7 @@ Text has font, size, weight, alignment and wrapping in the typography record, wi
 ## Delivery
 
 1. Typography record: ink, line height and letter spacing in the owners, the inspector and the schema-5 reader and writer, with the compatibility notes and changelog. **Built in 0.7.0-alpha.1**: the record, owner, inspector fields, schema 5 writer and reader, and the clipboard. Unknown future versions are still refused.
-2. Sticky-note palette: the 16 keys with their aliases, the swatch control in the inspector, and the reader rules for unknown keys.
+2. Sticky-note palette: the 16 keys with their aliases, the swatch control in the inspector, and the reader rules for unknown keys. **Built in 0.7.0-alpha.1**: sixteen hue-named keys, with the original three kept as the same keys (so no aliases are needed), a Note colour select in the inspector, and schema 5 for new keys. The keys are hues rather than the dmf-web collection names, because those names belong to a third party and the package's licensing is unresolved.
 3. S/M/L text-size presets and their Undo step.
 4. The PNG export hook: bounds, scale and size limits, cancellation and status, with a host renderer in the configurator and the shared custom host.
 5. Hosts and docs: configurator, playground and shared custom host; API, toolbar standard, glossary, compatibility, changelog.

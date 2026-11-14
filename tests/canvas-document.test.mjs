@@ -8,7 +8,7 @@ test('board records whitelist plain data and isolate returned values',()=>{
   validated.layout.width=12;assert.equal(source.layout.width,120);
 });
 test('board records reject malformed geometry, text, colors and drawing resources',()=>{
-  for(const mutate of [r=>r.type='iframe',r=>r.group=0,r=>r.group=51,r=>r.group=1.5,r=>r.group=null,r=>r.group='1',r=>r.layer=-1,r=>r.layer=50,r=>r.layer=1.5,r=>r.layer=null,r=>r.locked='true',r=>r.state.scale=Infinity,r=>r.layout.width=-1,r=>r.state.width='url(x)',r=>r.text='different',r=>{r.type='sticky';r.state.paperColor='orange';},r=>{r.type='drawing';r.points=Array(2049).fill({x:1,y:1});r.strokeWidth=4;r.ink='blue';}]){const value=record();mutate(value);assert.throws(()=>validateObject(value));}
+  for(const mutate of [r=>r.type='iframe',r=>r.group=0,r=>r.group=51,r=>r.group=1.5,r=>r.group=null,r=>r.group='1',r=>r.layer=-1,r=>r.layer=50,r=>r.layer=1.5,r=>r.layer=null,r=>r.locked='true',r=>r.state.scale=Infinity,r=>r.layout.width=-1,r=>r.state.width='url(x)',r=>r.text='different',r=>{r.type='sticky';r.state.paperColor='purple';},r=>{r.type='drawing';r.points=Array(2049).fill({x:1,y:1});r.strokeWidth=4;r.ink='blue';}]){const value=record();mutate(value);assert.throws(()=>validateObject(value));}
   const oversized=record();oversized.unknown='x'.repeat(65536);assert.throws(()=>validateObject(oversized),RangeError);
   const drawing={...record(),type:'drawing',points:[{x:2,y:3}],strokeWidth:8,ink:'red'};const validated=validateObject(drawing);assert.equal(validated.state.content,null);assert.equal(validated.text,undefined);assert.deepEqual(validated.points,[{x:2,y:3}]);validated.points[0].x=4;assert.equal(drawing.points[0].x,2);
 });
