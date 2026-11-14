@@ -53,7 +53,7 @@ Layer order (bring to front, send to back, forward and backward), locks, groups,
 ## Delivery
 
 1. Layers rows and type names in the toolbar entry point, with selection and order matching the canvas. **Built in 0.6.0-alpha.1**: `getLayers()` and `createCanvasLayers`.
-2. Rename (visit-local, one Undo step), and search.
+2. Rename (visit-local, one Undo step), and search. **Built in 0.6.0-alpha.1**: `execute('rename')`, with search and an inline field on the Layers panel.
 3. Reset object and Reset canvas edits, as Undo steps built on the existing snapshots.
 4. Context menu on right-click and Shift+F10, reusing the toolbar's dispatcher.
 5. Hosts: the configurator and the shared custom host get a Layers action and the context menu. Glossary, API, toolbar standard, changelog.

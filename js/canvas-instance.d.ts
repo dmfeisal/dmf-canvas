@@ -125,7 +125,9 @@ export interface CanvasInstance {
   execute(command:'shape-style',value:CanvasShapeStylePatch):CommandResult;
   getInspector():Readonly<{x:number;y:number;width:number;height:number;rotation:number;relativeRotation:boolean;editable:boolean}>|null;
   /** Layers, front to back. `element` is the object to pass to select(); visit-local and never saved. */
-  getLayers():readonly Readonly<{id:number;name:string;locked:boolean;group:number|null;selected:boolean;element:HTMLElement}>[];
+  getLayers():readonly Readonly<{id:number;name:string;typeName:string;renamed:boolean;locked:boolean;group:number|null;selected:boolean;element:HTMLElement}>[];
+  /** Visit-local display name for one layer (from getLayers id). A null or empty name restores the type name. Never saved, never dirties the board; one Undo step. */
+  execute(command:'rename',value:{id:number;name:string|null}):CommandResult;
   execute(command:'inspect',value:{field:'x'|'y'|'width'|'height'|'rotation';value:number}):CommandResult;
   /** One provisional creation at a time; cancellation owns preview cleanup. */
   beginCreation(cancel: () => void, kind?: 'text' | 'sticky' | 'image' | 'pencil' | 'shapes'): Readonly<{ cancel(): void; commit<T extends JsonValue>(element: HTMLElement, owner: CanvasOwner<T>): Readonly<{ dispose(): void }> | null }> | null;

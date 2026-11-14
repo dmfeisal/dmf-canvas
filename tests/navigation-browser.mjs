@@ -403,6 +403,47 @@ await check('the Layers panel follows new objects while open, and Escape closes 
  assert(!state.open&&state.expanded==='false'&&state.focus==='layers','Escape did not close or return focus: '+JSON.stringify(state));
 });
 
+// Organisation step 2: rename (visit-local, one Undo step, never dirties the board) and search.
+await check('rename from the Layers panel is visit-local, one Undo step, and leaves the board clean',async()=>{
+ await page.evaluate(()=>window.cam.canvas.select(null));await openLayers();
+ const rows=await layerRows(),target=rows.find(row=>row.name==='Rectangle');
+ const before=await page.evaluate(()=>window.cam.canvas.getState().revision);
+ await page.click(`.canvas-embed-layers__row[data-layer-id="${target.id}"] + .canvas-embed-layers__rename-button`);
+ await page.fill('.canvas-embed-layers__rename input[type=text]','  Hero   box\u0001 ');await page.keyboard.press('Enter');await frame();
+ const after=await layerRows(),renamed=after.find(row=>row.id===target.id);
+ assert(renamed.name==='Hero box','Name not normalised: '+JSON.stringify(renamed));
+ assert(await page.evaluate(()=>window.cam.canvas.getState().revision)===before,'Rename dirtied the board');
+ assert(await page.evaluate(()=>window.cam.canvas.getState().canUndo),'Rename is not in history');
+ assert(await page.evaluate(()=>window.cam.canvas.execute('undo').ok)&&(await layerRows()).find(row=>row.id===target.id).name==='Rectangle','Undo did not restore the type name');
+ assert(await page.evaluate(()=>window.cam.canvas.execute('redo').ok)&&(await layerRows()).find(row=>row.id===target.id).name==='Hero box','Redo did not restore the name');
+ await page.evaluate(()=>window.cam.canvas.execute('undo'));
+});
+
+await check('search filters rows by name and type without changing order or selection',async()=>{
+ await openLayers();const all=await layerRows();
+ await page.fill('.canvas-embed-layers__search','sticky');await frame();
+ const shown=await page.evaluate(()=>[...document.querySelectorAll('.canvas-embed-layers__list li')].filter(li=>!li.hidden).map(li=>li.querySelector('[data-layer-id]').dataset.layerId));
+ const expected=all.filter(row=>/sticky/i.test(row.name)).map(row=>String(row.id));
+ assert(shown.join()===expected.join()&&shown.length>0,'Search wrong: '+JSON.stringify({shown,expected}));
+ await page.fill('.canvas-embed-layers__search','zzz-no-match');await frame();
+ assert(await page.evaluate(()=>!document.querySelector('.canvas-embed-layers p:not([hidden])')?.textContent.includes('No objects')&&!!document.querySelector('.canvas-embed-layers p:not([hidden])')),'No-match message missing');
+ await page.fill('.canvas-embed-layers__search','');await frame();
+});
+
+await check('F2 on a focused row starts a rename; Escape cancels it without closing the panel; a locked layer cannot be renamed',async()=>{
+ await openLayers();const rows=await layerRows(),row=rows[0];
+ await page.focus(`.canvas-embed-layers__row[data-layer-id="${row.id}"]`);await page.keyboard.press('F2');
+ assert(await page.evaluate(()=>!!document.querySelector('.canvas-embed-layers__rename input')),'F2 did not start a rename');
+ await page.keyboard.press('Escape');await frame();
+ const state=await page.evaluate(()=>({open:document.querySelector('.canvas-embed-layers').matches(':popover-open'),form:!!document.querySelector('.canvas-embed-layers__rename')}));
+ assert(state.open&&!state.form,'Escape in the rename field did not cancel only the rename: '+JSON.stringify(state));
+ await page.evaluate(()=>window.cam.canvas.execute('lock',true));await frame();
+ const locked=await page.evaluate(()=>{const b=[...document.querySelectorAll('.canvas-embed-layers__rename-button')];return b.some(x=>x.disabled);});
+ assert(locked,'A locked layer offered Rename');
+ await page.evaluate(()=>window.cam.canvas.execute('lock',false));await frame();
+ await page.keyboard.press('Escape');await frame();
+});
+
 await check('destroy restores the world and the host background',async()=>{
  const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length+(h.hasAttribute('data-canvas-instance-hand')||h.hasAttribute('data-canvas-instance-panning')?1:0)};});
  assert(left.style===null&&!left.marked&&left.size===''&&left.position===''&&left.overlays===0,'Left behind: '+JSON.stringify(left));
