@@ -11,15 +11,23 @@
   #text { position: absolute; left: 100px; top: 100px; margin: 0; }
 </style>
 <!-- Navigation browser suite fixture (docs/prd/NAVIGATION.md): a camera host with one Text and one Rectangle. -->
-<div id="host" aria-label="Camera canvas"><div id="world"><p id="text">Camera text</p></div></div>
+<div id="frame"><button id="inspect" type="button">Inspect</button>
+<div id="host" aria-label="Camera canvas"><div id="world"><p id="text">Camera text</p></div></div></div>
 <script type="module">
   import {createCanvas} from '/index.js';
-  import {createTextOwner,createShape,canvasDocuments} from '/owners.js';
+  import {createTextOwner,createShape,createStickyNote,canvasDocuments} from '/owners.js';
+  import {createObjectClipboard} from '/clipboard.js';
+  import {createPencil} from '/pencil.js';
+  import {createCanvasInspector} from '/toolbar.js';
   const host = document.getElementById('host'), world = document.getElementById('world'), text = document.getElementById('text');
-  const canvas = createCanvas(host, {documents: canvasDocuments, camera: {world}});
+  const canvas = createCanvas(host, {documents: canvasDocuments, clipboard: createObjectClipboard(), camera: {world}});
   canvas.register(text, createTextOwner(text, world));
   const rect = createShape(world, {shape: 'rectangle', ink: 'primary', strokeWidth: 2, fill: 'none', corners: 'sharp'}, {left: 400, top: 250, width: 120, height: 80});
   canvas.register(rect.element, rect.owner, {created: true});
-  window.cam = {canvas, host, world, text, rect: rect.element};
+  const pencil = createPencil(canvas, host);
+  const inspector = createCanvasInspector(document.getElementById('frame'), {canvas, trigger: document.getElementById('inspect')});
+  // Adds a Sticky Note the way a host's Add note button would.
+  const addNote = () => { const reservation = canvas.beginCreation(() => {}, 'sticky'); const note = createStickyNote(world); return reservation.commit(note.element, note.owner) ? note.element : null; };
+  window.cam = {canvas, host, world, text, rect: rect.element, pencil, inspector, addNote};
 </script>
 </html>

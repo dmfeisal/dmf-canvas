@@ -64,6 +64,8 @@
 .canvas-instance-drawing[data-canvas-instance-selected] { outline:1px solid var(--dmf-color-canvas-selection,var(--primary,Highlight)); }
 .canvas-instance-drawing:focus-visible { outline:2px solid var(--dmf-color-canvas-selection,var(--primary,Highlight)); outline-offset:3px; }
 [data-canvas-instance-preview] { position:absolute; inset:0; width:100%; height:100%; z-index:101; overflow:hidden; pointer-events:none; }
+/* In an unbounded camera world the preview may reach past the world box; the host still clips what is shown. */
+[data-canvas-instance-world] > [data-canvas-instance-preview] { overflow:visible; }
 [data-instance-pencil-active], [data-instance-pencil-active] :is(.canvas-instance-editor,.canvas-instance-note,.canvas-instance-drawing,.canvas-instance-shape) { cursor:url('../assets/cursors/pencil.svg') 3 29, crosshair; }
 [data-instance-pencil-active] .canvas-instance-handle { visibility:hidden; }
 /* Stroke eraser: strokes, not their boxes, are hit targets; touched strokes preview as faded until release. */

@@ -15,7 +15,7 @@ related:
 
 # Navigation
 
-Phase 2 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.5.0: a camera (Hand, pan, zoom, Fit all, Zoom to selection), two-finger touch and full screen. The reference design is the Sticky Notes gallery and Guestbook board on feisal.id (dmf-web `docs/CANVAS.md`, "Camera pan/zoom and dotted-grid behavior" and "Select and Hand tools", and `canvas-touch.js`), adapted to the package's host, owner and settings model. Step 1 is built in 0.5.0-alpha.1. The five decisions below were accepted on 14 November 2026 with the recommended answers.
+Phase 2 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.5.0: a camera (Hand, pan, zoom, Fit all, Zoom to selection), two-finger touch and full screen. The reference design is the Sticky Notes gallery and Guestbook board on feisal.id (dmf-web `docs/CANVAS.md`, "Camera pan/zoom and dotted-grid behavior" and "Select and Hand tools", and `canvas-touch.js`), adapted to the package's host, owner and settings model. Steps 1 and 2 are built in 0.5.0-alpha.1. The five decisions below were accepted on 14 November 2026 with the recommended answers.
 
 This is the largest change on the roadmap. Today every owner positions itself in the host's untransformed coordinates, and containment, the inspector, snapping, guides, labels, drawing input and Duplicate all assume one screen pixel is one canvas pixel. A camera breaks that assumption everywhere at once, so this proposal settles the model before code.
 
@@ -64,7 +64,7 @@ A Full screen action (`maximize` / `minimize`, F) puts the host's chrome contain
 ## Delivery
 
 1. Camera model in core: world element, `camera` setting, `getState().camera`, the camera commands, world-accurate pointer drags, nudges and the dotted grid, behind the opt-in. Unbounded containment on camera hosts. **Done in 0.5.0-alpha.1**, with transform handles kept at 24 screen pixels and resize and rotate converted to world units as well.
-2. Coordinates everywhere else: inspector world units, creation and paste at the visible centre, snapping and guides at scale, labels showing world size, drawing input through the inverse matrix.
+2. Coordinates everywhere else: inspector world units, creation and paste at the visible centre, snapping and guides at scale, labels showing world size, drawing input through the inverse matrix. **Done in 0.5.0-alpha.1**; the inspector panel closes on camera changes, and an unfinished stroke, shape or erase is cancelled.
 3. Hand tool, Space, wheel pan, pinch and Ctrl/⌘ zoom, `+`/`-`/`0`, Fit all and Zoom to selection, with zoom buttons in the toolbar standard and status announcements.
 4. Two-finger touch handoff and one-finger empty-space pan.
 5. Full screen in the toolbar entrypoint.

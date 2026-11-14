@@ -16,6 +16,14 @@ export function createPencil(canvas,host,onChange=()=>{}) {
   // Pencil, Highlighter and Eraser follow the `pencil` permission (the Eraser also needs `delete`); Shapes follow `shapes`.
   const permitted=(state,name=tool)=>name==='shape'?state.settings.tools.shapes:state.settings.tools.pencil&&(name!=='eraser'||state.settings.tools.delete);
   const busy=()=>!!stroke||!!erasing||!!shaping;
+  // Where input lands, measured once per gesture: the host's own pixels, or, on a camera host
+  // (docs/prd/NAVIGATION.md), world units inside the world element, which is unbounded.
+  const worldOf=()=>root.querySelector(':scope > [data-canvas-instance-world]');
+  const space=()=>{
+    const world=worldOf(),camera=instance.getState().camera;
+    if(world&&camera){const rect=world.getBoundingClientRect(),scale=camera.scale;return {target:world,bounded:false,map:(x,y)=>({x:(x-rect.left)/scale-world.clientLeft,y:(y-rect.top)/scale-world.clientTop})};}
+    const rect=root.getBoundingClientRect();return {target:root,bounded:true,map:(x,y)=>({x:x-rect.left-root.clientLeft,y:y-rect.top-root.clientTop})};
+  };
   const cleanup=()=>{
     if(frame!==null){view.cancelAnimationFrame(frame);frame=null;}
     if(stroke){const old=stroke;stroke=null;old.svg.remove();if(root?.hasPointerCapture(old.id))root.releasePointerCapture(old.id);notify();}
@@ -25,7 +33,7 @@ export function createPencil(canvas,host,onChange=()=>{}) {
   const clearErase=()=>{if(!erasing)return;const old=erasing;erasing=null;for(const element of old.marked)element.removeAttribute('data-canvas-instance-erasing');if(root?.hasPointerCapture(old.id))root.releasePointerCapture(old.id);notify();};
   const cancel=()=>{if(stroke)stroke.reservation.cancel();if(shaping)shaping.reservation.cancel();clearErase();};
   const ring=[[0,0],...Array.from({length:8},(_,i)=>[Math.round(6*Math.cos(i*Math.PI/4)),Math.round(6*Math.sin(i*Math.PI/4))])];
-  const hitAt=(x,y)=>{for(const [dx,dy]of ring)for(const element of root.ownerDocument.elementsFromPoint(x+dx,y+dy)){if(element.localName!=='path')continue;const drawing=element.closest('.canvas-instance-drawing');if(drawing?.parentElement===root&&!drawing.hasAttribute('data-canvas-instance-locked')&&!erasing.marked.has(drawing)){erasing.marked.add(drawing);drawing.setAttribute('data-canvas-instance-erasing','');}}};
+  const hitAt=(x,y)=>{for(const [dx,dy]of ring)for(const element of root.ownerDocument.elementsFromPoint(x+dx,y+dy)){if(element.localName!=='path')continue;const drawing=element.closest('.canvas-instance-drawing');if(drawing?.parentElement===(worldOf()??root)&&!drawing.hasAttribute('data-canvas-instance-locked')&&!erasing.marked.has(drawing)){erasing.marked.add(drawing);drawing.setAttribute('data-canvas-instance-erasing','');}}};
   const eraseTo=event=>{const last=erasing.last,steps=Math.min(24,Math.max(1,Math.ceil(Math.hypot(event.clientX-last.x,event.clientY-last.y)/6)));for(let i=1;i<=steps;i++)hitAt(last.x+(event.clientX-last.x)*i/steps,last.y+(event.clientY-last.y)*i/steps);erasing.last={x:event.clientX,y:event.clientY};};
   const setActive=value=>{
     if(disposed)return false;
@@ -34,12 +42,12 @@ export function createPencil(canvas,host,onChange=()=>{}) {
     cancel();if(value){instance.execute('cancel');instance.setMultiple(false);if(tool!=='eraser'&&!instance.getState().canCreate)return false;}active=!!value;root.toggleAttribute('data-instance-pencil-active',active);if(active)root.dataset.instancePencilTool=tool;else delete root.dataset.instancePencilTool;notify();return true;
   };
   const addPoint=event=>{
-    const s=stroke,point={x:Math.max(20,Math.min(s.width-20,event.clientX-s.left)),y:Math.max(20,Math.min(s.height-44,event.clientY-s.top))},last=s.points.at(-1);
+    const s=stroke,raw=s.space.map(event.clientX,event.clientY),point=s.space.bounded?{x:Math.max(20,Math.min(s.width-20,raw.x)),y:Math.max(20,Math.min(s.height-44,raw.y))}:raw,last=s.points.at(-1);
     if(s.points.length<2048&&(!last||Math.hypot(point.x-last.x,point.y-last.y)>=.5))s.points.push(point);
   };
   // Shapes: the box between the press and the pointer, inside the host's containment area (8px inset, 32px reserved below).
   const area=()=>({left:8,top:8,right:root.clientWidth-8,bottom:root.clientHeight-32});
-  const clampPoint=(p,a=area())=>({x:Math.max(a.left,Math.min(a.right,p.x)),y:Math.max(a.top,Math.min(a.bottom,p.y))});
+  const clampPoint=(p,bounded=true,a=area())=>bounded?{x:Math.max(a.left,Math.min(a.right,p.x)),y:Math.max(a.top,Math.min(a.bottom,p.y))}:p;
   const shapeLayout=(start,end,constrain)=>{
     const {shape,width}=settings.shape,open=shape==='line'||shape==='arrow';let dx=end.x-start.x,dy=end.y-start.y;
     if(constrain&&open){const length=Math.hypot(dx,dy),angle=Math.round(Math.atan2(dy,dx)/(Math.PI/4))*Math.PI/4;dx=length*Math.cos(angle);dy=length*Math.sin(angle);}
@@ -61,21 +69,20 @@ export function createPencil(canvas,host,onChange=()=>{}) {
     s.preview?.remove();s.preview=null;if(!next)return;
     const svg=drawShape(root.ownerDocument,shapeStyle(next.points),next.layout.width,next.layout.height);
     svg.dataset.canvasInstancePreview='';Object.assign(svg.style,{position:'absolute',left:next.layout.left+'px',top:next.layout.top+'px',width:next.layout.width+'px',height:next.layout.height+'px',overflow:'visible',pointerEvents:'none'});
-    root.append(svg);s.preview=svg;
+    s.space.target.append(svg);s.preview=svg;
   };
-  const commitShape=(reservation,{layout,points})=>{
-    // Keep the box inside the containment area; the owner contains anything still too large.
-    const a=area();layout={...layout,left:Math.max(a.left,Math.min(a.right-layout.width,layout.left)),top:Math.max(a.top,Math.min(a.bottom-layout.height,layout.top))};
+  const commitShape=(reservation,{layout,points},place=space())=>{
+    // Keep the box inside the containment area; the owner contains anything still too large. Camera worlds are unbounded.
+    if(place.bounded){const a=area();layout={...layout,left:Math.max(a.left,Math.min(a.right-layout.width,layout.left)),top:Math.max(a.top,Math.min(a.bottom-layout.height,layout.top))};}
     let item;
     try{
-      item=createShape(root,shapeStyle(points),layout);
+      item=createShape(place.target,shapeStyle(points),layout);
       if(!reservation.commit(item.element,item.owner)){item.owner.dispose();return false;}
       instance.select(item.element);item.element.focus({preventScroll:true});
     }catch(error){item?.owner.dispose();reservation.cancel();throw error;}
     // Return to Select so the new shape can be manipulated immediately, like Pencil.
     setActive(false);return true;
   };
-  const local=event=>{const rect=root.getBoundingClientRect();return {x:event.clientX-rect.left-root.clientLeft,y:event.clientY-rect.top-root.clientTop};};
   const down=event=>{
     if(busy()){if(event.pointerId!==(stroke??erasing??shaping).id)cancel();return;}
     if(active&&tool==='eraser'){
@@ -88,16 +95,16 @@ export function createPencil(canvas,host,onChange=()=>{}) {
     if(root.clientWidth<80||root.clientHeight<100)return;
     if(tool==='shape'){
       const reservation=instance.beginCreation(cleanup,'shapes');if(!reservation)return;
-      const rect=root.getBoundingClientRect(),start=clampPoint(local(event));
-      shaping={id:event.pointerId,reservation,preview:null,start,end:start,moved:false,constrain:event.shiftKey,left:rect.left+root.clientLeft,top:rect.top+root.clientTop,width:root.clientWidth,height:root.clientHeight};
+      const rect=root.getBoundingClientRect(),place=space(),start=clampPoint(place.map(event.clientX,event.clientY),place.bounded);
+      shaping={id:event.pointerId,reservation,preview:null,space:place,start,end:start,moved:false,constrain:event.shiftKey,left:rect.left+root.clientLeft,top:rect.top+root.clientTop,width:root.clientWidth,height:root.clientHeight};
       root.focus({preventScroll:true});
       try{root.setPointerCapture(event.pointerId);}catch{reservation.cancel();return;}
       event.preventDefault();event.stopImmediatePropagation();notify();return;
     }
     const reservation=instance.beginCreation(cleanup,'pencil');if(!reservation)return;
-    const {width,color}=settings[tool],rect=root.getBoundingClientRect(),svg=svgNode(root.ownerDocument,'svg'),path=makePath(root.ownerDocument,[],width,color,tool);
-    svg.dataset.canvasInstancePreview='';svg.setAttribute('aria-hidden','true');svg.append(path);root.append(svg);
-    stroke={id:event.pointerId,reservation,svg,path,points:[],left:rect.left+root.clientLeft,top:rect.top+root.clientTop,width:root.clientWidth,height:root.clientHeight,ink:color,weight:width,tool};
+    const {width,color}=settings[tool],rect=root.getBoundingClientRect(),place=space(),svg=svgNode(root.ownerDocument,'svg'),path=makePath(root.ownerDocument,[],width,color,tool);
+    svg.dataset.canvasInstancePreview='';svg.setAttribute('aria-hidden','true');svg.append(path);place.target.append(svg);
+    stroke={id:event.pointerId,reservation,svg,path,space:place,points:[],left:rect.left+root.clientLeft,top:rect.top+root.clientTop,width:root.clientWidth,height:root.clientHeight,ink:color,weight:width,tool};
     root.focus({preventScroll:true});addPoint(event);path.setAttribute('d',pathFor(stroke.points));
     try{root.setPointerCapture(event.pointerId);}catch{reservation.cancel();return;}
     event.preventDefault();event.stopImmediatePropagation();notify();
@@ -105,7 +112,7 @@ export function createPencil(canvas,host,onChange=()=>{}) {
   const move=event=>{
     if(erasing&&erasing.id===event.pointerId){eraseTo(event);event.preventDefault();event.stopImmediatePropagation();return;}
     if(shaping&&shaping.id===event.pointerId){
-      const end=clampPoint(local(event));shaping.end=end;shaping.constrain=event.shiftKey;
+      const end=clampPoint(shaping.space.map(event.clientX,event.clientY),shaping.space.bounded);shaping.end=end;shaping.constrain=event.shiftKey;
       if(!shaping.moved&&Math.hypot(end.x-shaping.start.x,end.y-shaping.start.y)>=4)shaping.moved=true;
       if(frame===null)frame=view.requestAnimationFrame(()=>{frame=null;previewShape();});
       event.preventDefault();event.stopImmediatePropagation();return;
@@ -128,17 +135,17 @@ export function createPencil(canvas,host,onChange=()=>{}) {
     if(shaping&&shaping.id===event.pointerId){
       event.preventDefault();event.stopImmediatePropagation();
       if(event.type!=='pointerup'||stale(shaping)){cancel();return;}
-      const s=shaping,endPoint=clampPoint(local(event)),moved=s.moved||Math.hypot(endPoint.x-s.start.x,endPoint.y-s.start.y)>=4;
+      const s=shaping,endPoint=clampPoint(s.space.map(event.clientX,event.clientY),s.space.bounded),moved=s.moved||Math.hypot(endPoint.x-s.start.x,endPoint.y-s.start.y)>=4;
       // A click without a drag places the default size centred on the press.
       const next=moved?shapeLayout(s.start,endPoint,event.shiftKey):defaultShape(s.start);
-      const reservation=s.reservation;cleanup();commitShape(reservation,next);return;
+      const reservation=s.reservation,place=s.space;cleanup();commitShape(reservation,next,place);return;
     }
     if(!stroke||stroke.id!==event.pointerId)return;
     event.preventDefault();event.stopImmediatePropagation();
     if(event.type!=='pointerup'||stale(stroke)){cancel();return;}
     addPoint(event);const completed=stroke;cleanup();let drawing;
     try{
-      drawing=createDrawing(root,completed.points,{width:completed.weight,color:completed.ink,tool:completed.tool});
+      drawing=createDrawing(completed.space.target,completed.points,{width:completed.weight,color:completed.ink,tool:completed.tool});
       if(!completed.reservation.commit(drawing.element,drawing.owner)){drawing.owner.dispose();return;}
       instance.select(drawing.element);drawing.element.focus({preventScroll:true});
     }catch(error){drawing?.owner.dispose();completed.reservation.cancel();throw error;}
@@ -150,8 +157,8 @@ export function createPencil(canvas,host,onChange=()=>{}) {
     if(!instance.getState().canCreate||root.clientWidth<80||root.clientHeight<100)return false;
     const reservation=instance.beginCreation(()=>{},'shapes');if(!reservation)return false;
     const rect=root.getBoundingClientRect(),left=Math.max(rect.left,0),right=Math.min(rect.right,view.innerWidth),top=Math.max(rect.top,0),bottom=Math.min(rect.bottom,view.innerHeight);
-    const center=clampPoint({x:(left+right)/2-rect.left-root.clientLeft,y:(top+bottom)/2-rect.top-root.clientTop});
-    return commitShape(reservation,defaultShape(center));
+    const place=space(),center=clampPoint(place.map((left+right)/2,(top+bottom)/2),place.bounded);
+    return commitShape(reservation,defaultShape(center),place);
   };
   const key=event=>{
     if(event.defaultPrevented||event.isComposing||event.keyCode===229||event.target.closest(native))return;
@@ -173,7 +180,13 @@ export function createPencil(canvas,host,onChange=()=>{}) {
   const context=()=>cancel();
   const listeners={pointerdown:down,pointermove:move,pointerup:end,pointercancel:end,lostpointercapture:end,keydown:key,contextmenu:context};
   for(const [type,listener]of Object.entries(listeners))root.addEventListener(type,listener,true);
-  const unsubscribe=instance.subscribe(state=>{if(!state.mounted)dispose();else if((state.editing||state.settings.readOnly||!permitted(state))&&active)setActive(false);});
+  // A camera change mid-gesture cancels unfinished ink, shapes and erasing: their points were measured for the old view.
+  let camera=JSON.stringify(instance.getState().camera);
+  const unsubscribe=instance.subscribe(state=>{
+    if(!state.mounted){dispose();return;}
+    const next=JSON.stringify(state.camera);if(next!==camera){camera=next;if(busy())cancel();}
+    if((state.editing||state.settings.readOnly||!permitted(state))&&active)setActive(false);
+  });
   function dispose(){
     if(disposed)return;cancel();disposed=true;active=false;
     for(const [type,listener]of Object.entries(listeners))root.removeEventListener(type,listener,true);

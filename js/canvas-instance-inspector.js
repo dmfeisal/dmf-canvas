@@ -23,12 +23,14 @@ export function createCanvasInspector(container,{canvas,trigger}){
  const reset=doc.createElement('button');reset.type='button';reset.textContent='Reset text styles';reset.dataset.inspectorTextReset='';textSection.append(textGrid,reset);
  const closeButton=doc.createElement('button');closeButton.type='button';closeButton.textContent='Close inspector';panel.append(grid,message,closeButton);container.append(panel);
  panel.insertBefore(textSection,message);closeButton.className='canvas-embed-inspector__close';
- let alive=true,committing=false,selectionKey='',values=null;const dirty=new Set();
+ let alive=true,committing=false,selectionKey='',values=null,cameraKey=null;const dirty=new Set();
  const isOpen=()=>panel.matches(':popover-open');
  function close(focus=false){if(!alive)return;if(isOpen())panel.hidePopover();trigger.setAttribute('aria-expanded','false');if(focus&&!trigger.disabled)trigger.focus({preventScroll:true});}
  function refresh(force=false){
   if(!alive)return;const state=canvas.getState(),key=state.selectionIds.join(',');
   if(key!==selectionKey){selectionKey=key;close();}
+  // Camera hosts (docs/prd/NAVIGATION.md): values are world units, and any pan or zoom closes the panel.
+  const view=JSON.stringify(state.camera);if(view!==cameraKey){if(cameraKey!==null)close();cameraKey=view;help.textContent=state.camera?'Canvas units, unaffected by zoom. Width and height scale proportionally.':'Visible bounds in px. Width and height scale proportionally.';}
   values=canvas.getInspector();trigger.disabled=!values;
   if(!values){close();return;}if(!isOpen()&&!force)return;
   for(const [field,input]of fields){input.disabled=!values.editable;if(force||doc.activeElement!==input){input.value=String(Math.round(values[field]*100)/100);input.removeAttribute('aria-invalid');dirty.delete(input);}}
