@@ -273,6 +273,50 @@ await check('far pans, new objects, pastes and drags stay within the range saved
  assert(saved.ok,'Board could not be saved: '+JSON.stringify(saved));
 });
 
+// Step 4: touch, dispatched through CDP so several contacts can be down at once.
+const touch=(type,points)=>page.cdp('Input.dispatchTouchEvent',{type,touchPoints:points.map(p=>({x:p.x,y:p.y,id:p.id,radiusX:1,radiusY:1,force:1}))});
+async function touchPath(from,to,steps=5){for(let i=1;i<=steps;i++){const t=i/steps;await touch('touchMove',from.map((p,k)=>({id:p.id,x:p.x+(to[k].x-p.x)*t,y:p.y+(to[k].y-p.y)*t})));}}
+
+await check('one finger pans from empty space and drags an object after 4px',async()=>{
+ await run('camera',{x:-3000,y:-3000,scale:1});const h=await host(),start=await cam();
+ const a={id:1,x:h.x+400,y:h.y+300};await touch('touchStart',[a]);await touchPath([a],[{id:1,x:a.x-50,y:a.y-20}]);await touch('touchEnd',[]);await frame();
+ const c=await cam();assert(near(c.x,start.x+50,.01)&&near(c.y,start.y+20,.01),'One-finger pan wrong: '+JSON.stringify({start,c}));
+ await run('camera',{x:0,y:0,scale:1});await page.evaluate(()=>window.cam.canvas.select(null));
+ const before=await rect('#text'),undo=await page.evaluate(()=>window.cam.canvas.getState().canUndo);void undo;
+ const f={id:2,x:before.cx,y:before.cy};await touch('touchStart',[f]);await touchPath([f],[{id:2,x:f.x+60,y:f.y+30}]);await touch('touchEnd',[]);await frame();
+ const after=await rect('#text');
+ assert(near(after.left-before.left,60,6.5)&&near(after.top-before.top,30,6.5),'Touch drag moved '+(after.left-before.left)+','+(after.top-before.top));
+ assert(JSON.stringify(await cam())==='{"x":0,"y":0,"scale":1}','Touch drag moved the camera');
+});
+
+await check('two fingers take the camera: a started drag finishes as one Undo step, then pinch zooms around the midpoint',async()=>{
+ await run('camera',{x:0,y:0,scale:1});await page.evaluate(()=>window.cam.canvas.select(null));
+ // The owner's translate, readable mid-gesture (saving is refused while a gesture is active).
+ const read=()=>page.evaluate(()=>{const [x,y]=(window.cam.text.style.translate||'0px 0px').split(' ').map(parseFloat);return {x,y:y||0};});
+ const t=await rect('#text'),before=await read();
+ const a={id:3,x:t.cx,y:t.cy};await touch('touchStart',[a]);await touchPath([a],[{id:3,x:a.x+20,y:a.y}],3);
+ const moved=await read();assert(near(moved.x-before.x,20,6.5),'The first finger did not drag the text: '+JSON.stringify({before,moved}));
+ const a2={id:3,x:a.x+20,y:a.y},b={id:4,x:a.x+120,y:a.y};
+ await touch('touchStart',[a2,b]);
+ const mid={x:(a2.x+b.x)/2,y:(a2.y+b.y)/2};
+ const under=()=>page.evaluate(([x,y])=>{const c=window.cam.canvas.getState().camera,w=window.cam.world.getBoundingClientRect();return {x:(x-w.left)/c.scale,y:(y-w.top)/c.scale};},[mid.x,mid.y]);
+ const anchor=await under();
+ await touchPath([a2,b],[{id:3,x:a2.x-50,y:a2.y},{id:4,x:b.x+50,y:b.y}]);await frame();
+ const c=await cam(),after=await under(),still=await read();
+ assert(near(c.scale,2,.02),'Pinch did not double the zoom: '+c.scale);
+ assert(near(after.x,anchor.x,.1)&&near(after.y,anchor.y,.1),'The midpoint world point moved: '+JSON.stringify({anchor,after}));
+ assert(near(still.x,moved.x,.01)&&near(still.y,moved.y,.01),'The object kept moving during the pinch');
+ // Lifting one finger keeps panning with the other; a new finger rebases without a jump.
+ await touch('touchEnd',[{id:4,x:b.x+50,y:b.y}]);const one=await cam();
+ await touchPath([{id:3,x:a2.x-50,y:a2.y}],[{id:3,x:a2.x-90,y:a2.y}],3);await frame();
+ const panned=await cam();assert(near(panned.x,one.x+40/one.scale,.05)&&panned.scale===one.scale,'Remaining finger did not pan: '+JSON.stringify({one,panned}));
+ await touch('touchStart',[{id:3,x:a2.x-90,y:a2.y},{id:5,x:a2.x+60,y:a2.y+40}]);await frame();
+ assert(JSON.stringify(await cam())===JSON.stringify(panned),'Adding a finger made the camera jump');
+ await touch('touchEnd',[]);await frame();
+ assert(await page.evaluate(()=>!window.cam.host.hasAttribute('data-canvas-instance-panning')),'Panning state left behind');
+ assert((await run('undo')).ok&&near((await read()).x,before.x,.01),'The handed-off drag was not one Undo step');
+});
+
 await check('destroy restores the world and the host background',async()=>{
  const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length+(h.hasAttribute('data-canvas-instance-hand')||h.hasAttribute('data-canvas-instance-panning')?1:0)};});
  assert(left.style===null&&!left.marked&&left.size===''&&left.position===''&&left.overlays===0,'Left behind: '+JSON.stringify(left));

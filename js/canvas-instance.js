@@ -151,7 +151,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   // history, change events or saved data.
   let cameraView = { x: 0, y: 0, scale: 1 };
   const cameraOriginal = world ? { transform: world.style.transform, origin: world.style.transformOrigin, marked: world.hasAttribute('data-canvas-instance-world'),
-    inverse: world.style.getPropertyValue('--canvas-instance-camera-inverse'), zoom: world.style.getPropertyValue('--canvas-instance-camera-scale'), cameraX: world.style.getPropertyValue('--canvas-instance-camera-x'), cameraY: world.style.getPropertyValue('--canvas-instance-camera-y'), size: root.style.backgroundSize, position: root.style.backgroundPosition } : null;
+    inverse: world.style.getPropertyValue('--canvas-instance-camera-inverse'), touchAction: root.style.touchAction, zoom: world.style.getPropertyValue('--canvas-instance-camera-scale'), cameraX: world.style.getPropertyValue('--canvas-instance-camera-x'), cameraY: world.style.getPropertyValue('--canvas-instance-camera-y'), size: root.style.backgroundSize, position: root.style.backgroundPosition } : null;
   function applyCamera() {
     if (!world) return;
     const { x, y, scale } = cameraView, tile = 24 * scale, offset = value => ((value % tile) + tile) % tile;
@@ -264,6 +264,55 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     }
     scheduleCamera();
   }
+  // Touch on camera hosts (docs/prd/NAVIGATION.md step 4). One finger drags an object (after 4px) or pans from empty
+  // space. Two fingers take the camera: any object drag already applied finishes as its normal Undo step, then the
+  // pair pinches around its midpoint and pans with it. A third finger or a replaced pair rebases without a jump, and
+  // lifting to one finger keeps panning until every finger is up. Geometry is read only at handoff and rebase.
+  const touches = new Map(); let touchCamera = null;
+  function rebaseTouch() {
+    if (cameraQueue) { const next = cameraQueue; cameraQueue = null; setCamera(next, false, true); }
+    const ids = [...touches.keys()].slice(0, 2);
+    if (!ids.length || !world) { touchCamera = null; root?.removeAttribute('data-canvas-instance-panning'); return; }
+    const points = ids.map(id => touches.get(id)), mid = { x: points.reduce((sum, p) => sum + p.x, 0) / points.length, y: points.reduce((sum, p) => sum + p.y, 0) / points.length };
+    touchCamera = { ids, mid, distance: points.length > 1 ? Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y)) : null, camera: { ...cameraView }, frame: cameraFrame() };
+    root.toggleAttribute('data-canvas-instance-panning', true);
+  }
+  function moveTouchCamera() {
+    const active = touchCamera, points = active.ids.map(id => touches.get(id));
+    if (points.some(point => !point)) { rebaseTouch(); return; }
+    const mid = { x: points.reduce((sum, p) => sum + p.x, 0) / points.length, y: points.reduce((sum, p) => sum + p.y, 0) / points.length };
+    const start = active.camera, limits = settings.camera;
+    const scale = active.distance && points.length > 1 ? Math.min(limits.maxScale, Math.max(limits.minScale, start.scale * Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) / active.distance)) : start.scale;
+    // The world point that was under the starting midpoint stays under the moving midpoint.
+    const px = start.x + (active.mid.x - active.frame.left) / start.scale, py = start.y + (active.mid.y - active.frame.top) / start.scale;
+    cameraQueue = { x: px - (mid.x - active.frame.left) / scale, y: py - (mid.y - active.frame.top) / scale, scale };
+    scheduleCamera();
+  }
+  function touchDown(event) {
+    if (touches.size >= 10 || native(event.target)) return;
+    touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    try { root.setPointerCapture(event.pointerId); } catch { touches.delete(event.pointerId); return; }
+    event.preventDefault();
+    if (touches.size === 1) {
+      const entry = entryAt(event.target);
+      if (entry && !handleAt(event.target)) {
+        finish(true); if (!selection.has(entry)) select(entry); entry.element.focus({ preventScroll: true });
+        const active = begin(entry);
+        if (active) { Object.assign(active, { pointerId: event.pointerId, x: event.clientX, y: event.clientY, started: false, touch: true }); gesture = active; return; }
+      }
+      // Empty space, a handle, or an object that cannot move (locked): one finger pans.
+      finish(true); rebaseTouch(); return;
+    }
+    // A second finger takes the camera: keep what an object drag already applied, and cancel a marquee.
+    if (gesture) finish(!!gesture.marquee);
+    rebaseTouch();
+  }
+  function touchEnd(event) {
+    if (!touches.delete(event.pointerId)) return false;
+    if (touchCamera) rebaseTouch();
+    if (root?.hasPointerCapture(event.pointerId)) root.releasePointerCapture(event.pointerId);
+    return true;
+  }
   function announceZoom(scale) {
     if (zoomNotice !== null) view.clearTimeout(zoomNotice);
     zoomNotice = view.setTimeout(() => { zoomNotice = null; if (alive && status) status.textContent = `Zoom ${Math.round(scale * 100)}%.`; }, 400);
@@ -374,7 +423,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
         }catch(error){for(const part of parts)if(part.entry.alive)part.entry.adapter.restore(clone(part.before));throw error;}
       }else for(const part of parts)if(part.entry.alive)part.entry.adapter.restore(clone(part.before));
     } finally {
-      if (active.pointerId !== undefined && root?.hasPointerCapture(active.pointerId)) root.releasePointerCapture(active.pointerId);
+      // Touch contacts keep their capture: a finger that started an object drag may go on to steer the camera.
+      if (active.pointerId !== undefined && !active.touch && root?.hasPointerCapture(active.pointerId)) root.releasePointerCapture(active.pointerId);
       emit();
     }
   }
@@ -578,7 +628,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       if(editing.session.editor.contains(event.target))return;
       finishEdit();
     }
-    if (event.button !== 0 || event.pointerType === 'touch' || !event.isPrimary || native(event.target)) return;
+    if (event.pointerType === 'touch') { if (world) touchDown(event); return; }
+    if (event.button !== 0 || !event.isPrimary || native(event.target)) return;
     finish(true);
     // Hand pans even when the drag starts over an object, and never moves it.
     if (world && (handTool || handSpace)) {
@@ -616,6 +667,10 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     event.preventDefault();
   }
   function onMove(event) {
+    if (event.pointerType === 'touch' && touches.has(event.pointerId)) {
+      touches.set(event.pointerId, { x: event.clientX, y: event.clientY }); event.preventDefault();
+      if (touchCamera) { moveTouchCamera(); return; }
+    }
     if (!gesture || event.pointerId !== gesture.pointerId) return;
     if (gesture.pan) {
       const start = gesture.camera;
@@ -656,7 +711,9 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     catch(error){finish(true);view.reportError(error);}
   }
   function onPointerEnd(event) {
+    const touched = event.pointerType === 'touch' && touchEnd(event);
     if (event.pointerId === gesture?.pointerId) finish(event.type !== 'pointerup');
+    else if (touched && !touches.size) emit();
   }
   function onKey(event) {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229) return;
@@ -1110,7 +1167,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
   const listeners = { focusin: onFocus, focusout: onBlur, pointerdown: onPointer, pointermove: onMove,
     pointerup: onPointerEnd, pointercancel: onPointerEnd, lostpointercapture: onPointerEnd, keydown: onKey, keyup: onKeyUp, contextmenu: onContext, dblclick: onDoubleClick, click: onClick };
   for (const [type,listener] of Object.entries(listeners)) root.addEventListener(type,listener);
-  if (world) root.addEventListener('wheel', onWheel, { passive: false });
+  if (world) { root.addEventListener('wheel', onWheel, { passive: false }); root.style.touchAction = 'none'; }
   applyCamera();
   emit();
   const instance = Object.freeze({
@@ -1245,6 +1302,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       undo.length = redo.length = 0;selected = null;selection.clear();multiple=false;
       for (const [type,listener] of Object.entries(listeners)) root.removeEventListener(type,listener);
       root.removeEventListener('wheel', onWheel, { passive: false });
+      for (const id of touches.keys()) if (root.hasPointerCapture(id)) root.releasePointerCapture(id); touches.clear(); touchCamera = null;
+      if (cameraOriginal) root.style.touchAction = cameraOriginal.touchAction;
       if (cameraFrameId !== null) view.cancelAnimationFrame(cameraFrameId); if (zoomNotice !== null) view.clearTimeout(zoomNotice); cameraFrameId = zoomNotice = null; cameraQueue = wheel = null;
       handTool = handSpace = false; root.removeAttribute('data-canvas-instance-hand'); root.removeAttribute('data-canvas-instance-panning');
       if(world){

@@ -20,6 +20,12 @@ Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 2, [navigation](docs/p
   - keys: `+`/`-` zoom, `0` returns to 100%, Shift+1 is Fit all, Shift+2 is Zoom to selection, and arrows pan with nothing selected;
   - writes are coalesced per animation frame, and wheel zoom announces once it settles;
   - the toolbar standard adds Hand and a Camera group (Zoom out, Zoom in, Fit all), with Lucide `hand`, `zoom-in`, `zoom-out` and `focus`.
+- Navigation step 4, touch on camera hosts:
+  - one finger drags an object after 4px, or pans from empty space;
+  - two fingers take the camera, finishing an applied drag as its Undo step, then pinch around the midpoint and pan;
+  - a third finger or a replaced pair rebases without a jump, and the remaining finger keeps panning;
+  - camera hosts set `touch-action: none`;
+  - checked with emulated multi-touch so far.
 - Keep camera worlds within the ±100,000 world-unit range board files accept: the visible centre, owner positions, new objects, pastes and drawings stay inside it, so a far pan never makes a board unsaveable. On camera hosts, copy records clipboard bounds in world units.
 
 Migration: hosts without `camera` are unchanged. No board, clipboard, draft or portable format change.
