@@ -18,6 +18,7 @@
   import {createTextOwner,createShape,createStickyNote,canvasDocuments} from '/owners.js';
   import {createObjectClipboard} from '/clipboard.js';
   import {createPencil} from '/pencil.js';
+  import {createCanvasExport} from '/export.js';
   import {createCanvasInspector,createCanvasFullscreen,createCanvasLayers,createCanvasToolbar,createCanvasContextMenu} from '/toolbar.js';
   const host = document.getElementById('host'), world = document.getElementById('world'), text = document.getElementById('text');
   const canvas = createCanvas(host, {documents: canvasDocuments, clipboard: createObjectClipboard(), camera: {world}});
@@ -40,6 +41,15 @@
   ]});
   canvas.subscribe(state => {bar.update('undo', {disabled: !state.canUndo}); bar.update('duplicate', {disabled: !state.canDuplicate}); bar.update('reset-object', {disabled: !state.selectionCount});});
   const context = createCanvasContextMenu(host, {canvas, toolbar: bar});
-  window.cam = {canvas, host, world, text, rect: rect.element, pencil, inspector, addNote, fullscreen, fullStates, layers, bar, context};
+  // A test renderer: paints the requested size and records each request, so the export area can be checked.
+  const exportRequests = [];
+  const paint = async ({width, height, scale, signal, elements, bounds}) => {
+    exportRequests.push({width, height, scale, elements: elements.length, bounds});
+    const c = document.createElement('canvas'); c.width = width; c.height = height;
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#ffcf34'; ctx.fillRect(0, 0, width, height);
+    return new Promise(resolve => c.toBlob(resolve, 'image/png'));
+  };
+  const exporter = createCanvasExport(canvas, {host, render: paint});
+  window.cam = {canvas, host, world, text, rect: rect.element, pencil, inspector, addNote, fullscreen, fullStates, layers, bar, context, exporter, exportRequests, paint};
 </script>
 </html>

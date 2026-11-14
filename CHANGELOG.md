@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0-alpha.2 (prepared 14 November 2026, private, experimental)
+
+Completes the export part of [styling and export](docs/prd/STYLING-EXPORT.md) (phase 4) with step 4: PNG export.
+
+- Add `dmf-canvas/export` with `createCanvasExport(canvas, {host, render})`. It exports the selection or the visible host as a PNG through a renderer the host supplies, capped at 2x, 4096px per side and 12 megapixels, and reports whether the scale was reduced. Export is read-only and runs one at a time. It cancels on `AbortSignal`, times out after 25 seconds, and never downloads anything.
+- Add `planExport()` and `exportLimits`.
+- The navigation browser suite has 62 checks, including the export area, the empty-selection refusal, a second export refused while one runs, cancellation, timeout and a non-PNG result.
+
+Migration: no format change. Hosts without export are unchanged.
+
 ## 0.7.0-alpha.1 (prepared 14 November 2026, private, experimental)
 
 Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 4, [styling and export](docs/prd/STYLING-EXPORT.md), with steps 1–3: the typography record, the sticky-note palette and the text size presets.

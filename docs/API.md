@@ -11,6 +11,7 @@ The package export map and installed TypeScript declarations define supported na
 | `dmf-canvas/pencil` | Optional scoped Pencil input controller |
 | `dmf-canvas/clipboard` | Explicitly shared page-local object clipboard |
 | `dmf-canvas/toolbar` | Optional action toolbar |
+| `dmf-canvas/export` | Optional PNG export with a host renderer (0.7.0-alpha.2) |
 | `dmf-canvas/theme` | Scoped System/Light/Dark/Inherit theme adapter |
 | `dmf-canvas/drafts` | Optional host-injected local draft storage |
 | `dmf-canvas/images` | Raster validation, dimensions and encoding helpers |
@@ -36,6 +37,16 @@ Dispose optional draft/Pencil subscriptions before destroying the canvas, then d
 ## Text typography (0.7.0-alpha.1)
 
 `getTextStyle()` reports `ink` (`primary`, `blue` or `red`), `lineHeight` (`normal` or 0.8–3) and `letterSpacing` (em, −0.08 to 0.3) alongside font, size, weight, alignment and wrapping. Change them with `execute('text-style', {field, value})`, for example `{field: 'ink', value: 'blue'}`, `{field: 'lineHeight', value: 1.5}` or `{field: 'letterSpacing', value: 0.1}`. Values are validated and refused when out of range, and a change is one Undo step. Boards that set any of the three use schema 5; see [compatibility](COMPATIBILITY.md).
+
+## PNG export (0.7.0-alpha.2)
+
+`createCanvasExport(canvas, {host, render})` from `dmf-canvas/export` exports the selection (`scope: 'selection'`) or the visible host (`scope: 'visible'`) as a PNG, through a renderer the host supplies. The package has no runtime dependencies, so it never rasterises content itself and never downloads anything.
+
+- `exportPng({scope, scale, signal})` resolves to `{blob, width, height, scale, reduced}`. `scale` defaults to 1 and is capped at 2. Output is at most 4096px per side and 12 megapixels; a larger request reduces the scale and reports `reduced: true`.
+- `render({elements, bounds, width, height, scale, signal})` returns a `image/png` Blob of the requested size. A different type is refused.
+- Limits: 1200 objects and 64 images per export, and a 25 second timeout. A cancelled, timed-out or destroyed export rejects with `AbortError`. One export runs at a time, and a second request rejects with "already running".
+- Read-only canvases can export. An empty selection, with `scope: 'selection'`, is refused.
+- `planExport({width, height, scale})` is exported for hosts that want the same plan up front.
 
 ## Camera (0.5.0-alpha.1, experimental)
 

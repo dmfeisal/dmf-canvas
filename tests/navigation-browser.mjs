@@ -749,4 +749,45 @@ await check('text size presets set S, M, L and Original, and each is one Undo st
  await page.keyboard.press('Escape');await frame();
 });
 
+// PNG export (docs/prd/STYLING-EXPORT.md): the package picks the area and limits; the host paints and downloads.
+await check('PNG export covers the selection or the visible canvas, reports its size, and refuses an empty selection',async()=>{
+ await page.goto(navigationTest.base+'/tests/fixtures/camera.html');await page.waitForFunction(()=>!!window.cam);
+ await run('camera',{x:0,y:0,scale:1});
+ await page.evaluate(()=>window.cam.canvas.select(null));
+ const empty=await page.evaluate(async()=>{try{await window.cam.exporter.exportPng({scope:'selection'});return 'ok';}catch(error){return error.message;}});
+ assert(/Select objects/.test(empty),'Empty selection exported: '+empty);
+ await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));
+ const r=await rect('#host [data-canvas-instance-shape]');
+ const sel=await page.evaluate(async()=>{const result=await window.cam.exporter.exportPng({scope:'selection',scale:1});return {type:result.blob.type,width:result.width,height:result.height,scale:result.scale,reduced:result.reduced};});
+ assert(sel.type==='image/png'&&Math.abs(sel.width-Math.round(r.width))<=1&&Math.abs(sel.height-Math.round(r.height))<=1,'Selection export size wrong: '+JSON.stringify({sel,r}));
+ const visible=await page.evaluate(async()=>{const result=await window.cam.exporter.exportPng({scope:'visible',scale:2});return {width:result.width,height:result.height,scale:result.scale,reduced:result.reduced};});
+ const h=await host();
+ assert(visible.scale===2&&!visible.reduced&&Math.abs(visible.width-2*h.width)<=1&&Math.abs(visible.height-2*h.height)<=1,'Visible export size wrong: '+JSON.stringify({visible,h}));
+ const requested=await page.evaluate(()=>window.cam.exportRequests.length);
+ assert(requested>=2,'The renderer was not called for each export');
+});
+
+await check('a second PNG export waits behind the first; cancelling and timing out reject; a bad renderer result is refused',async()=>{
+ const outcome=await page.evaluate(async()=>{
+  const {createCanvasExport}=await import('/export.js');
+  const slow=async req=>{await new Promise(resolve=>setTimeout(resolve,300));return window.cam.paint(req);};
+  const exporter=createCanvasExport(window.cam.canvas,{host:window.cam.host,render:slow});
+  const first=exporter.exportPng({scope:'visible',scale:1});
+  const second=await exporter.exportPng({scope:'visible',scale:1}).then(()=> 'ran', error=>error.message);
+  await first;
+  const controller=new AbortController();const pending=exporter.exportPng({scope:'visible',signal:controller.signal});controller.abort();
+  const cancelled=await pending.then(()=> 'ran', error=>error.name);
+  const quick=createCanvasExport(window.cam.canvas,{host:window.cam.host,render:slow,timeoutMs:50});
+  const timedOut=await quick.exportPng({scope:'visible'}).then(()=> 'ran', error=>error.name);
+  const bad=createCanvasExport(window.cam.canvas,{host:window.cam.host,render:()=>new Blob(['x'],{type:'text/plain'})});
+  const badResult=await bad.exportPng({scope:'visible'}).then(()=> 'ran', error=>error.message);
+  return {second,cancelled,timedOut,badResult,busyAfter:exporter.isBusy()};
+ });
+ assert(/already running/.test(outcome.second),'A second export ran at once: '+JSON.stringify(outcome));
+ assert(outcome.cancelled==='AbortError','Cancel did not reject: '+JSON.stringify(outcome));
+ assert(outcome.timedOut==='AbortError','Timeout did not reject: '+JSON.stringify(outcome));
+ assert(/PNG Blob/.test(outcome.badResult),'A non-PNG result was accepted: '+JSON.stringify(outcome));
+ assert(outcome.busyAfter===false,'Export left busy after rejection');
+});
+
 console.log(`PASS navigation: ${passed} checks`);
