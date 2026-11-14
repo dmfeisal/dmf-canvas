@@ -68,7 +68,7 @@ Phase 2 of dmf-web parity ([navigation](prd/NAVIGATION.md)) adds an opt-in camer
   - Up to ten contacts are tracked. Native fields and controls never start touch gestures, and geometry is read only at handoff and rebase.
   - Checked with emulated multi-touch only so far; a physical-device check is part of the 0.5.0 promotion.
 - **Full screen:** `createCanvasFullscreen` in `dmf-canvas/toolbar` (below).
-- **Layers** (0.6.0-alpha.1): `getLayers()` lists objects front to back. `execute('rename', {id, name})` sets a visit-local display name (null restores the type name; one Undo step; never dirties the board). `createCanvasLayers(container, {canvas, trigger})` from `dmf-canvas/toolbar` shows them in a popover with search, Rename and F2. Visit-local, never saved.
+- **Layers** (0.6.0-alpha.1): `getLayers()` lists objects front to back. `execute('rename', {id, name})` sets a visit-local display name (null restores the type name; one Undo step; never dirties the board). `createCanvasLayers(container, {canvas, trigger})` from `dmf-canvas/toolbar` shows them in a popover with search, Rename, F2 and Reset. `execute('reset-object')` returns the selection to its start state, and `execute('reset-canvas')` removes unlocked visit-local objects and restores the rest; each is one Undo step, and each changes the board.
 
 ## Compatibility changes
 

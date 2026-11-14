@@ -372,7 +372,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const entries=selection.has(entry)?[...selection].filter(item=>!members.includes(item)):[...selection,...members];
     selectEntries(entries,selected);
   }
-  const actionEntries=action=>(action.groupItems??action.layerItems??action.lockItems??action.nameItems??action.presenceItems??action.items)?.map(item=>item.entry)??[action.entry];
+  const actionEntries=action=>(action.groupItems??action.layerItems??action.lockItems??action.nameItems??action.resetItems??action.presenceItems??action.items)?.map(item=>item.entry)??[action.entry];
   // Shared style of a selection made only of unlocked shapes; null keys are mixed or do not apply.
   function shapeStyleView(){
     if(settings.readOnly||!settings.tools.shapes||!selection.size)return null;
@@ -390,6 +390,28 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     const after = capture(entry);
     if (JSON.stringify(before) === JSON.stringify(after)) return;
     pushAction({ entry, before, after },source);
+  }
+  // Reset (docs/prd/ORGANISATION.md step 3). Each object keeps the start state it had when registered. A reset is one
+  // history action holding the before and after of every object it changes, so Undo restores exactly what was reset.
+  // It changes the saved board (owner state and presence), so it is recorded through the change tracker.
+  const resetSnapshot=entry=>({present:entry.present,locked:entry.locked,label:entry.label,layer:entry.layer,owner:entry.present?capture(entry):null});
+  // The state a reset leaves an object in. Reset object returns one object to its start state. Reset canvas edits
+  // removes visit-local objects that are not locked and returns the others to their start state; locked objects stay.
+  function resetAfter(before,entry,mode){
+    if(mode==='canvas'&&entry.created&&!before.locked)return {...before,present:false};
+    if(mode==='canvas'&&entry.created)return before;
+    return {...before,present:true,locked:entry.start.locked,label:null,layer:entry.start.layer,owner:entry.start.owner};
+  }
+  function applyResetStates(items){
+    const presence=items.filter(({entry,state})=>entry.present!==state.present).map(({entry,state})=>({entry,present:state.present}));
+    if(presence.length)applyPresence(presence);
+    for(const {entry,state} of items){
+      if(!entry.alive)continue;
+      if(state.present&&state.owner)entry.adapter.restore(clone(state.owner));
+      applyLock(entry,state.locked);
+      entry.label=state.label;entry.layer=state.layer;
+      if(state.present)entry.element.style.setProperty('z-index',String(state.layer+1));
+    }
   }
   function pushAction(action, source) {
     undo.push(action);
@@ -853,6 +875,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if(feature&&!settings.tools[feature])return result(false,'disabled');
     if(command==='text-style'&&!settings.tools.text)return result(false,'disabled');
     if(command==='rename'&&!settings.tools.layers)return result(false,'disabled');
+    if((command==='reset-object'||command==='reset-canvas')&&!settings.tools.layers)return result(false,'disabled');
     if (command === 'edit') {const ok=startEdit(selected);return result(ok,ok?null:'unsupported');}
     if(editing||creation)return result(false,'busy');
     if (gesture) return result(false,'busy');
@@ -905,6 +928,27 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
         applyLayers(plan.after);pushAction({layerItems,selection:[...selection]},command);
       }
       emit();status.textContent=plan.changed?'Selection layer order changed.':'Selection is already at this layer boundary.';return result(true);
+    }
+    if(command==='reset-object'||command==='reset-canvas'){
+      // Reset object: the selection returns to its start states. Reset canvas edits: visit-local objects go away and
+      // the rest return to their start states (locked visit-local objects stay). One Undo step either way.
+      const mode=command==='reset-object'?'object':'canvas';
+      const targets=mode==='object'?[...selection].filter(usable):[...owners.values()].filter(usable);
+      if(!targets.length)return result(false,'unsupported');
+      const items=[];
+      for(const entry of targets){
+        const before=resetSnapshot(entry),after=resetAfter(before,entry,mode);
+        if(JSON.stringify(before)!==JSON.stringify(after))items.push({entry,before,after});
+      }
+      if(!items.length){emit();return result(true);}
+      if(new TextEncoder().encode(JSON.stringify(items.map(({before,after})=>({before,after})))).byteLength>131072)return result(false,'resource-limit');
+      const beforeSelection=[...selection];
+      applyResetStates(items.map(({entry,after})=>({entry,state:after})));
+      const afterSelection=beforeSelection.filter(usable);
+      pushAction({resetItems:items,beforeSelection,afterSelection},'reset');
+      selectEntries(afterSelection);
+      status.textContent=mode==='object'?'Selection reset to its start state.':`${items.length} change${items.length===1?'':'s'} reset. Undo restores them.`;
+      emit();return result(true);
     }
     if(command==='rename'){
       // Visit-local display name for one object (docs/prd/ORGANISATION.md). Null restores the type name. Read-only
@@ -988,7 +1032,7 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     }
     if (command !== 'undo' && command !== 'redo') return result(false,'unsupported');
     const source = command === 'undo' ? undo : redo, destination = command === 'undo' ? redo : undo;
-    while (source.length && actionEntries(source.at(-1)).some(entry=>!entry.alive||(!source.at(-1).presence&&!source.at(-1).presenceItems&&!source.at(-1).layerItems&&!source.at(-1).groupItems&&!usable(entry)))) source.pop();
+    while (source.length && actionEntries(source.at(-1)).some(entry=>!entry.alive||(!source.at(-1).presence&&!source.at(-1).presenceItems&&!source.at(-1).resetItems&&!source.at(-1).layerItems&&!source.at(-1).groupItems&&!usable(entry)))) source.pop();
     if (!source.length) { emit();return result(false,'empty-history'); }
     const action = source.at(-1);
     if(action.groupItems){
@@ -998,6 +1042,12 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
     if(action.layerItems){
       for(const item of action.layerItems){item.entry.layer=command==='undo'?item.before:item.after;if(command==='undo'){if(item.beforeZ)item.entry.element.style.setProperty('z-index',item.beforeZ,item.beforePriority);else item.entry.element.style.removeProperty('z-index');}else item.entry.element.style.setProperty('z-index',String(item.entry.layer+1));}
       source.pop();destination.push(action);changes.restore(command,command==='undo'?action.beforeToken:action.afterToken);selectEntries(action.selection.filter(usable));return result(true);
+    }
+    if(action.resetItems){
+      const items=action.resetItems.map(item=>({entry:item.entry,state:command==='undo'?item.before:item.after})),rollback=action.resetItems.map(item=>({entry:item.entry,state:command==='undo'?item.after:item.before}));
+      try{applyResetStates(items);}catch(error){applyResetStates(rollback);throw error;}
+      source.pop();destination.push(action);changes.restore(command,command==='undo'?action.beforeToken:action.afterToken);
+      selectEntries((command==='undo'?action.beforeSelection:action.afterSelection).filter(usable));emit();return result(true);
     }
     if(action.nameItems){
       // Visit-local metadata: applied and restored without touching the change tracker, so the board is not dirtied.
@@ -1291,6 +1341,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       let portableNumber=entry.id;while([...owners.values()].some(owner=>owner.portableId==='node:'+portableNumber))portableNumber++;entry.portableId='node:'+portableNumber;
       if (entry.tab === null) element.setAttribute('tabindex','0');
       owners.set(element,entry);registrations.set(element,entry);applyLock(entry,locked);
+      // The start state Reset returns to: the owner's state, lock and layer when the object was registered.
+      entry.start={owner:clone(adapter.capture()),locked,layer:entry.layer};
       if(created)element.style.setProperty('z-index',String(entry.layer+1));
       const dispose = () => {
         if (!entry?.alive) return;

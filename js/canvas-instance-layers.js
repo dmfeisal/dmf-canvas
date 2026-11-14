@@ -18,7 +18,14 @@ export function createCanvasLayers(container,{canvas,trigger}){
   const list=doc.createElement('ul');list.className='canvas-embed-layers__list';list.setAttribute('aria-describedby',note.id);
   const empty=doc.createElement('p');empty.hidden=true;empty.textContent='No objects yet.';
   const none=doc.createElement('p');none.hidden=true;none.textContent='No layers match this search.';
-  panel.append(heading,search,note,list,empty,none);container.append(panel);
+  // Reset (docs/prd/ORGANISATION.md step 3): the selection's start state, or every visit-local object gone.
+  const resets=doc.createElement('div');resets.className='canvas-embed-layers__resets';
+  const resetObject=doc.createElement('button');resetObject.type='button';resetObject.textContent='Reset selected';
+  const resetCanvas=doc.createElement('button');resetCanvas.type='button';resetCanvas.textContent='Reset canvas edits';
+  resets.append(resetObject,resetCanvas);
+  panel.append(heading,search,note,list,empty,none,resets);container.append(panel);
+  const runReset=command=>{const result=canvas.execute(command);note.textContent=result.ok?'Done. Undo restores it.':result.reason==='unsupported'?'Nothing to reset here.':'This reset is not available right now.';};
+  resetObject.addEventListener('click',()=>runReset('reset-object'));resetCanvas.addEventListener('click',()=>runReset('reset-canvas'));
   trigger.setAttribute('aria-controls',id);trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-haspopup','dialog');
   let alive=true,rowsKey='',renaming=null,renameForm=null;
   const isOpen=()=>panel.matches(':popover-open');
@@ -49,6 +56,7 @@ export function createCanvasLayers(container,{canvas,trigger}){
   // One button per object. Rows are rebuilt only when the list's contents change, never on every pointer move.
   function render(){
     if(!alive||renaming!==null)return;
+    resetObject.disabled=!canvas.getState().selectionCount;
     const layers=canvas.getLayers(),key=layers.map(item=>`${item.id}:${item.name}:${item.typeName}:${item.locked}:${item.group}:${item.selected}`).join('|');
     empty.hidden=layers.length>0;
     if(key===rowsKey){applyFilter();return;}rowsKey=key;

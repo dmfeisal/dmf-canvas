@@ -2,13 +2,15 @@
 
 ## 0.6.0-alpha.1 (prepared 14 November 2026, private, experimental)
 
-Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 3, [organisation](docs/prd/ORGANISATION.md), with steps 1 and 2: the Layers panel, then rename and search.
+Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 3, [organisation](docs/prd/ORGANISATION.md), with steps 1–3: the Layers panel, rename and search, then reset.
 
 - Add `getLayers()`: every present object, front to back, with its id, type name, lock and group state, selection, and the element to pass to `select()`. It is visit-local and never saved or in history.
 - Add `createCanvasLayers(container, {canvas, trigger})` in `dmf-canvas/toolbar`: a native popover, opened from a contained button, that lists objects front to back with their type icon and name. Choosing a row selects that object. It follows changes while open. Escape closes it and returns focus to the button.
 - The navigation browser suite grows to 45 checks, including Layers order against z-index, bring-to-front and send-back, row selection, and Escape.
 
 - Organisation step 2, rename and search: `execute('rename', {id, name})` sets a visit-local display name for one object (null or empty restores the type name). Names are plain text, normalised and limited to 100 characters, and refused on read-only canvases and locked objects. A rename is one Undo step and never dirties the board. The Layers panel gains search (names and types), and Rename or F2 on a row opens an inline field, where Enter saves and Escape cancels.
+
+- Organisation step 3, reset: `execute('reset-object')` returns the selection to its start state (owner content, lock, layer and visit-local name), and `execute('reset-canvas')` removes visit-local objects that are not locked and returns the rest to their start states. Start states are recorded at registration. Each reset is one Undo step. Because a reset changes owner state and removes objects, it changes the board (it is recorded through the change tracker). The Layers panel gains Reset selected and Reset canvas edits.
 
 Migration: no format change. Names are visit-local and are never saved.
 

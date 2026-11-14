@@ -444,6 +444,36 @@ await check('F2 on a focused row starts a rename; Escape cancels it without clos
  await page.keyboard.press('Escape');await frame();
 });
 
+// Organisation step 3: Reset object and Reset canvas edits (one Undo step each, board-changing).
+await check('Reset object returns the selection to its start state, and Undo restores it',async()=>{
+ await placeRect(300,200);await page.evaluate(()=>window.cam.canvas.select(window.cam.rect));
+ await page.evaluate(()=>window.cam.canvas.execute('rename',{id:window.cam.canvas.getLayers().find(i=>i.element===window.cam.rect).id,name:'Moved box'}));
+ await run('inspect',{field:'x',value:420});await page.evaluate(()=>window.cam.canvas.execute('lock',true));
+ const moved=await page.evaluate(()=>window.cam.canvas.getLayers().find(i=>i.element===window.cam.rect).name);
+ assert(moved==='Moved box','Setup rename failed');
+ assert((await page.evaluate(()=>window.cam.canvas.execute('reset-object'))).ok,'Reset object refused');
+ const after=await page.evaluate(()=>{const i=window.cam.canvas.getLayers().find(x=>x.element===window.cam.rect);return {name:i.name,locked:i.locked};});
+ assert(after.name==='Rectangle'&&after.locked===false,'Reset object did not clear the name and lock: '+JSON.stringify(after));
+ assert((await page.evaluate(()=>window.cam.canvas.execute('undo'))).ok,'Undo refused');
+ const undone=await page.evaluate(()=>window.cam.canvas.getLayers().find(x=>x.element===window.cam.rect).name);
+ assert(undone==='Moved box','Undo did not restore the name: '+undone);
+});
+
+await check('Reset canvas edits removes visit-local objects, keeps locked ones, restores originals, and is one Undo step',async()=>{
+ await page.evaluate(()=>window.cam.canvas.execute('move',{dx:40,dy:0}));
+ const count=()=>page.evaluate(()=>window.cam.canvas.getState().objects);
+ await page.evaluate(()=>window.cam.addNote());await page.evaluate(()=>window.cam.canvas.select(null));
+ const withNote=await count(),board=await page.evaluate(()=>window.cam.canvas.getState().revision);
+ assert((await page.evaluate(()=>window.cam.canvas.execute('reset-canvas'))).ok,'Reset canvas edits refused');
+ const after=await count();
+ assert(after<withNote,'Visit-local note was not removed: '+withNote+' -> '+after);
+ assert(await page.evaluate(()=>!!window.cam.text.isConnected&&window.cam.canvas.getLayers().some(i=>i.element===window.cam.text)),'The authored original was removed');
+ const [x=0,y=0]=(await page.evaluate(()=>window.cam.text.style.translate)||'0px 0px').split(' ').map(v=>parseFloat(v)||0);const now=[x,y];
+ assert(JSON.stringify([x,y])==='[0,0]','The original was not restored to its registration position: '+now);
+ assert(await page.evaluate(()=>window.cam.canvas.getState().revision)>board,'Reset did not change the board');
+ assert((await page.evaluate(()=>window.cam.canvas.execute('undo'))).ok&&await count()===withNote,'Undo did not restore the removed object');
+});
+
 await check('destroy restores the world and the host background',async()=>{
  const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length+(h.hasAttribute('data-canvas-instance-hand')||h.hasAttribute('data-canvas-instance-panning')?1:0)};});
  assert(left.style===null&&!left.marked&&left.size===''&&left.position===''&&left.overlays===0,'Left behind: '+JSON.stringify(left));
