@@ -19,7 +19,7 @@ Record this as the working release plan, not permission to publish. The proposal
 | `0.5.0-alpha.1` | Recorded private experimental prerelease: opt-in camera model in core (world element, camera commands, world-accurate drags and nudges, dotted grid, unbounded world, plus inspector, creation, paste and drawing at zoom; Hand, wheel, pinch and keyboard zoom, touch, full screen, host options, coverage; navigation steps 1–7; device check pending) |
 | `0.5.0` | Recorded private release. dmf-web parity, navigation: opt-in camera (Hand, wheel and pinch zoom, zoom keys, Fit all, Zoom to selection), two-finger touch, full screen, configurator and custom host options; device check pending ([proposal](prd/NAVIGATION.md)) |
 | `0.6.0` | Current private release. dmf-web parity, organisation: Layers panel, Reset canvas edits, context menu ([proposal](prd/ORGANISATION.md)) |
-| `0.7.0` | dmf-web parity, styling and export: text ink and spacing, sticky swatches and presets, PNG export; expanded release validation |
+| `0.7.0` | dmf-web parity, styling and export: text ink and spacing, sticky swatches and presets, PNG export; expanded release validation ([proposal](prd/STYLING-EXPORT.md)) |
 | `1.0.0-beta.1` | API freeze and integration testing |
 | `1.0.0` | Stable documented API, compatibility baseline and resolved licensing |
 
