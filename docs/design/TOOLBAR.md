@@ -24,7 +24,7 @@ Editor surfaces use **floating chrome**: four groups placed over the canvas stag
 |---|---|---|---|
 | Tools | Top, inline start | Vertical rail | Select, Hand (camera hosts only), Add text, Add note, Add image, Pencil, Highlighter, Stroke eraser, Shapes |
 | Tool options | Top, beside the rail | Horizontal | Shapes only: the five kinds first. Then the armed tool's three inks and Thin, Medium, Bold (Pencil, Highlighter and Shapes). Shapes end with Fill (closed shapes) and Round corners (rectangles) |
-| Camera | Bottom, inline start | Horizontal | Camera hosts only: Zoom out, Zoom in, Fit all |
+| Camera | Bottom, inline start | Horizontal | Camera hosts only: Zoom out, Zoom in, Fit all, Full screen (where supported) |
 | History | Bottom, inline start, after Camera | Horizontal | Undo, Redo |
 | Selection actions | Bottom, centre | Horizontal | Selection inspector, Duplicate, Delete, More |
 | Help | Bottom, inline end | Horizontal | Keyboard help |
@@ -90,6 +90,7 @@ All artwork is local [Lucide](https://lucide.dev) from `js/canvas-instance-toolb
 | `zoom-out` | Zoom out | `zoom-out` | − | Camera |
 | `zoom-in` | Zoom in | `zoom-in` | + | Camera |
 | `fit` | Fit all | `focus` | Shift 1 | Camera |
+| `fullscreen` | Full screen, or Exit full screen while active (pressed) | `maximize`, `minimize` while active | F | Camera; hidden when unsupported |
 | `help` | Keyboard help | `circle-question-mark` |  | Help |
 
 The sprite also carries `image-plus` and `layers` for hosts that need them. To add an action, pick a Lucide icon that is not already in this table, copy its path data from a pinned Lucide release (record the version in the sprite's header comment), add a row here, and keep the label identical to the accessible name.

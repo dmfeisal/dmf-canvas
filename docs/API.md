@@ -67,7 +67,7 @@ Phase 2 of dmf-web parity ([navigation](prd/NAVIGATION.md)) adds an opt-in camer
   - A third finger or a replaced pair rebases without a jump, and lifting to one finger keeps panning until every finger is up.
   - Up to ten contacts are tracked. Native fields and controls never start touch gestures, and geometry is read only at handoff and rebase.
   - Checked with emulated multi-touch only so far; a physical-device check is part of the 0.5.0 promotion.
-- **Not in alpha.1 yet:** full screen. It follows in the next step of the proposal.
+- **Full screen:** `createCanvasFullscreen` in `dmf-canvas/toolbar` (below).
 
 ## Compatibility changes
 
@@ -80,6 +80,14 @@ All modules, CSS and declarations share one package version. Before 1.0, compati
 `execute('inspect', {field, value})` accepts one of `x`, `y`, `width`, `height` or `rotation`, and a finite numeric value. Width/height scale proportionally around the visible top-left, not text reflow or image stretching. Single rotation is absolute; multiple-object rotation is a relative turn around the combined center and its UI resets to zero. Plans intersect owner scale/bounds limits; translation and size clamp to applicable limits. Rotation that cannot fit is rejected. Successful batches create one history step, failures restore every captured owner, and subpixel no-ops create no history. Read actual values after applying. Existing serialization captures the geometry without a file-schema change.
 
 Custom owners opt in through `geometry.read()` and `geometry.prepare(target)`. Read returns a finite `CanvasGeometry` with center, unscaled border-box dimensions, scale, angle, permitted scale range and bounds in the same surface coordinate space. Prepare must not mutate; it returns one apply closure or null. The closure applies geometry only, preserving content, metadata and style capabilities. Core captures/restores owner snapshots and owns the batch/history. One unsupported or locked member prevents the whole batch. There is no DOM fallback for unknown owners.
+
+`createCanvasFullscreen(target, {canvas, onChange})` from `dmf-canvas/toolbar` (0.5.0-alpha.1) puts a canvas's chrome container, not just the canvas, into native full screen, so toolbars, menus, the inspector and help stay visible.
+- `getState()` reports `{supported, active, pending}`; `onChange` receives it after every change, including the browser's own exit (Escape).
+- `supported` is false without the Fullscreen API or in an iframe without permission; hide the action then.
+- `toggle()`, `enter()` and `exit()` return promises of whether they changed anything. Entering needs a user gesture, such as a click or F.
+- F on the focused target toggles it, but not while typing, editing, creating or inside a native control or menu.
+- `dispose()` removes its document `fullscreenchange` listener and its key listener, and exits full screen if it is active.
+- The camera keeps its position across the change; core needs nothing new. Hosts that resize objects on host resize keep doing so.
 
 `createCanvasInspector(container, {canvas, trigger})` from `dmf-canvas/toolbar` mounts one optional native popover for a contained HTML button. Call its `toggle()` from the trigger's existing dispatcher, load `toolbar.css`, and dispose it before the canvas/toolbar. It restores trigger attributes and disabled state. The caller owns trigger dispatch; the inspector owns fields, subscriptions and dismissal listeners. No storage, persistence service or publication is added. See the configurator for the complete host recipe.
 

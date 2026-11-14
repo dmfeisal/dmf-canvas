@@ -317,6 +317,24 @@ await check('two fingers take the camera: a started drag finishes as one Undo st
  assert((await run('undo')).ok&&near((await read()).x,before.x,.01),'The handed-off drag was not one Undo step');
 });
 
+await check('F puts the whole chrome container into full screen, and the camera keeps its view',async()=>{
+ await page.evaluate(()=>window.cam.canvas.select(null));await run('camera',{x:40,y:30,scale:1.5});const view=await cam();
+ const supported=await page.evaluate(()=>window.cam.fullscreen.getState().supported);
+ assert(supported,'Full screen reported unsupported in Chromium');
+ await focusHost();await page.keyboard.press('f');
+ await page.waitForFunction(()=>document.fullscreenElement===document.getElementById('frame'),null,{timeout:3000});
+ const on=await page.evaluate(()=>({state:window.cam.fullscreen.getState(),seen:[...window.cam.fullStates]}));
+ assert(on.state.active&&on.seen.includes(true),'Full screen state not reported: '+JSON.stringify(on));
+ assert(JSON.stringify(await cam())===JSON.stringify(view),'Entering full screen moved the camera');
+ await page.keyboard.press('f');await page.waitForFunction(()=>!document.fullscreenElement,null,{timeout:3000});
+ assert(!(await page.evaluate(()=>window.cam.fullscreen.getState().active)),'F did not leave full screen');
+ // F is ignored while editing text, and after dispose.
+ await page.evaluate(()=>{window.cam.canvas.select(window.cam.text);window.cam.canvas.execute('edit');});await page.keyboard.press('f');
+ assert(!(await page.evaluate(()=>document.fullscreenElement)),'F entered full screen while editing');
+ await run('finish-edit');await page.evaluate(()=>window.cam.fullscreen.dispose());await focusHost();await page.keyboard.press('f');await page.waitForTimeout(200);
+ assert(!(await page.evaluate(()=>document.fullscreenElement)),'F still worked after dispose');
+});
+
 await check('destroy restores the world and the host background',async()=>{
  const left=await page.evaluate(()=>{window.cam.canvas.destroy();const w=window.cam.world,h=window.cam.host;return {style:w.getAttribute('style'),marked:w.hasAttribute('data-canvas-instance-world'),size:h.style.backgroundSize,position:h.style.backgroundPosition,overlays:h.querySelectorAll('.canvas-instance-guide,.canvas-instance-gap,.canvas-instance-label').length+(h.hasAttribute('data-canvas-instance-hand')||h.hasAttribute('data-canvas-instance-panning')?1:0)};});
  assert(left.style===null&&!left.marked&&left.size===''&&left.position===''&&left.overlays===0,'Left behind: '+JSON.stringify(left));

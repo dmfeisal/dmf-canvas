@@ -26,6 +26,7 @@ Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 2, [navigation](docs/p
   - a third finger or a replaced pair rebases without a jump, and the remaining finger keeps panning;
   - camera hosts set `touch-action: none`;
   - checked with emulated multi-touch so far.
+- Navigation step 5, full screen: `createCanvasFullscreen(target, {canvas, onChange})` in `dmf-canvas/toolbar` puts the chrome container into native full screen. It offers `supported`, `active` and `pending` state, toggle, enter and exit, F on the focused target, and dispose. The toolbar standard adds a Full screen action (Lucide `maximize` and `minimize`, hidden when unsupported).
 - Keep camera worlds within the ±100,000 world-unit range board files accept: the visible centre, owner positions, new objects, pastes and drawings stay inside it, so a far pan never makes a board unsaveable. On camera hosts, copy records clipboard bounds in world units.
 
 Migration: hosts without `camera` are unchanged. No board, clipboard, draft or portable format change.
