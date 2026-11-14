@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The shared custom host (`examples/shared/custom-host.js`) has an **Export PNG** button. It uses `dmf-canvas/export` with a copy of the example renderer, so the framework and Astro fixtures that copy that one file keep working. Example code only; the package is unchanged.
 - The configurator's preview has an **Export PNG** action in More › Board. It exports the selection, or the visible canvas when nothing is selected, at 2×, through `dmf-canvas/export` and an example renderer (`examples/configurator/canvas-export-renderer.js`) that draws the host through an SVG foreignObject. The example renderer embeds the page's stylesheets, but not fonts or images loaded from other origins, so the PNG can differ from the screen for those. Generated code includes the renderer as a fifth file, and the configurator's import map includes `dmf-canvas/export`.
 
 ## 0.7.0 (prepared 14 November 2026, private)## 0.7.0 (prepared 14 November 2026, private)
