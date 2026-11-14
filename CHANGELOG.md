@@ -18,7 +18,7 @@ Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 2, [navigation](docs/p
   - Hand (H, `execute('hand')`, `getState().hand`) and Space held pan on drag without moving objects, and Hand and Pencil disarm each other;
   - the wheel pans, and pinch or Ctrl/⌘ with the wheel zooms around the pointer;
   - keys: `+`/`-` zoom, `0` returns to 100%, Shift+1 is Fit all, Shift+2 is Zoom to selection, and arrows pan with nothing selected;
-  - writes are coalesced per animation frame, and wheel zoom announces once it settles;
+  - writes are coalesced per animation frame, and wheel zoom announces once it settles; a key or command zoom drops a pending wheel announcement, so it never names an old scale;
   - the toolbar standard adds Hand and a Camera group (Zoom out, Zoom in, Fit all), with Lucide `hand`, `zoom-in`, `zoom-out` and `focus`.
 - Navigation step 4, touch on camera hosts:
   - one finger drags an object after 4px, or pans from empty space;
@@ -26,6 +26,7 @@ Starts [dmf-web parity](docs/prd/DMF-WEB-PARITY.md) phase 2, [navigation](docs/p
   - a third finger or a replaced pair rebases without a jump, and the remaining finger keeps panning;
   - camera hosts set `touch-action: none`;
   - checked with emulated multi-touch so far.
+- Navigation step 5, full screen: `createCanvasFullscreen(target, {canvas, onChange})` in `dmf-canvas/toolbar` puts the chrome container into native full screen. It offers `supported`, `active` and `pending` state, toggle, enter and exit, F on the focused target, and dispose. The toolbar standard adds a Full screen action (Lucide `maximize` and `minimize`, hidden when unsupported).
 - Keep camera worlds within the ±100,000 world-unit range board files accept: the visible centre, owner positions, new objects, pastes and drawings stay inside it, so a far pan never makes a board unsaveable. On camera hosts, copy records clipboard bounds in world units.
 
 Migration: hosts without `camera` are unchanged. No board, clipboard, draft or portable format change.

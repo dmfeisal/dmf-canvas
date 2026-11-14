@@ -2,7 +2,7 @@ import {createCanvas,resolveSettings,type CanvasOwner} from 'dmf-canvas';
 import {createTextOwner,createStickyNote,createImageObject,createDrawing,createShape,shapeKinds,canvasDocuments,validateObject} from 'dmf-canvas/owners';
 import type {ShapeKind} from 'dmf-canvas/owners';
 import {createPencil} from 'dmf-canvas/pencil';
-import {createCanvasToolbar} from 'dmf-canvas/toolbar';
+import {createCanvasToolbar,createCanvasFullscreen} from 'dmf-canvas/toolbar';
 import {createCanvasTheme,resolveTheme} from 'dmf-canvas/theme';
 import {createLocalDraft,parseLocalDraft} from 'dmf-canvas/drafts';
 import {createObjectClipboard,validateTransfer} from 'dmf-canvas/clipboard';
@@ -98,3 +98,6 @@ portable.version=4;
 pen.setTool('marker');}
 // @ts-expect-error erase needs drawing elements
 canvas.execute('erase','all');
+{const full=createCanvasFullscreen(host,{canvas,onChange:state=>{const on:boolean=state.active&&state.supported;void on;}});void full.toggle().then((changed:boolean)=>changed);full.dispose();}
+// @ts-expect-error onChange must be a function
+createCanvasFullscreen(host,{onChange:true});

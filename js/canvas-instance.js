@@ -180,7 +180,8 @@ export function createCanvas(host, { documents = null, clipboard = null, readOnl
       applyCamera();
       // Owners size their handle spacing from the drawn size; style writes only, no layout reads.
       if (zoomed) for (const entry of owners.values()) if (usable(entry)) try { entry.adapter.cameraChanged?.(); } catch (error) { view.reportError(error); }
-      emit(); if (zoomed) { if (quiet) announceZoom(scale); else status.textContent = `Zoom ${Math.round(scale * 100)}%.`; }
+      // A direct zoom announces now and drops any wheel announcement still pending, which would name an old scale.
+      emit(); if (zoomed) { if (quiet) announceZoom(scale); else { if (zoomNotice !== null) { view.clearTimeout(zoomNotice); zoomNotice = null; } status.textContent = `Zoom ${Math.round(scale * 100)}%.`; } }
     }
     return result(true);
   }

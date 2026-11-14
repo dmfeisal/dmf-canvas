@@ -252,6 +252,13 @@ await check('Ctrl+wheel (pinch) zooms around the pointer and announces once it s
  await page.waitForTimeout(500);assert(/^Zoom \d+%\.$/.test((await state()).status),'No settled zoom announcement: '+(await state()).status);
 });
 
+await check('a keyboard zoom right after a wheel zoom announces the new scale, not the old one',async()=>{
+ const h=await host();await run('camera',{x:0,y:0,scale:1});await focusHost();
+ await page.mouse.move(h.x+200,h.y+200);await page.keyboard.down('Control');await page.mouse.wheel(0,-100);await page.keyboard.up('Control');await frame();
+ await page.keyboard.press('0');await page.waitForTimeout(550);
+ const s=await state();assert(s.camera.scale===1&&s.status==='Zoom 100%.','Stale announcement: '+JSON.stringify(s));
+});
+
 await check('+, -, 0, Shift+1, Shift+2 and arrows drive the camera from the keyboard',async()=>{
  await run('camera',{x:300,y:200,scale:1});await focusHost();
  await page.keyboard.press('+');assert(near((await cam()).scale,1.2,1e-9),'+ did not zoom in');
@@ -315,6 +322,24 @@ await check('two fingers take the camera: a started drag finishes as one Undo st
  await touch('touchEnd',[]);await frame();
  assert(await page.evaluate(()=>!window.cam.host.hasAttribute('data-canvas-instance-panning')),'Panning state left behind');
  assert((await run('undo')).ok&&near((await read()).x,before.x,.01),'The handed-off drag was not one Undo step');
+});
+
+await check('F puts the whole chrome container into full screen, and the camera keeps its view',async()=>{
+ await page.evaluate(()=>window.cam.canvas.select(null));await run('camera',{x:40,y:30,scale:1.5});const view=await cam();
+ const supported=await page.evaluate(()=>window.cam.fullscreen.getState().supported);
+ assert(supported,'Full screen reported unsupported in Chromium');
+ await focusHost();await page.keyboard.press('f');
+ await page.waitForFunction(()=>document.fullscreenElement===document.getElementById('frame'),null,{timeout:3000});
+ const on=await page.evaluate(()=>({state:window.cam.fullscreen.getState(),seen:[...window.cam.fullStates]}));
+ assert(on.state.active&&on.seen.includes(true),'Full screen state not reported: '+JSON.stringify(on));
+ assert(JSON.stringify(await cam())===JSON.stringify(view),'Entering full screen moved the camera');
+ await page.keyboard.press('f');await page.waitForFunction(()=>!document.fullscreenElement,null,{timeout:3000});
+ assert(!(await page.evaluate(()=>window.cam.fullscreen.getState().active)),'F did not leave full screen');
+ // F is ignored while editing text, and after dispose.
+ await page.evaluate(()=>{window.cam.canvas.select(window.cam.text);window.cam.canvas.execute('edit');});await page.keyboard.press('f');
+ assert(!(await page.evaluate(()=>document.fullscreenElement)),'F entered full screen while editing');
+ await run('finish-edit');await page.evaluate(()=>window.cam.fullscreen.dispose());await focusHost();await page.keyboard.press('f');await page.waitForTimeout(200);
+ assert(!(await page.evaluate(()=>document.fullscreenElement)),'F still worked after dispose');
 });
 
 await check('destroy restores the world and the host background',async()=>{

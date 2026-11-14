@@ -18,7 +18,7 @@
   import {createTextOwner,createShape,createStickyNote,canvasDocuments} from '/owners.js';
   import {createObjectClipboard} from '/clipboard.js';
   import {createPencil} from '/pencil.js';
-  import {createCanvasInspector} from '/toolbar.js';
+  import {createCanvasInspector,createCanvasFullscreen} from '/toolbar.js';
   const host = document.getElementById('host'), world = document.getElementById('world'), text = document.getElementById('text');
   const canvas = createCanvas(host, {documents: canvasDocuments, clipboard: createObjectClipboard(), camera: {world}});
   canvas.register(text, createTextOwner(text, world));
@@ -28,6 +28,8 @@
   const inspector = createCanvasInspector(document.getElementById('frame'), {canvas, trigger: document.getElementById('inspect')});
   // Adds a Sticky Note the way a host's Add note button would.
   const addNote = () => { const reservation = canvas.beginCreation(() => {}, 'sticky'); const note = createStickyNote(world); return reservation.commit(note.element, note.owner) ? note.element : null; };
-  window.cam = {canvas, host, world, text, rect: rect.element, pencil, inspector, addNote};
+  const fullStates = [];
+  const fullscreen = createCanvasFullscreen(document.getElementById('frame'), {canvas, onChange: state => fullStates.push(state.active)});
+  window.cam = {canvas, host, world, text, rect: rect.element, pencil, inspector, addNote, fullscreen, fullStates};
 </script>
 </html>
