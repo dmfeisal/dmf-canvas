@@ -29,6 +29,11 @@ export function createCanvasInspector(container,{canvas,trigger}){
   }
   label.append(span,input);textGrid.append(label);textFields.set(key,input);
  }
+ // Text size presets (docs/prd/STYLING-EXPORT.md): S 14px, M 18px, L 24px, or Original (the authored size). One Undo step.
+ const presetLabel=doc.createElement('label'),presetSpan=doc.createElement('span'),preset=doc.createElement('select');
+ presetSpan.textContent='Size preset';preset.dataset.inspectorPreset='';preset.setAttribute('aria-describedby',message.id);
+ for(const [value,label]of [['','Custom'],['original','Original'],['14','S · 14px'],['18','M · 18px'],['24','L · 24px']]){const option=doc.createElement('option');option.value=value;option.textContent=label;if(value==='')option.disabled=true;preset.append(option);}
+ presetLabel.append(presetSpan,preset);textGrid.append(presetLabel);
  const reset=doc.createElement('button');reset.type='button';reset.textContent='Reset text styles';reset.dataset.inspectorTextReset='';textSection.append(textGrid,reset);
  const closeButton=doc.createElement('button');closeButton.type='button';closeButton.textContent='Close inspector';panel.append(grid,message,closeButton);container.append(panel);
  panel.insertBefore(textSection,message);closeButton.className='canvas-embed-inspector__close';
@@ -56,6 +61,8 @@ export function createCanvasInspector(container,{canvas,trigger}){
   if(!noteSection.hidden&&(force||doc.activeElement!==paperSelect)){paperSelect.value=paper;paperSelect.disabled=!values.editable;}
   for(const [key,input]of textFields){input.disabled=!text?.editable;if(force||doc.activeElement!==input){const value=text?.[key]??'';if(key==='weight'){for(const option of [...input.options])if(option.dataset.originalWeight)option.remove();if(value!==''&&![...input.options].some(option=>option.value===String(value))){const option=doc.createElement('option');option.value=String(value);option.textContent=value+' (original)';option.disabled=true;option.dataset.originalWeight='';input.append(option);}for(const option of input.options)if(option.value&&!option.dataset.originalWeight)option.disabled=!text?.weights.includes(Number(option.value));}input.value=key==='lineHeight'&&value==='normal'?'':String(value);input.removeAttribute('aria-invalid');dirty.delete(input);}}
   reset.disabled=!text?.editable;
+  // The summary reports the rendered size, so a preset shows only when the size matches one; otherwise Custom.
+  preset.value=[14,18,24].includes(text?.size)?String(text.size):'';preset.disabled=!text?.editable;
  }
  function commit(input){
   if(committing||!isOpen()||input.disabled||!dirty.has(input))return;const text=!!input.dataset.inspectorText,field=text?input.dataset.inspectorText:input.dataset.inspectorField,value=text&&field==='lineHeight'&&!input.value.trim()?'normal':text&&!['size','weight','lineHeight','letterSpacing'].includes(field)?input.value:input.type==='number'?input.valueAsNumber:Number(input.value);
@@ -81,6 +88,8 @@ export function createCanvasInspector(container,{canvas,trigger}){
  const onInput=event=>{if(isField(event.target))dirty.add(event.target);};
  const onBlur=event=>{if(isField(event.target))commit(event.target);};
  const onChange=event=>{if(textFields.has(event.target.dataset?.inspectorText)&&event.target.tagName==='SELECT'){dirty.add(event.target);commit(event.target);}};
+ const onPreset=()=>{if(committing||!preset.value)return;committing=true;try{const value=preset.value==='original'?null:Number(preset.value);const result=canvas.execute('text-style',{field:'size',value});refresh(true);message.textContent=result.ok?'Text size applied.':'This selection cannot change text size.';}catch{refresh(true);message.textContent='Could not change text size.';}finally{committing=false;}};
+ preset.addEventListener('change',onPreset);
  const onReset=()=>{committing=true;try{const result=canvas.execute('text-style',{field:'reset'});refresh(true);message.textContent=result.ok?'Original text styles restored.':'This selection cannot reset text styles.';}catch{message.textContent='Could not reset this selection.';}finally{committing=false;}};
  const onKey=event=>{
   if(event.key==='Escape'){event.preventDefault();event.stopPropagation();refresh(true);close(true);}

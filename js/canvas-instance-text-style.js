@@ -17,7 +17,8 @@ export function validateTextStyle(value){
 }
 export function resolveTextStyle(current,field,value){
  if(field==='reset')return defaultTextStyle;
- if(!Object.hasOwn(defaultTextStyle,field)||value===undefined||value===null)throw new TypeError('Choose a supported text property.');
+ // Size may be cleared to Original (null), which restores the authored size; every other field needs a value.
+ if(!Object.hasOwn(defaultTextStyle,field)||value===undefined||value===null&&field!=='size')throw new TypeError('Choose a supported text property.');
  return validateTextStyle({...current,[field]:value});
 }
 // Only the schema 5 keys make a record need schema 5 (see hasSchema5Style).
