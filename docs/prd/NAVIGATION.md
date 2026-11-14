@@ -15,7 +15,7 @@ related:
 
 # Navigation
 
-Phase 2 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.5.0: a camera (Hand, pan, zoom, Fit all, Zoom to selection), two-finger touch and full screen. The reference design is the Sticky Notes gallery and Guestbook board on feisal.id (dmf-web `docs/CANVAS.md`, "Camera pan/zoom and dotted-grid behavior" and "Select and Hand tools", and `canvas-touch.js`), adapted to the package's host, owner and settings model. Steps 1–6 are built in 0.5.0-alpha.1. The five decisions below were accepted on 14 November 2026 with the recommended answers.
+Phase 2 of [dmf-web parity](DMF-WEB-PARITY.md), targeting 0.5.0: a camera (Hand, pan, zoom, Fit all, Zoom to selection), two-finger touch and full screen. The reference design is the Sticky Notes gallery and Guestbook board on feisal.id (dmf-web `docs/CANVAS.md`, "Camera pan/zoom and dotted-grid behavior" and "Select and Hand tools", and `canvas-touch.js`), adapted to the package's host, owner and settings model. All seven steps are built in 0.5.0-alpha.1; the device check and promotion are pending. The five decisions below were accepted on 14 November 2026 with the recommended answers.
 
 This is the largest change on the roadmap. Today every owner positions itself in the host's untransformed coordinates, and containment, the inspector, snapping, guides, labels, drawing input and Duplicate all assume one screen pixel is one canvas pixel. A camera breaks that assumption everywhere at once, so this proposal settles the model before code.
 
@@ -69,7 +69,7 @@ A Full screen action (`maximize` / `minimize`, F) puts the host's chrome contain
 4. Two-finger touch handoff and one-finger empty-space pan. **Done in 0.5.0-alpha.1**, with one-finger object dragging on camera hosts (bounded hosts still ignore touch), checked with emulated multi-touch; the physical-device check remains for promotion.
 5. Full screen in the toolbar entrypoint. **Done in 0.5.0-alpha.1** as `createCanvasFullscreen`.
 6. Hosts and docs: configurator, playground and the shared custom host get a camera option; API, toolbar standard, glossary, compatibility and changelog. **Done in 0.5.0-alpha.1**: the configurator's Zoom and pan setting (which the homepage playground inherits but leaves off, so the wheel still scrolls the page) and `mountConsumer(..., {camera: true})`.
-7. A navigation browser suite (pan, zoom around the pointer, limits, Fit all, Zoom to selection, drags and snaps at 0.5× and 2×, inspector values at zoom, drawing at zoom, two-finger handoff in emulation, full screen, mobile RTL, teardown) in CI, plus a recorded physical-device touch check before 0.5.0.
+7. A navigation browser suite (pan, zoom around the pointer, limits, Fit all, Zoom to selection, drags and snaps at 0.5× and 2×, inspector values at zoom, drawing at zoom, two-finger handoff in emulation, full screen, mobile RTL, teardown) in CI, plus a recorded physical-device touch check before 0.5.0. **Built in 0.5.0-alpha.1**: the suite has 42 checks, covering snapping at 0.5× and 2×, the world grid at 2×, mobile RTL camera controls and camera teardown in the configurator. The device check is in [NAVIGATION-DEVICE-CHECK.md](NAVIGATION-DEVICE-CHECK.md) and is still pending.
 
 Land as `0.5.0-alpha.n` and promote to `0.5.0` when the suite passes in CI, touch has been checked on a physical device, and dmf-web can move one camera surface (the Sticky Notes gallery or Guestbook board) onto the package.
 
