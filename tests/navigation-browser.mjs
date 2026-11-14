@@ -267,8 +267,9 @@ await check('Ctrl+wheel (pinch) zooms around the pointer and announces once it s
  await page.mouse.move(point.x,point.y);await page.keyboard.down('Control');await page.mouse.wheel(0,-100);await page.mouse.wheel(0,-100);await page.keyboard.up('Control');await frame();
  const c=await cam(),after=await under();
  assert(c.scale>start.scale*1.5&&c.scale<=4,'Pinch zoom scale '+c.scale);
- // Measured in screen pixels: a sub-pixel layout rounding difference in CI is well under half a pixel.
- assert(Math.abs(after.x-before.x)*c.scale<.5&&Math.abs(after.y-before.y)*c.scale<.5,'The world point under the pointer moved more than half a pixel: '+JSON.stringify({before,after,scale:c.scale}));
+ // Measured in screen pixels. Layout snaps transforms to device pixels, so CI measured up to ~0.6px at 3.3x zoom;
+ // a 1px bound still catches a real anchor error, which moves the point by tens of pixels.
+ assert(Math.abs(after.x-before.x)*c.scale<1&&Math.abs(after.y-before.y)*c.scale<1,'The world point under the pointer moved more than 1px: '+JSON.stringify({before,after,scale:c.scale}));
  await page.waitForTimeout(500);assert(/^Zoom \d+%\.$/.test((await state()).status),'No settled zoom announcement: '+(await state()).status);
 });
 
